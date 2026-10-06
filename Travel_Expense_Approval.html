@@ -1,0 +1,3453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Travel Expense Claim &amp; Approval — Prostarm</title>
+<style>
+:root{
+  --navy:#0b3f7a; --blue:#1e5fa8; --blue-lt:#2f80d2;
+  --teal:#00b3a4; --teal-lt:#5fdccb;
+  --ink:#123047; --muted:#5d7c93; --line:#c9dae6;
+  --panel:#fff; --page:#dfeaf2; --tile:#f2f8fb;
+  --amber:#b06a00; --amber-lt:#fdf1de;
+  --green:#0a8a53; --green-lt:#e2f5ec;
+  --red:#c0392b; --red-lt:#fdeceb;
+  --violet:#5a3fa8; --violet-lt:#eeeafa;
+  --shadow:0 1px 3px rgba(11,63,122,.14), 0 6px 16px rgba(11,63,122,.08);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{overflow-x:hidden;background:var(--page);color:var(--ink);
+  font-family:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;font-size:13px;
+  -webkit-font-smoothing:antialiased}
+.wrap{max-width:1440px;margin:0 auto;padding:14px}
+
+/* ---------- header ---------- */
+.topbar{display:flex;align-items:center;gap:16px;background:linear-gradient(180deg,#f7fbfd,#e3eef5);
+  border:1px solid var(--line);border-radius:8px;padding:10px 14px;box-shadow:var(--shadow)}
+.logo{width:178px;height:auto;flex:0 0 auto;display:block}
+.title{flex:1 1 auto;text-align:center;background:linear-gradient(180deg,var(--blue-lt),var(--navy));
+  color:#fff;border-radius:6px;padding:13px 16px;font-size:19px;font-weight:700;letter-spacing:.4px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25)}
+.userbox{flex:0 0 auto;text-align:right;min-width:170px}
+.userbox b{display:block;font-size:13px;font-weight:800;color:var(--navy);line-height:1.2}
+.userbox span{display:block;font-size:10px;letter-spacing:.4px;color:var(--muted);font-weight:700}
+.userbox button{margin-top:5px;font:inherit;font-size:10.5px;font-weight:700;color:var(--blue);
+  background:#fff;border:1px solid var(--line);border-radius:4px;padding:3px 10px;cursor:pointer}
+.userbox button:hover{background:#eef7fb}
+.bell{position:relative;display:inline-block;margin-right:6px}
+.userbox .bell span.dot{display:inline-block;background:var(--red);color:#fff;font-size:9px;font-weight:800;border-radius:9px;padding:0 5px;margin-left:4px}
+
+/* ---------- kpi ---------- */
+.kpis{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:9px 11px;
+  box-shadow:var(--shadow);border-top:3px solid var(--accent,var(--blue))}
+.kpi .lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700;display:block}
+.kpi .val{font-size:17px;font-weight:800;letter-spacing:-.2px;font-variant-numeric:tabular-nums;display:block}
+.kpi.total{background:linear-gradient(160deg,#1e5fa8,#0b3f7a);border-color:#0b3f7a}
+.kpi.total .lbl{color:#a9d3f2}
+.kpi.total .val{color:#fff;font-size:19px}
+
+/* ---------- nav ---------- */
+.navbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;flex-wrap:wrap}
+.navtabs{display:flex;gap:6px;flex-wrap:wrap}
+.navtab{font:inherit;font-size:12px;font-weight:700;padding:7px 16px;border-radius:6px 6px 0 0;cursor:pointer;
+  border:1px solid var(--line);border-bottom:none;background:#e7f1f7;color:var(--blue)}
+.navtab.on{background:linear-gradient(180deg,#4c93d6,#1e5fa8);color:#fff;border-color:#1e5fa8}
+.navtab .cnt{display:inline-block;background:var(--teal);color:#fff;font-size:9.5px;font-weight:800;
+  border-radius:9px;padding:0 6px;margin-left:6px;font-variant-numeric:tabular-nums}
+.navtab.on .cnt{background:#fff;color:var(--navy)}
+.navtools{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.btn{font:inherit;font-size:11px;font-weight:700;color:var(--navy);background:#fff;
+  border:1px solid var(--line);border-radius:4px;padding:5px 11px;cursor:pointer}
+.btn:hover{background:#eef7fb}
+.btn-go{background:linear-gradient(180deg,#12a768,#0a8a53);color:#fff;border-color:#0a8a53}
+.btn-rec{background:linear-gradient(180deg,#6f52c4,#5a3fa8);color:#fff;border-color:#5a3fa8}
+.btn-no{color:var(--red);border-color:#eab9b3}
+.btn-main{background:linear-gradient(180deg,#4c93d6,#1e5fa8);color:#fff;border-color:#1e5fa8;
+  font-size:12.5px;padding:8px 20px}
+.btn-amb{background:linear-gradient(180deg,#d98a17,#b06a00);color:#fff;border-color:#b06a00}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---------- layout ---------- */
+.grid{display:grid;grid-template-columns:1fr 288px;gap:10px;margin-top:6px;align-items:start}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;box-shadow:var(--shadow);overflow:hidden}
+.card>h3{margin:0;padding:8px 12px;font-size:12.5px;font-weight:700;letter-spacing:.3px;color:#fff;
+  background:linear-gradient(180deg,#4c93d6,#1e5fa8);border-radius:7px 7px 0 0;
+  display:flex;align-items:center;justify-content:space-between;gap:10px}
+.card>h3 em{font-style:normal;font-size:10.5px;font-weight:600;color:#cfe6f7}
+.card .body{padding:10px 12px 12px}
+.stack>*+*{margin-top:10px}
+.view{display:none}
+.view.on{display:block}
+
+/* ---------- form ---------- */
+.frow{display:grid;grid-template-columns:repeat(3,1fr);gap:9px 12px}
+.f{display:flex;flex-direction:column;gap:4px}
+.f.wide{grid-column:span 2}
+.f.full{grid-column:1/-1}
+label{font-size:10px;font-weight:700;letter-spacing:.35px;text-transform:uppercase;color:var(--muted)}
+.req{color:var(--red)}
+.auto{color:#a9bccb;font-weight:700}
+input,select,textarea{font:inherit;font-size:12.5px;color:var(--ink);background:#fff;
+  border:1px solid var(--line);border-radius:4px;padding:6px 8px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--teal);outline-offset:0;border-color:var(--teal)}
+input[readonly]{background:var(--tile);color:var(--muted)}
+textarea{resize:vertical;min-height:54px}
+input.amt{font-size:16px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+.hint{color:#a9bccb;font-weight:700}
+.flag{border-color:var(--red)!important;background:var(--red-lt)!important}
+.drop{border:1.5px dashed var(--line);border-radius:5px;padding:10px;text-align:center;
+  color:var(--muted);font-size:11.5px;cursor:pointer;background:var(--tile)}
+.drop:hover{border-color:var(--teal);color:var(--blue)}
+.drop b{display:block;font-size:12.5px;color:var(--ink)}
+.cond{font-size:10.5px;color:var(--amber);background:var(--amber-lt);border-left:3px solid var(--amber);
+  padding:6px 9px;border-radius:0 3px 3px 0;margin-bottom:10px;font-weight:600}
+.formfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;
+  background:var(--tile);border-top:1px solid var(--line)}
+.formfoot .sp{margin-left:auto;font-size:10.5px;color:var(--muted);font-weight:700}
+
+/* ---------- line items ---------- */
+.item{border:1px solid var(--line);border-radius:6px;margin-bottom:9px;background:#fff;overflow:hidden}
+.item-h{display:flex;align-items:center;gap:9px;padding:6px 10px;background:var(--tile);border-bottom:1px solid var(--line)}
+.item-h b{font-size:11px;font-weight:800;color:var(--blue)}
+.item-h .sp{margin-left:auto;font-size:13px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums}
+.item-b{padding:9px 10px}
+.frow4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px 10px}
+.frow5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px 10px}
+input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-numeric:tabular-nums}
+.refnote{font-size:10px;font-weight:700;color:var(--muted);margin-top:6px}
+.refnote b{color:var(--ink)}
+.refnote.warn{color:var(--amber)}
+.vflag{font-size:9px;font-weight:800;background:var(--amber-lt);color:var(--amber);border-radius:3px;padding:1px 5px;margin-left:5px}
+.hide{display:none!important}
+.bikebox{background:var(--violet-lt);border:1px solid #ddd4f5;border-radius:5px;padding:8px 9px;margin-top:8px}
+.bikebox .note{font-size:10px;font-weight:700;color:var(--violet);margin-bottom:7px}
+.att{display:flex;flex-wrap:wrap;gap:5px;margin-top:7px}
+.chip{font-size:10px;font-weight:700;background:var(--tile);border:1px solid var(--line);border-radius:12px;
+  padding:2px 8px;display:inline-flex;align-items:center;gap:5px;color:var(--blue)}
+.chip a{color:var(--blue);text-decoration:none;cursor:pointer}
+.chip span{color:var(--red);cursor:pointer;font-weight:800}
+.tot{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:4px}
+.tbox{background:var(--tile);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.tbox span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:800}
+.tbox b{font-size:15px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--navy)}
+
+/* ---------- route rail ---------- */
+.slab{font-size:10.5px;font-weight:800;color:var(--violet);background:var(--violet-lt);
+  padding:4px 8px;border-radius:4px;display:inline-block;margin-bottom:10px}
+.chain{list-style:none;margin:0;padding:0;position:relative}
+.chain::before{content:"";position:absolute;left:10px;top:12px;bottom:14px;width:2px;background:#e2edf4}
+.chain li{position:relative;padding:0 0 13px 28px}
+.nd{position:absolute;left:0;top:0;width:22px;height:22px;border-radius:50%;background:#fff;
+  border:2px solid var(--line);display:grid;place-items:center;font-size:9px;font-weight:800;
+  color:var(--muted);z-index:1;font-variant-numeric:tabular-nums}
+.chain li.origin .nd{border-color:var(--blue);background:var(--blue);color:#fff}
+.chain li.rec .nd{border-color:var(--violet);background:var(--violet-lt);color:var(--violet)}
+.chain li.fin .nd{border-color:var(--green);background:var(--green);color:#fff}
+.chain li.pay .nd{border-color:var(--amber);background:var(--amber-lt);color:var(--amber)}
+.rl{font-size:11.5px;font-weight:700;line-height:1.25}
+.rl small{display:block;font-weight:600;font-size:10px;color:var(--muted)}
+.rl .cd{font-size:9.5px;color:#a9bccb;font-weight:700}
+.tag{font-size:9px;font-weight:800;border-radius:3px;padding:1px 5px;display:inline-block;margin-top:3px;
+  background:var(--tile);color:var(--muted);border:1px solid var(--line)}
+.tag.v{background:var(--violet-lt);color:var(--violet);border-color:transparent}
+.tag.g{background:var(--green-lt);color:var(--green);border-color:transparent}
+.tag.a{background:var(--amber-lt);color:var(--amber);border-color:transparent}
+.why{margin-top:8px;font-size:10.5px;color:var(--muted);background:var(--tile);
+  border:1px solid var(--line);border-radius:5px;padding:8px 9px;line-height:1.4;font-weight:600}
+.why b{color:var(--ink)}
+
+/* ---------- claim list ---------- */
+.rq{border:1px solid var(--line);border-radius:6px;margin-bottom:8px;overflow:hidden;background:#fff}
+.rq-top{display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:9px 11px;cursor:pointer}
+.rq-top:hover{background:#f3fafd}
+.rq-top input[type=checkbox]{width:15px;height:15px;flex:0 0 auto;cursor:pointer;accent-color:var(--teal)}
+.rq-no{font-size:10.5px;font-weight:800;color:var(--blue);font-variant-numeric:tabular-nums}
+.rq-main{flex:1 1 220px;min-width:0}
+.rq-main b{display:block;font-size:12.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rq-main small{font-size:10.5px;color:var(--muted);font-weight:600}
+.rq-amt{font-size:14px;font-weight:800;font-variant-numeric:tabular-nums;color:var(--navy)}
+.st{font-size:9.5px;font-weight:800;border-radius:20px;padding:3px 10px;white-space:nowrap}
+.st.p{background:var(--amber-lt);color:var(--amber)}
+.st.r{background:var(--violet-lt);color:var(--violet)}
+.st.a{background:var(--green-lt);color:var(--green)}
+.st.x{background:var(--red-lt);color:var(--red)}
+.st.d{background:var(--tile);color:var(--muted);border:1px solid var(--line)}
+.excep{font-size:9px;font-weight:800;background:var(--amber-lt);color:var(--amber);border-radius:3px;padding:2px 6px}
+.rq-body{display:none;border-top:1px solid var(--line);padding:11px;background:var(--tile)}
+.rq.open .rq-body{display:block}
+.dl{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:8px 12px;margin-bottom:11px}
+.dl div span{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);font-weight:700}
+.dl div b{font-size:11.5px;font-weight:600;word-break:break-word}
+.sub{font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:800;margin-bottom:5px}
+.trail{border-left:2px solid var(--line);padding-left:11px;margin-bottom:11px}
+.trail div{margin-bottom:7px;font-size:11.5px}
+.trail b{font-weight:800}
+.trail .tt{display:block;font-size:9.5px;color:var(--muted);font-weight:700}
+.trail .ok{color:var(--green)}.trail .no{color:var(--red)}.trail .wt{color:var(--amber)}.trail .rc{color:var(--violet)}
+.act{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap;background:#fff;border:1px solid var(--line);
+  border-radius:6px;padding:9px 10px}
+.act .f{flex:1 1 190px}
+.empty{border:1px dashed var(--line);border-radius:6px;padding:30px 16px;text-align:center;color:var(--muted);font-weight:600}
+.trTbl{width:100%;border-collapse:collapse;font-size:12px}
+.trTbl th{background:var(--tile);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.3px;
+  font-weight:800;text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+.trTbl td{padding:6px 8px;border-bottom:1px solid #eef4f8;vertical-align:middle}
+.trTbl td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.trTbl tr.over td{background:var(--red-lt)}
+.trTbl input.limIn{width:88px;font-size:11.5px;padding:4px 6px;text-align:right}
+.trPill{font-size:9.5px;font-weight:800;border-radius:20px;padding:2px 8px;white-space:nowrap;display:inline-block}
+.trPill.ok{background:var(--green-lt);color:var(--green)}
+.trPill.over{background:var(--red-lt);color:var(--red)}
+.trPill.unset{background:var(--tile);color:var(--muted)}
+.trBar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.trBar select{width:auto}
+.trNote{font-size:10.5px;color:var(--muted);font-weight:600;margin-top:8px}
+.empty b{display:block;font-size:14px;color:var(--ink);margin-bottom:3px}
+.msg{border-radius:5px;padding:10px 12px;font-size:12px;margin-bottom:10px;font-weight:600;display:none}
+.msg.on{display:block}
+.msg.ok{background:var(--green-lt);border:1px solid #a8ddc4;color:#0a6b42}
+.msg.no{background:var(--red-lt);border:1px solid #eab9b3;color:#96271b}
+.bulk{display:none;align-items:center;gap:10px;flex-wrap:wrap;background:var(--green-lt);
+  border:1px solid #a8ddc4;border-radius:6px;padding:9px 12px;margin-bottom:10px;font-weight:700;color:#0a6b42}
+.bulk.on{display:flex}
+.bulk .sp{margin-left:auto;display:flex;gap:6px}
+.itab{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:11px;background:#fff}
+.itab th{background:#e7f1f7;color:var(--navy);font-size:9px;text-transform:uppercase;letter-spacing:.4px;
+  padding:5px 6px;text-align:left;border:1px solid var(--line)}
+.itab td{padding:4px 6px;border:1px solid var(--line);vertical-align:top}
+.itab td.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}
+.filters{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:10px}
+
+:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+
+@media (max-width:1100px){
+  .kpis{grid-template-columns:repeat(3,1fr)}
+  .grid{grid-template-columns:1fr}
+  .frow{grid-template-columns:1fr 1fr}
+  .frow4,.frow5{grid-template-columns:1fr 1fr}
+  .tot{grid-template-columns:1fr 1fr}
+  .filters{grid-template-columns:repeat(3,1fr)}
+  .f.wide{grid-column:1/-1}
+}
+@media (max-width:760px){
+  .topbar{flex-wrap:wrap}
+  .logo{width:132px}
+  .title{font-size:14px;order:3;width:100%}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .frow,.frow4,.frow5{grid-template-columns:1fr}
+  .filters{grid-template-columns:1fr 1fr}
+  .f.wide{grid-column:auto}
+}
+</style>
+</head>
+<body>
+
+<div id="loading" style="display:flex;justify-content:center;align-items:center;height:100vh;font-weight:700;font-size:16px;color:var(--navy);">
+  Loading Travel Expense Claim &amp; Approval...
+</div>
+
+<div id="app" style="display:none">
+<div class="wrap">
+
+  <div class="topbar">
+    <img class="logo" id="logoTop" alt="Prostarm Info Systems Ltd">
+    <div class="title">Travel Expense Claim &amp; Approval</div>
+    <div class="userbox">
+      <b id="uName">—</b><span id="uSub">—</span>
+      <span class="bell" id="bell" title="Pending with you"></span>
+      <button id="logoutBtn">Sign out</button>
+    </div>
+  </div>
+
+  <div class="kpis" id="kpis"></div>
+
+  <div class="navbar">
+    <div class="navtabs" id="navtabs">
+      <button type="button" class="navtab on" data-v="new">New Claim</button>
+      <button type="button" class="navtab" data-v="mine">My Claims<span class="cnt" id="cMine">0</span></button>
+      <button type="button" class="navtab" data-v="check" id="tabCheck">To Check<span class="cnt" id="cCheck">0</span></button>
+      <button type="button" class="navtab" data-v="approve" id="tabApprove">To Approve<span class="cnt" id="cApprove">0</span></button>
+      <button type="button" class="navtab" data-v="teamreport" id="tabTeamReport">Team Report<span class="cnt" id="cTeamOver">0</span></button>
+      <button type="button" class="navtab" data-v="bulk" id="tabBulk">Bulk Upload</button>
+      <button type="button" class="navtab" data-v="ho" id="tabHo">HO Admin<span class="cnt" id="cHo">0</span></button>
+    </div>
+    <div class="navtools">
+      <button type="button" class="btn" onclick="refresh()">Refresh</button>
+    </div>
+  </div>
+
+  <!-- NEW CLAIM -->
+  <div class="view on" id="v-new">
+    <div class="msg" id="toast"></div>
+    <div class="grid">
+      <div class="stack">
+
+        <div class="card">
+          <h3>A · Engineer Details<em id="claimNoTop">—</em></h3>
+          <div class="body">
+            <div class="frow">
+              <div class="f"><label>Engineer <span class="auto">auto</span></label><input id="fEmp" readonly></div>
+              <div class="f"><label>Employee ID <span class="auto">auto</span></label><input id="fCode" readonly></div>
+              <div class="f"><label>Designation <span class="auto">auto</span></label><input id="fDesig" readonly></div>
+              <div class="f"><label>Branch <span class="auto">auto</span></label><input id="fBranch" readonly></div>
+              <div class="f"><label>Zone <span class="auto">auto</span></label><input id="fZone" readonly></div>
+              <div class="f"><label>Reporting Manager <span class="auto">auto</span></label><input id="fRM" readonly></div>
+              <div class="f"><label>Regional Manager <span class="auto">auto</span></label><input id="fRG" readonly></div>
+              <div class="f"><label>Branch Manager <span class="auto">auto</span></label><input id="fBH" readonly></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>B · Claim Header<em>One claim per day — everything else is captured per line</em></h3>
+          <div class="body">
+            <div class="msg no" id="dateWarn"></div>
+            <div class="frow">
+              <div class="f"><label>Claim Date <span class="req">*</span></label><input type="date" id="claimDate"></div>
+              <div class="f"><label>Voucher No <span class="auto">auto</span></label><input id="voucher" readonly></div>
+              <div class="f"><label>Mobile No <span class="auto">optional</span></label><input id="mobile" maxlength="10" inputmode="numeric" placeholder="10 digits"></div>
+            </div>
+            <datalist id="custList">
+              <option>Hitachi Payment Services Pvt Ltd</option>
+              <option>BTI Payments Pvt Ltd</option>
+              <option>India1 Payments Ltd</option>
+              <option>CMS Info Systems Ltd</option>
+              <option>EPS</option>
+              <option>Perto</option>
+              <option>Prostarm — Own Branch</option>
+            </datalist>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>C · Expense Line Items<em id="lineDateNote">All lines share the claim date — each carries its own ticket, customer and purpose</em></h3>
+          <div class="body">
+            <div class="cond">Bike claims are calculated by the system. Up to 200 KM in a day pays ₹4/KM. Cross 200 KM in the same day and the whole day's distance pays ₹3/KM. Every other head is claimed at actual bill value. Ticket / Case No is required on Travel and Hotel lines only.</div>
+            <div id="items"></div>
+            <button type="button" class="btn btn-main" id="addItem">+ Add Expense Line</button>
+            <div class="tot">
+              <div class="tbox"><span>Lines</span><b id="tLines">0</b></div>
+              <div class="tbox"><span>Total KM Travelled</span><b id="tKm">0</b></div>
+              <div class="tbox"><span>Attachments</span><b id="tAtt">0</b></div>
+              <div class="tbox"><span id="tAmtLbl">Total Claimed</span><b id="tAmt">₹0</b>
+                <span id="tAmtWas" style="display:block;font-size:9px;color:var(--muted);font-weight:700"></span></div>
+            </div>
+          </div>
+          <div class="formfoot">
+            <button type="button" class="btn btn-main" id="submitBtn">Submit Claim</button>
+            <button type="button" class="btn" id="clearBtn">Clear Form</button>
+            <span class="sp" id="lockNote">You can keep editing this claim until your manager acts on it.</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="card">
+        <h3>Approval Route</h3>
+        <div class="body">
+          <span class="slab" id="slabTag">—</span>
+          <ul class="chain" id="chain"></ul>
+          <div class="why" id="why"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MY CLAIMS -->
+  <div class="view" id="v-mine">
+    <div class="card"><h3>My Claims<em>Draft, submitted, rejected, approved and paid</em></h3>
+      <div class="trBar" style="padding:8px 12px 0">
+        <span style="font-size:10.5px;color:var(--muted);font-weight:700">Export your own claims</span>
+        <div style="margin-left:auto;display:flex;gap:6px">
+          <button type="button" class="btn btn-go" id="mineXlPay">Download Payment File</button>
+          <button type="button" class="btn" id="mineXlCrm">Download CRM Format</button>
+        </div>
+      </div>
+      <div class="body"><div id="mineList"></div></div></div>
+  </div>
+
+  <!-- TO CHECK -->
+  <div class="view" id="v-check">
+    <div class="card"><h3 id="checkTitle">Waiting For Your Check &amp; Recommendation</h3>
+      <div class="body">
+        <div class="trBar" style="padding:0 0 10px">
+          <span style="font-size:10.5px;color:var(--muted);font-weight:700">Export every claim that comes to you for checking</span>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button type="button" class="btn btn-go" id="chkXlPay">Download Payment File</button>
+            <button type="button" class="btn" id="chkXlCrm">Download CRM Format</button>
+          </div>
+        </div>
+        <div class="bulk" id="bulkbar">
+          <span><b id="bulkCount">0</b> selected</span>
+          <div class="sp">
+            <button type="button" class="btn" onclick="selectAll(true)">Select all</button>
+            <button type="button" class="btn" onclick="selectAll(false)">Clear</button>
+            <button type="button" class="btn btn-rec" onclick="bulkRecommend()">Recommend selected at claimed value</button>
+          </div>
+        </div>
+        <div id="checkList"></div>
+      </div></div>
+  </div>
+
+  <!-- TO APPROVE -->
+  <div class="view" id="v-approve">
+    <div class="card"><h3>Waiting For Your Approval<em>Recommended by Reporting Manager</em></h3>
+      <div class="body">
+        <div class="trBar" style="padding:0 0 10px">
+          <span style="font-size:10.5px;color:var(--muted);font-weight:700">Export every claim that comes to you for approval</span>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button type="button" class="btn btn-go" id="aprXlPay">Download Payment File</button>
+            <button type="button" class="btn" id="aprXlCrm">Download CRM Format</button>
+          </div>
+        </div>
+        <div id="approveList"></div></div></div>
+  </div>
+
+  <!-- TEAM REPORT -->
+  <div class="view" id="v-teamreport">
+    <div class="card"><h3>Team Report — Travel Claims by User<em>Your direct reports only</em></h3>
+      <div class="body">
+        <div class="cond">Travel claim totals for the people who report to you, over the dates you choose.
+          Totals use the approved amount where a claim has been approved, otherwise the claimed amount.
+          Drafts and rejected claims are left out.</div>
+        <div class="trBar">
+          <div class="f" style="flex:0 0 150px"><label>From date</label><input type="date" id="trFrom"></div>
+          <div class="f" style="flex:0 0 150px"><label>To date</label><input type="date" id="trTo"></div>
+          <div class="f" style="flex:0 0 170px"><label>Quick pick</label>
+            <select id="trPeriod">
+              <option value="month">This calendar month</option>
+              <option value="30">Last 30 days</option>
+              <option value="fy">This financial year</option>
+              <option value="all">All time</option>
+              <option value="custom">Custom dates</option>
+            </select>
+          </div>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button type="button" class="btn btn-go" id="teamXlPay">Download Payment File</button>
+            <button type="button" class="btn" id="teamXlCrm">Download CRM Format</button>
+            <button type="button" class="btn" id="trRefresh">Refresh</button>
+          </div>
+        </div>
+        <div class="msg" id="trToast"></div>
+        <div id="trTableWrap"><div class="empty"><b>No data yet</b>Open this tab to load your team's totals.</div></div>
+        <div class="trNote" id="trFootnote"></div>
+      </div></div>
+  </div>
+
+  <!-- BULK UPLOAD -->
+  <div class="view" id="v-bulk">
+    <div class="card">
+      <h3>Bulk Engineer Claim Upload<em>Excel in, claims out, routed to the Regional Manager</em></h3>
+      <div class="body">
+        <div class="msg" id="bToast"></div>
+        <div class="cond">Fill the <b>Bulk_Engineer_Claim_Upload_Template.xlsx</b> and drop it below. Every rule in the
+          workbook is re-checked here, because Excel does not validate pasted cells. Nothing is created until you press Create.</div>
+        <div class="dl" style="margin-bottom:10px">
+          <div><span>Uploading as</span><b id="bWho">—</b></div>
+          <div><span>Branch Name</span><b id="bBranch">—</b></div>
+          <div><span>Region</span><b id="bRegion">—</b></div>
+          <div><span>Claims route to</span><b id="bRoute">—</b></div>
+        </div>
+        <div class="drop" id="bDrop" style="padding:22px">
+          <b>Choose the filled Excel file</b>.xlsx only, sheet named "Claim Upload Template", up to 500 rows
+        </div>
+        <input type="file" id="bFile" class="hide" accept=".xlsx">
+        <div id="bResult" class="hide">
+          <div class="tot" style="margin-top:12px;grid-template-columns:repeat(6,1fr)">
+            <div class="tbox"><span>Rows read</span><b id="bTotal">0</b></div>
+            <div class="tbox"><span>Ready to create</span><b id="bOk" style="color:var(--green)">0</b></div>
+            <div class="tbox"><span>Rows with errors</span><b id="bBad" style="color:var(--red)">0</b></div>
+            <div class="tbox"><span>Claims to create</span><b id="bClaims" style="color:var(--blue)">0</b></div>
+            <div class="tbox"><span>Total KM travelled</span><b id="bKm">0 KM</b></div>
+            <div class="tbox"><span>Batch value</span><b id="bVal">₹0</b></div>
+          </div>
+          <div class="act" style="margin-top:10px">
+            <label style="display:flex;align-items:center;gap:7px;font-size:11px;text-transform:none;letter-spacing:0">
+              <input type="checkbox" id="bPartial" style="width:15px;height:15px;accent-color:var(--teal)">
+              Commit the valid rows only and leave the failed rows out (partial upload)
+            </label>
+            <button type="button" class="btn btn-main" id="bCommit">Create claims</button>
+            <button type="button" class="btn" id="bCsv">Download error report</button>
+            <button type="button" class="btn" id="bClear">Discard file</button>
+          </div>
+          <div id="bRows" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HO ADMIN -->
+  <div class="view" id="v-ho">
+    <div class="card"><h3>HO Admin — Payment Processing<em>All regions, all branches, all statuses</em></h3>
+      <div class="body">
+        <div class="filters">
+          <div class="f"><label>Employee</label><select id="hEmp"></select></div>
+          <div class="f"><label>Zone</label><select id="hZone"></select></div>
+          <div class="f"><label>Branch</label><select id="hBranch"></select></div>
+          <div class="f"><label>Reporting Manager</label><select id="hRm"></select></div>
+          <div class="f"><label>Claim Status</label><select id="hStatus"></select></div>
+          <div class="f"><label>Payment Status</label><select id="hPay"></select></div>
+          <div class="f"><label>Approved From</label><input type="date" id="hFrom"></div>
+          <div class="f"><label>Approved To</label><input type="date" id="hTo"></div>
+          <div class="f wide" style="justify-content:flex-end">
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button type="button" class="btn btn-go" id="xlPay">Download Payment File</button>
+              <button type="button" class="btn" id="xlCrm">Download CRM Format</button>
+              <button type="button" class="btn" id="hReset">Reset filters</button>
+            </div>
+          </div>
+        </div>
+        <div class="tot" style="margin-bottom:10px">
+          <div class="tbox"><span>Claims shown</span><b id="hCount">0</b></div>
+          <div class="tbox"><span>Awaiting HO approval</span><b id="hAwait">0</b></div>
+          <div class="tbox"><span>Approved value</span><b id="hApproved">₹0</b></div>
+          <div class="tbox"><span>Pending payment</span><b id="hPending">₹0</b></div>
+          <div class="tbox"><span>Paid value</span><b id="hPaid">₹0</b></div>
+        </div>
+        <div id="hoList"></div>
+      </div></div>
+  </div>
+
+</div>
+</div>
+
+<script src="app-config.js"></script>
+<script>
+/* ================= BACKEND: ONE POWER AUTOMATE FLOW -> SHAREPOINT ================= */
+/* Every call goes to a single flow URL (set in app-config.js) with an "action":
+   login | bootstrap | list | get | save | delete.  The flow answers { ok:true, data:... }
+   or { ok:false, error:"..." }.  SharePoint keeps two lists only: TE_Users and TE_Claims.
+   TE_Claims stores each claim as ONE raw JSON payload plus a few indexed columns. */
+const API_URL = window.EC_API_URL || "";
+
+/* Image / payload budget. Bills are stored inside the claim JSON, so they are kept small. */
+const IMG_MAX_SIDE = 900;              /* longest edge in px after resize */
+const IMG_TARGET_BYTES = 60 * 1024;    /* each compressed image aims to be at or under this */
+const PAYLOAD_MAX_CHARS = 1000000;
+/* Opt-in (app-config.js: EC_SPLIT_BILLS = true). Bill images go into a separate "Bills" column that only
+   the single-claim "get" action returns, so the claim LIST stays small. Needs the two flow edits in SharePoint_Setup.md. */
+const SPLIT_BILLS = window.EC_SPLIT_BILLS === true;     /* refuse to save a claim JSON bigger than this (~1 MB) */
+
+/* Every call to the flow goes through this so a failure is never silent: a non-2xx status,
+   a timed-out flow, or an HTML error page instead of JSON all become one clear Error. */
+async function postJSON(url, body, timeoutMs = 60000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  let res, text;
+  try {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: ctrl.signal
+    });
+    text = await res.text();
+  } catch (err) {
+    if (err.name === "AbortError") throw new Error("The server took too long to respond (over " + (timeoutMs/1000) + "s). Please try again.");
+    throw new Error("Could not reach the server. Check your connection and try again.");
+  } finally {
+    clearTimeout(timer);
+  }
+  if (!res.ok) throw new Error("Server returned " + res.status + " " + res.statusText + " — " + text.slice(0, 300));
+  try { return text ? JSON.parse(text) : {}; }
+  catch (e) { throw new Error("Server response was not valid JSON — " + text.slice(0, 300)); }
+}
+
+async function api(action, data) {
+  if (!API_URL || /PASTE_/.test(API_URL)) throw new Error("The flow URL is not set. Edit app-config.js.");
+  const res = await postJSON(API_URL, Object.assign({ action: action }, data || {}));
+  if (res && res.ok === false) throw new Error(res.error || "The server rejected the request.");
+  return res && res.data !== undefined ? res.data : res;
+}
+
+/* What goes to SharePoint: a few indexed columns for filtering, and the whole claim as raw JSON. */
+function packClaim(r) {
+  let payload, bills = "";
+  if (SPLIT_BILLS) {
+    const lean = JSON.parse(JSON.stringify(r)), map = {};
+    (lean.items || []).forEach(it => (it.att || []).forEach((a, i) => {
+      if (a.data) { map[it.id + ":" + i] = a.data; a.data = ""; a.stored = 1; }
+      else if (a.stored) throw new Error("The bill images of this claim have not been loaded, so saving now would delete them. Reload the claim and try again.");
+    }));
+    payload = JSON.stringify(lean);
+    bills = Object.keys(map).length ? JSON.stringify(map) : "";
+  } else {
+    payload = JSON.stringify(r);
+  }
+  if (payload.length > PAYLOAD_MAX_CHARS || bills.length > PAYLOAD_MAX_CHARS) {
+    throw new Error("This claim is too large to save (" + Math.round(Math.max(payload.length, bills.length)/1024) +
+      " KB). Remove some bills or attach smaller ones and try again.");
+  }
+  const out = {
+    id: r.id || "", no: r.no || "",
+    empCode: cleanCode(r.by) || "", status: r.status || "",
+    rmCode: cleanCode(r.rmCode) || "", rgCode: cleanCode(r.rgCode) || "",
+    claimDate: dkey(r.claimDate),
+    payload: payload
+  };
+  if (SPLIT_BILLS) out.bills = bills;
+  return out;
+}
+
+const fetchClaimsFromCloud = empCode => api("list", { empCode: empCode, role: myRole() });
+const fetchClaimFromCloud  = id => api("get", { claimId: id, empCode: ME });
+const saveClaimToCloud     = claim => api("save", { claim: packClaim(claim) });   /* add and update are one call */
+const deleteClaimFromCloud = id => api("delete", { claimId: id, empCode: ME });
+
+/* This must answer "does this person manage anyone, or are they an individual
+   contributor?" — NOT the approval-stage bucket (EMP[x].g), which defaults to
+   "Reporting Manager" for everyone who isn't a Regional Manager or HO Admin. */
+function myRole(){
+  if(!EMP[ME]) return "";
+  if(isHO(ME)) return "HO Admin";
+  if(isRegional(ME)) return "Regional Manager";
+  if(isReporting(ME)) return "Reporting Manager";
+  return "Engineer";
+}
+
+/* ================= HELPERS ================= */
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,"0");
+/* LOCAL calendar date. toISOString() is UTC, which is yesterday between 00:00 and 05:30 IST. */
+const ymd=d=>d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());
+const todayISO=()=>ymd(new Date());
+const MON=["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
+const money=n=>"₹"+Number(n||0).toLocaleString("en-IN",{maximumFractionDigits:2});
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+function dt(s){ if(!s) return "—"; const d=new Date(s); return pad(d.getDate())+"-"+MON[d.getMonth()]+"-"+String(d.getFullYear()).slice(2)+" "+pad(d.getHours())+":"+pad(d.getMinutes()); }
+function dd(s){ 
+  if(!s) return "—"; 
+  const cleanDate = dkey(s) || String(s).slice(0, 10);
+  const d = new Date(cleanDate + "T00:00:00"); 
+  return pad(d.getDate()) + "-" + MON[d.getMonth()] + "-" + d.getFullYear(); 
+}
+
+/* ================= DYNAMIC MASTER STATE ================= */
+let EMP = {};
+let BRANCH_HEAD = {};
+let HO_ADMIN = [];
+let codes = [];
+
+const nm=c=>EMP[c]?EMP[c].n:"—";
+let ME=null, ITEMS=[], IDSEQ=1, CLAIMNO="", VOUCHNO="", EDITING=null, REVOF=null;
+
+/* ================= LOGO ================= */
+const LOGO = "ProstarM.png";
+const logoEl = document.getElementById("logoTop");
+if(logoEl) logoEl.src = LOGO;
+
+const ST = {DRAFT:"Draft",SUB:"Submitted",REJ:"Rejected",REC:"Recommended by Reporting Manager",
+  HOA:"Submitted for HO Admin Approval",
+  APP:"Approved by Regional Manager",PAID:"Payment Processed",HOLD:"Payment On Hold",CLOSED:"Closed"};
+/* Claims filed before either approver could reject carry the older wording,
+   so both spellings must count as rejected. */
+const REJ_LEGACY = "Rejected by Reporting Manager";
+const isRejected = st => st === ST.REJ || st === REJ_LEGACY;
+
+const HEADS = {
+  "Travel":["Bike","Bus","Train","Flight","Taxi","Own Vehicle","Auto","Cab","Metro","Car","Ferry","Others"],
+  "Hotel":["Hotel","Lodge","Dormitory","Guest House","Others"],
+  "Food":["Breakfast","Lunch","Dinner","Tea - Snack","Restaurants","Others"],
+  "Misc":["Stationary","Photocopy","Printing","Courier","Toll / Parking","Others"]
+};
+const SLAB_MODES=["Bike","Own Vehicle"];
+const isSlabMode=m=>SLAB_MODES.indexOf(m)>-1;
+const BIKE_SLAB = {limit:200, low:4, high:3};
+/* A bill is not required on small Food claims. Above this value one is. */
+const FOOD_BILL_FREE = 400;
+/* Customer segments offered on every line. */
+const SEGMENTS = ["ATM","NON-ATM","Dealer & Channel Sales","Branch"];
+/* Heads tied to a customer site. Only these must quote a service ticket;
+   Food and Misc are incidental spend and may leave it blank. */
+const SITE_HEADS = ["Travel","Hotel"];
+const needsTicket = it => SITE_HEADS.indexOf(it.cat)>-1;
+
+function needsBill(it){
+  if(isBikeLine(it)) return false;
+  if(it.cat==="Food" && (Number(it.amt)||0) <= FOOD_BILL_FREE) return false;
+  return true;
+}
+const TAT = {rec:"24 hrs", app:"48 hrs", pay:"7 working days"};
+const MAXFILE = 150*1024;   /* non-image files (PDF etc.) are stored inside the claim JSON, so keep them small */
+const ROAD_FACTOR = 1.25;
+let PINMAP=null;
+function pinIndex(){
+  if(typeof PINDATA === "undefined") return null; // ADD THIS SAFETY CHECK
+  if(PINMAP) return PINMAP;
+  PINMAP={};
+  const D="0123456789abcdefghijklmnopqrstuvwxyz";
+  const d36=x=>{ let n=0; for(let i=0;i<x.length;i++) n=n*36+D.indexOf(x[i]); return n; };
+  let cur=d36(PINDATA.slice(0,4)), p=4, first=true;
+  while(p+8<=PINDATA.length){
+    const d=d36(PINDATA.substr(p,2)), la=d36(PINDATA.substr(p+2,3)), lo=d36(PINDATA.substr(p+5,3));
+    p+=8;
+    if(first) first=false; else cur+=d;
+    if(la===0&&lo===0) continue;
+    PINMAP[cur]=[la/100,lo/100];
+  }
+  return PINMAP;
+}
+const pinOk=v=>/^[1-9][0-9]{5}$/.test(String(v||"").trim());
+function pinLL(v){ return pinOk(v)?(pinIndex()[Number(v)]||null):null; }
+function haversine(a,b){
+  const R=6371.0088, rad=Math.PI/180;
+  const x=0.5-Math.cos((b[0]-a[0])*rad)/2+Math.cos(a[0]*rad)*Math.cos(b[0]*rad)*(1-Math.cos((b[1]-a[1])*rad))/2;
+  return 2*R*Math.asin(Math.sqrt(x));
+}
+function refKm(fromPin,toPin){
+  const a=pinLL(fromPin), b=pinLL(toPin);
+  if(!a||!b) return null;
+  const km=haversine(a,b)*ROAD_FACTOR;
+  return km<1?Math.round(km*10)/10:Math.round(km);
+}
+function refStatus(it){
+  if(!it.jFromPin&&!it.jToPin) return "Enter both pincodes to see the reference distance";
+  if(!pinOk(it.jFromPin)) return "From pincode is not a valid 6-digit pincode";
+  if(!pinOk(it.jToPin)) return "To pincode is not a valid 6-digit pincode";
+  if(!pinLL(it.jFromPin)) return "Pincode "+it.jFromPin+" is not in the India Post directory";
+  if(!pinLL(it.jToPin)) return "Pincode "+it.jToPin+" is not in the India Post directory";
+  return null;
+}
+
+/* ================= STORAGE & FETCH ================= */
+
+/* ---------- IndexedDB store ----------
+   Holds only the signed-in user (shared with index.html). Claims always come from SharePoint. */
+const EC_DB_NAME = "prostarm_ec";
+const EC_DB_VERSION = 1;
+const EC_STORE_SESSION = "session";
+
+function ecIdbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(EC_DB_NAME, EC_DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(EC_STORE_SESSION)) {
+        db.createObjectStore(EC_STORE_SESSION);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function ecSessionGet(key) {
+  const db = await ecIdbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(EC_STORE_SESSION, "readonly");
+    const req = tx.objectStore(EC_STORE_SESSION).get(key);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function ecSessionRemove(key) {
+  const db = await ecIdbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(EC_STORE_SESSION, "readwrite");
+    tx.objectStore(EC_STORE_SESSION).delete(key);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+let MEM = [], MEM_AT = 0, LOAD_INFLIGHT = null;
+
+
+/* ================= REVISED CLOUD LOAD & PERSIST ================= */
+
+const cleanCode = (c) => { const s = String(c || "").trim().toUpperCase(); return s === "NULL" || s === "" ? null : s; };
+/* A stage amount is only real once it is greater than zero. Power Automate sends
+   back 0 or "" for stages that have not happened, and 0 is not null, so these
+   have to be folded to null or the claim shows as ₹0 before any approval. */
+function stageAmt(v){
+  if (v === null || v === undefined || v === "") return null;
+  const n = Number(v);
+  return (isNaN(n) || n <= 0) ? null : n;
+}
+/* Power Automate hands ClaimDate back in whatever shape the Excel column holds:
+   "2026-09-01", "2026-09-01T00:00:00.000Z", "01/09/2026" or an Excel serial.
+   Every date comparison goes through this so a stored claim always matches the
+   value in the date picker. Returns "" when the value cannot be read. */
+function dkey(v){
+  if(v==null||v==="") return "";
+  const raw=String(v).trim();
+  if(/^\d+(\.\d+)?$/.test(raw)){                 // Excel serial date
+    const n=Number(raw);
+    if(n>20000&&n<80000){
+      return new Date(Date.UTC(1899,11,30)+Math.round(n)*86400000).toISOString().slice(0,10);
+    }
+  }
+  let m=raw.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);       // ISO, with or without a time
+  if(m) return m[1]+"-"+pad(m[2])+"-"+pad(m[3]);
+  m=raw.match(/^(\d{1,2})[\/-](\d{1,2})[\/-](\d{4})/);  // DD/MM/YYYY as written in India
+  if(m) return m[3]+"-"+pad(m[2])+"-"+pad(m[1]);
+  const d=new Date(raw);
+  return isNaN(d.getTime())?"":d.toISOString().slice(0,10);
+}
+
+/* One SharePoint row -> the claim object the screens use. The raw JSON payload is the
+   source of truth; the indexed columns are only a fallback. */
+function rowToClaim(r) {
+  let c = {};
+  const raw = r.Payload || r.payload || r.ClaimDataJSON;
+  try { c = raw ? (typeof raw === "string" ? JSON.parse(raw) : raw) : {}; } catch (e) { c = {}; }
+  const claim = Object.assign({}, c, {
+    id: c.id || r.ClaimID || r.Title || r.id,
+    no: c.no || r.ClaimNo,
+    by: cleanCode(c.by || r.EmpCode),
+    name: String(c.name || "").trim(),
+    claimDate: c.claimDate || r.ClaimDate,
+    claimed: Number(c.claimed) || 0,
+    recommended: stageAmt(c.recommended),
+    approved: stageAmt(c.approved),
+    payable: stageAmt(c.payable),
+    status: String(c.status || r.Status || "").trim(),
+    rmCode: cleanCode(c.rmCode || r.RMCode),
+    rgCode: cleanCode(c.rgCode || r.RGCode),
+    bhCode: cleanCode(c.bhCode),
+    rev: c.rev || 1,
+    rejectedBy: c.rejectedBy || null,
+    rejectedStage: c.rejectedStage || null,
+    purpose: c.purpose || "", segment: c.segment || "", custName: c.custName || "",
+    ticket: c.ticket || "", uid: c.uid || "",
+    items: (Array.isArray(c.items) ? c.items : []).map(it => Object.assign(
+      { id:"L",date:"",ticket:"",uid:"",custName:"",segment:"",purpose:"",cat:"Misc",mode:"Others",
+        jFrom:"",jFromPin:"",jTo:"",jToPin:"",km:"",rate:0,amt:0,desc:"",att:[] }, it || {},
+      { att: (Array.isArray(it && it.att) ? it.att : []).map(a => a && a.name ? Object.assign({}, a, { name: shortAttName(a.name, a.type) }) : a) })),
+    trail: (Array.isArray(c.trail) ? c.trail : []).filter(t => t && typeof t === "object")
+             .map(t => Object.assign({ code:"", act:"", remark:"", ts:"", amt:null }, t)),
+    pay: c.pay || { status: "Pending", ref: "", date: "", remark: "", by: null }
+  });
+  /* split mode: put the images back from the Bills column (only the "get" action returns it) */
+  const bl = r.Bills || r.bills;
+  if (bl) {
+    let map = {}; try { map = typeof bl === "string" ? JSON.parse(bl) : bl; } catch (e) { map = {}; }
+    claim.items.forEach(it => it.att.forEach((a, i) => { const d = map[it.id + ":" + i]; if (d) a.data = d; }));
+  }
+  return claim;
+}
+
+/* true when a claim was loaded from the list and still lacks its bill images (split mode) */
+const billsMissing = r => (r.items || []).some(it => (it.att || []).some(a => a.stored && !a.data));
+
+/* loadAll(maxAgeMs): 0 = always ask the server (default), N = reuse the list if it is
+   younger than N ms. Callers that arrive while a request is already running share it,
+   so a burst of clicks makes one round trip instead of several. */
+async function loadAll(maxAgeMs) {
+  if (maxAgeMs && MEM_AT && Date.now() - MEM_AT < maxAgeMs) return MEM;
+  if (LOAD_INFLIGHT) return LOAD_INFLIGHT;
+  LOAD_INFLIGHT = loadAllNow().finally(() => { LOAD_INFLIGHT = null; });
+  return LOAD_INFLIGHT;
+}
+async function loadAllNow() {
+  try {
+    const raw = await fetchClaimsFromCloud(ME || "");
+    const rows = Array.isArray(raw) ? raw : (raw.value || []);
+    MEM = rows.map(rowToClaim);
+    MEM_AT = Date.now();
+    return MEM;
+  } catch (err) {
+    /* A failed load is surfaced as a toast, and the app keeps whatever was last loaded
+       instead of blanking the screen. */
+    console.error("List claims failed:", err);
+    const el = $("toast");
+    if (el) {
+      el.className = "msg no on";
+      el.textContent = "Could not load claims from the server (" + err.message + "). Showing the last loaded data — press Refresh to try again.";
+      clearTimeout(el._hideTimer);
+      el._hideTimer = setTimeout(() => { el.className = "msg"; }, 20000);
+    }
+    return MEM;
+  }
+}
+
+/* Reads ONE claim instead of the whole list — used before an approve / reject / delete
+   so those actions stay fast and still act on the latest saved copy. */
+async function loadOne(id) {
+  const row = await fetchClaimFromCloud(id);
+  const one = Array.isArray(row) ? row[0] : row;
+  const i = MEM.findIndex(x => x.id === id);
+  if (!one || (!one.Payload && !one.payload && !one.Title && !one.ClaimID)) {
+    if (i > -1) MEM.splice(i, 1);
+    return null;
+  }
+  const c = rowToClaim(one);
+  if (i > -1) MEM[i] = c; else MEM.push(c);
+  return c;
+}
+
+/* ================= TEAM REPORT ================= */
+/* Quick picks fill the two date boxes; the boxes are what the report actually reads. */
+function trPeriodRange(period){
+  const now=new Date(), iso=ymd;
+  if(period==="month") return [iso(new Date(now.getFullYear(),now.getMonth(),1)), iso(now)];
+  if(period==="30")    return [iso(new Date(now.getTime()-29*86400000)), iso(now)];
+  if(period==="fy"){
+    /* Indian financial year: 1 April to 31 March */
+    const y = now.getMonth()>=3 ? now.getFullYear() : now.getFullYear()-1;
+    return [y+"-04-01", iso(now)];
+  }
+  if(period==="all")   return ["2000-01-01", iso(now)];
+  return [null,null];
+}
+function trRange(){
+  const f=dkey($("trFrom").value), t=dkey($("trTo").value);
+  const iso=todayISO();
+  return [f||"2000-01-01", t||iso];
+}
+function trInRange(dateStr,from,to){
+  const d=dkey(dateStr);
+  if(!d) return false;
+  return (!from||d>=from) && (!to||d<=to);
+}
+
+let TR_ROWS=[]; 
+async function renderTeamReport(){
+  const reportees=Object.keys(EMP).filter(c=>EMP[c]&&EMP[c].rm===ME)
+        .sort((a,b)=>String(EMP[a].n||"").localeCompare(String(EMP[b].n||"")));
+  $("cTeamOver").textContent="0";
+  if(!reportees.length){
+    $("trTableWrap").innerHTML='<div class="empty"><b>No direct reports</b>Nobody currently reports to you in Travel Expense.</div>';
+    return;
+  }
+  $("trTableWrap").innerHTML='<div class="empty"><b>Loading…</b>Fetching travel claim totals for your team.</div>';
+  $("trFootnote").textContent="";
+
+  const [from,to]=trRange();
+
+  const travelAll=await loadAll(20000);
+  const travelByEmp={}, claimCount={}, lastClaim={};
+  reportees.forEach(c=>{ travelByEmp[c]=0; claimCount[c]=0; lastClaim[c]=""; });
+  travelAll.forEach(r=>{
+    const by=cleanCode(r.by);
+    if(!travelByEmp.hasOwnProperty(by)) return;
+    if(r.status===ST.DRAFT || isRejected(r.status)) return;
+    const d=dkey(r.claimDate||r.perFrom);
+    if(!trInRange(d,from,to)) return;
+    travelByEmp[by]+=Number(r.approved!=null?r.approved:r.claimed)||0;
+    claimCount[by]+=1;
+    if(!lastClaim[by]||d>lastClaim[by]) lastClaim[by]=d;
+  });
+
+  TR_ROWS=reportees.map(c=>({
+    code:c, name:EMP[c].n, branch:EMP[c].b,
+    travel:travelByEmp[c]||0, claims:claimCount[c]||0, last:lastClaim[c]||""
+  })).sort((a,b)=>b.travel-a.travel);
+
+  const grand=TR_ROWS.reduce((s,r)=>s+r.travel,0);
+  const claims=TR_ROWS.reduce((s,r)=>s+r.claims,0);
+  $("cTeamOver").textContent=claims;
+
+  let h='<table class="trTbl"><thead><tr><th>Employee</th><th>Branch</th>'+
+    '<th style="text-align:right">Claims</th><th style="text-align:right">Travel Claimed</th>'+
+    '<th>Last claim date</th><th style="text-align:right">Share</th></tr></thead><tbody>';
+  TR_ROWS.forEach(r=>{
+    const share = grand>0 ? Math.round(r.travel/grand*100) : 0;
+    h+='<tr data-code="'+r.code+'">'+
+      '<td><b>'+esc(r.name)+'</b><br><span style="color:var(--muted);font-size:10px">'+r.code+'</span></td>'+
+      '<td>'+esc(r.branch)+'</td>'+
+      '<td class="n">'+r.claims+'</td>'+
+      '<td class="n">'+money(r.travel)+'</td>'+
+      '<td>'+(r.last?dd(r.last):"—")+'</td>'+
+      '<td class="n">'+share+'%</td></tr>';
+  });
+  h+='<tr style="font-weight:800;background:var(--tile)"><td colspan="2">Team total</td>'+
+     '<td class="n">'+claims+'</td><td class="n">'+money(grand)+'</td><td></td><td class="n">100%</td></tr>';
+  h+="</tbody></table>";
+  $("trTableWrap").innerHTML = TR_ROWS.length ? h
+    : '<div class="empty"><b>No claims in this period</b>Widen the dates to see more.</div>';
+  $("trFootnote").textContent="Showing "+dd(from)+" to "+dd(to)+
+    ". Totals use the approved amount where a claim has been approved, otherwise the claimed amount. "+
+    "Drafts and rejected claims are excluded.";
+}
+
+/* ================= EVENT LISTENERS ================= */
+$("trPeriod").addEventListener("change",()=>{
+  const [f,t]=trPeriodRange($("trPeriod").value);
+  if(f){ $("trFrom").value=f; $("trTo").value=t; }
+  renderTeamReport();
+});
+["trFrom","trTo"].forEach(id=>$(id).addEventListener("change",()=>{
+  $("trPeriod").value="custom"; renderTeamReport();
+}));
+$("trRefresh").addEventListener("click",()=>{ MEM_AT=0; renderTeamReport(); });
+document.querySelectorAll(".navtab").forEach(t=>t.addEventListener("click",()=>{
+  document.querySelectorAll(".navtab").forEach(x=>x.classList.remove("on"));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
+  t.classList.add("on"); $("v-"+t.dataset.v).classList.add("on");
+  if(t.dataset.v==="teamreport") renderTeamReport();
+  else if(t.dataset.v!=="new") refresh();
+}));
+$("logoutBtn").addEventListener("click",async()=>{
+  try{ await ecSessionRemove('activeUser'); }catch(e){}
+  window.location.href='index.html';
+});
+$("claimDate").addEventListener("change",()=>{ syncItemDates(); queueRender(); checkDateClash(); });
+$("addItem").addEventListener("click",()=>addItem());
+$("clearBtn").addEventListener("click",()=>{ if(confirm("Clear the form? Anything not saved is lost.")) clearForm(); });
+
+/* ================= CORE LOGIC ================= */
+const LEVEL_ROUTE={
+  "Reporting Manager":"Reporting Manager check, then Regional Manager approval, then HO Admin payment",
+  "Regional Manager":"Regional Manager approval, then HO Admin payment",
+  "HO Admin":"HO Admin approval and payment"
+};
+function stages(c){ 
+  const e=EMP[c]; 
+  return (e.rm && e.rm !== e.rg ? 1 : 0) + (e.rg ? 1 : 0); 
+}
+function isHO(c){ return HO_ADMIN.indexOf(c)>-1 || (EMP[c] && EMP[c].g === "HO Admin"); }
+
+function isRegional(c) {
+  const e = EMP[c];
+  if (!e) return false;
+  const d = String(e.d || "").toLowerCase();
+  return e.g === "Regional Manager" || e.g === "HO Admin" || isHO(c) ||
+         d.includes("regional manager") || d.includes("state manager") ||
+         Object.keys(EMP).some(k => EMP[k].rg === c);
+}
+
+function isReporting(c) {
+  const e = EMP[c];
+  if (!e) return false;
+  return Object.keys(EMP).some(k => EMP[k].m === c || EMP[k].rm === c) || isRegional(c) || isHO(c);
+}
+
+function isBranchHead(c) {
+  const e = EMP[c];
+  if (!e) return false;
+  const d = String(e.d || "").toLowerCase();
+  return Object.keys(BRANCH_HEAD).some(b => BRANCH_HEAD[b] === c) ||
+         d.includes("branch manager") || d.includes("state manager") ||
+         d.includes("coordination") || d.includes("logistics") ||
+         isRegional(c) || isHO(c);
+}
+
+function canBulkUpload(c) {
+  const e = EMP[c];
+  if (!e) return false;
+  const d = String(e.d || "").toLowerCase();
+  if (isHO(c) || isRegional(c) || isBranchHead(c) || isReporting(c)) return true;
+  if (d.includes("coordination") || d.includes("logistics") || d.includes("manager") || d.includes("admin") || d.includes("executive")) return true;
+  return false;
+}
+
+function enterApp(c){
+  ME=c;
+  $("app").style.display="block";
+  const e=EMP[c];
+  $("uName").textContent=e.n+" · "+c;
+  $("uSub").textContent=e.d+" · "+e.b+" · "+e.z;
+  $("fEmp").value=e.n; $("fCode").value=c; $("fBranch").value=e.b; $("fZone").value=e.z; $("fDesig").value=e.d;
+  $("fRM").value=e.rm?nm(e.rm)+" — "+(EMP[e.rm]?EMP[e.rm].d:"Manager")+(e.msub?"  (reassigned)":""):"Not applicable at your approval level";
+  $("fRG").value=e.rg?nm(e.rg)+" — "+(EMP[e.rg]?EMP[e.rg].d:"Regional Manager"):"Not applicable at your approval level";
+  const bh=BRANCH_HEAD[e.b];
+  $("fBH").value=bh?nm(bh)+" — "+(EMP[bh]?EMP[bh].d:"Branch Manager"):"—";
+  
+  $("tabCheck").style.display      = isReporting(c) ? "" : "none";
+  $("tabApprove").style.display    = isRegional(c) ? "" : "none";
+  $("tabTeamReport").style.display = isReporting(c) ? "" : "none";
+  $("tabBulk").style.display       = canBulkUpload(c) ? "" : "none";
+  $("tabHo").style.display         = isHO(c) ? "" : "none";
+  $("bWho").textContent=e.n+" ("+c+")";
+  $("bBranch").textContent=e.b;
+  $("bRegion").textContent=e.z;
+  $("bRoute").textContent=e.rg?nm(e.rg)+" · Regional Manager":"HO Admin";
+  stampHeader(); clearItems(); addItem(); route(); buildHoFilters(); wireExportButtons(); refresh();
+}
+
+function stampHeader(){
+  const now=new Date(), bc=(EMP[ME].b||"BR").split("_")[0], yy=String(now.getFullYear()).slice(2);
+  const seq=String(Math.floor(Math.random()*9000)+1000);
+  CLAIMNO="TC/"+bc+"/"+yy+pad(now.getMonth()+1)+"/"+seq;
+  VOUCHNO="TV/"+bc+"/"+yy+pad(now.getMonth()+1)+"/"+seq;
+  $("claimNoTop").textContent=CLAIMNO;
+  $("voucher").value=VOUCHNO;
+  const iso=todayISO();
+  if(!$("claimDate").value) $("claimDate").value=iso;
+  $("claimDate").max=iso;
+}
+
+function claimForDate(list,date,excludeId){
+  const key=dkey(date);
+  if(!key) return null;
+  const me=cleanCode(ME);
+  return (list||[]).find(c=>
+        cleanCode(c.by)===me
+     && dkey(c.claimDate)===key
+     && String(c.id||"")!==String(excludeId||"")
+     && !isRejected(c.status))||null;
+}
+function actedOn(r){
+  const t=r.trail||[];
+  let start=-1;
+  t.forEach((x,i)=>{ if(/^Submitted|^Resubmitted/.test(x.act||"")) start=i; });
+  return t.slice(start+1).some(x=>/recommended|^Approved|^Rejected|^Payment|^Closed/.test(x.act||""));
+}
+/* A rejected claim goes back to its owner to correct and resubmit. */
+function canResubmit(r){ return r.by===ME && isRejected(r.status); }
+let REVISION_REMARK="";
+function canEditOwn(r){
+  return r.by===ME && !actedOn(r) && [ST.DRAFT,ST.SUB,ST.REC,ST.HOA].indexOf(r.status)>-1;
+}
+const CLASH_MSG="An expense claim already exists for the selected date. Please edit the existing claim and add the new expense as an additional line item.";
+
+async function checkDateClash(){
+  const el=$("dateWarn"); el.className="msg";
+  const d=$("claimDate").value;
+  if(!d||!ME) return null;
+  const list=await loadAll(15000);      /* typing a date should not hit the server every time */
+  const hit=claimForDate(list,d,EDITING);
+  if(!hit) return null;
+  el.className="msg no on";
+  el.innerHTML=esc(CLASH_MSG)+' <b>'+esc(hit.no)+'</b> — '+esc(hit.status)+'. '+
+    (canEditOwn(hit)
+      ? '<button type="button" class="btn" style="margin-left:6px" onclick="editClaim(\''+hit.id+'\')">Open that claim and add a line</button>'
+      : '<b>It has already been acted on by your manager, so it can no longer be edited.</b>');
+  return hit;
+}
+function syncItemDates(){
+  const d=$("claimDate").value;
+  ITEMS.forEach(it=>{ it.date=d; });
+}
+
+function route(){
+  if(!ME) return;
+  const e=EMP[ME], hoList=HO_ADMIN;
+  const hasRmStage = e.rm && e.rm !== e.rg;
+  let html='<li class="origin"><div class="nd">&#10003;</div><div class="rl">'+esc(e.n)+
+    '<small>'+esc(e.d)+'</small><span class="cd">'+ME+' · raises the claim</span></div></li>';
+  
+  if(hasRmStage) html+='<li class="rec"><div class="nd">R1</div><div class="rl">'+esc(nm(e.rm))+
+    '<small>'+esc(EMP[e.rm]?EMP[e.rm].d:"Reporting Manager")+'</small><span class="cd">'+e.rm+' · Reporting Manager</span>'+
+    '<span class="tag v">checks &amp; recommends · '+TAT.rec+'</span></div></li>';
+  
+  if(e.rg) html+='<li class="fin"><div class="nd">A</div><div class="rl">'+esc(nm(e.rg))+
+    '<small>'+esc(EMP[e.rg]?EMP[e.rg].d:"Regional Manager")+'</small><span class="cd">'+e.rg+' · Regional Manager</span>'+
+    '<span class="tag g">approves final amount · '+TAT.app+'</span></div></li>';
+    
+  html+='<li class="pay"><div class="nd">₹</div><div class="rl">HO Admin<small>'+
+    hoList.map(c=>esc(nm(c))).join(" / ")+'</small><span class="cd">'+
+    (stages(ME)?"payment processing":"approval and payment")+'</span>'+
+    '<span class="tag a">'+(stages(ME)?"pays &amp; closes · ":"approves, pays &amp; closes · ")+TAT.pay+'</span></div></li>';
+  $("chain").innerHTML=html;
+  
+  $("slabTag").textContent = stages(ME)===2 ? "1 recommendation → 1 approval → payment"
+    : stages(ME)===1 ? "1 approval → payment" : "Straight to HO Admin";
+  
+  const bh=BRANCH_HEAD[e.b];
+  let why='Your approval level is <b>'+esc(e.g)+'</b>. '+esc(LEVEL_ROUTE[e.g]||"")+'. ';
+  
+  if(hasRmStage) why+='Your claim reaches <b>'+esc(nm(e.rm))+'</b> first, and only he can send it back to you for correction. '+
+    'After his recommendation the claim is locked for him and moves to <b>'+esc(nm(e.rg))+'</b>, who fixes the final approved amount.';
+  else if(e.rg) why+='There is no separate Reporting Manager stage at your level, so the claim goes straight to <b>'+esc(nm(e.rg))+'</b> for final approval.';
+  else why+='There is no manager stage at your level, so HO Admin sanctions the amount and processes payment.';
+  
+  if(e.msub) why+=' <b>Note:</b> your recorded manager ('+esc(e.msub)+') is no longer in the employee master, so claims route to '+esc(nm(e.rm))+' until HR updates it.';
+  /* Say plainly when the route was patched, so nobody assumes the master is right. */
+  if(e.mgrMissing||e.rgMissing){
+    const gone=e.mgrMissing||e.rgMissing;
+    const to=e.mgrStandIn||e.rgStandIn;
+    why+=' <b style="color:var(--amber)">Check with HR:</b> your recorded approver ('+esc(gone)+
+      ') is not in the employee master. '+
+      (to?'This claim is routed to <b>'+esc(nm(to))+'</b> instead.'
+         :'This claim is routed to HO Admin instead.')+
+      ' Ask HR to set the correct ManagerCode.';
+  }
+  if(bh&&bh!==e.rm&&bh!==ME) why+=' <b>'+esc(nm(bh))+'</b> can see this claim as Branch Manager but takes no action.';
+  
+  $("why").innerHTML=why;
+}
+
+function clearItems(){ ITEMS=[]; IDSEQ=1; $("items").innerHTML=""; }
+function carry(field){ return ITEMS.length?(ITEMS[ITEMS.length-1][field]||""):""; }
+function addItem(seed){
+  const it=Object.assign({id:"L"+(IDSEQ++),date:$("claimDate").value||todayISO(),
+    ticket:carry("ticket"), uid:"", custName:carry("custName"),
+    segment:carry("segment")||"ATM", purpose:carry("purpose"),
+    cat:"Travel",mode:"Bike",jFrom:"",jFromPin:"",jTo:"",jToPin:"",km:"",rate:0,refKm:null,amt:0,desc:"",att:[]},seed||{});
+  ITEMS.push(it); renderItems();
+}
+function removeItem(id){ ITEMS=ITEMS.filter(i=>i.id!==id); if(!ITEMS.length) addItem(); else renderItems(); }
+function modeOptions(cat,sel){ return (HEADS[cat]||[]).map(m=>'<option'+(m===sel?" selected":"")+'>'+esc(m)+'</option>').join(""); }
+
+function renderItems(){
+  applyBikeRates();
+  $("items").innerHTML=ITEMS.map((it,i)=>{
+    const isTravel=it.cat==="Travel", isBike=isTravel&&it.mode==="Bike";
+    /* The journey fields appear on every head. They are mandatory on Travel and
+       optional on Hotel, Food and Misc, where they simply record where the spend happened. */
+    const jReq = '<span class="req">*</span>';
+    const jPh  = "City / site";
+    const rk=isTravel?refKm(it.jFromPin,it.jToPin):null;
+    it.refKm=rk;
+    return '<div class="item" data-id="'+it.id+'"><div class="item-h"><b>Line '+(i+1)+'</b>'+
+      '<span style="font-size:10px;color:var(--muted);font-weight:700">'+esc(it.cat)+' · '+esc(it.mode)+
+        (it.ticket?' · '+esc(it.ticket):"")+(it.uid?' · '+esc(it.uid):"")+
+        (it.custName?' · '+esc(it.custName):"")+'</span>'+
+      '<span class="sp">'+money(it.amt)+'</span>'+
+      '<button type="button" class="btn btn-no" onclick="removeItem(\''+it.id+'\')">Remove</button></div>'+
+      '<div class="item-b">'+approverNote(it)+'<div class="frow4">'+
+        fld("Ticket / Case No "+(needsTicket(it)?"<span class=\"req\">*</span>":"<span class=\"auto\">optional for "+esc(it.cat)+"</span>"),
+          "<input value=\""+esc(it.ticket||"")+"\" placeholder=\""+(needsTicket(it)?"PROSTARM26XXXXXXX":"not required")+"\" onchange=\"upd('"+it.id+"','ticket',this.value)\">",1)+
+        fld("UID <span class=\"auto\">optional</span>","<input value=\""+esc(it.uid||"")+"\" placeholder=\"Site UID / ATM ID\" onchange=\"upd('"+it.id+"','uid',this.value)\">",1)+
+        fld("Customer Name <span class=\"req\">*</span>","<input list=\"custList\" value=\""+esc(it.custName||"")+"\" placeholder=\"e.g. Hitachi Payment Services Pvt Ltd\" onchange=\"upd('"+it.id+"','custName',this.value)\">",1)+
+        fld("Customer Segment <span class=\"req\">*</span>","<select onchange=\"upd('"+it.id+"','segment',this.value)\">"+
+          SEGMENTS.map(x=>'<option'+(x===it.segment?" selected":"")+'>'+esc(x)+'</option>').join("")+"</select>",1)+
+      '</div>'+
+      '<div class="frow4" style="margin-top:8px">'+
+        fld("Purpose Of Travel <span class=\"req\">*</span>","<input value=\""+esc(it.purpose||"")+"\" placeholder=\"e.g. UPS breakdown attended at site\" onchange=\"upd('"+it.id+"','purpose',this.value)\">",1)+
+        fld("Expense Type","<select onchange=\"updCat('"+it.id+"',this.value)\">"+Object.keys(HEADS).map(h=>'<option'+(h===it.cat?" selected":"")+'>'+h+'</option>').join("")+"</select>",1)+
+        fld("Travel / Expense Mode","<select onchange=\"upd('"+it.id+"','mode',this.value)\">"+modeOptions(it.cat,it.mode)+"</select>",1)+
+        fld("Claimed Amount (₹)","<input class=\"amt\" type=\"number\" min=\"0\" step=\"1\" value=\""+(it.amt||"")+"\" "+(isBike?"readonly":"")+" onchange=\"upd('"+it.id+"','amt',this.value)\">",1)+
+      '</div>'+
+      (isTravel?'<div class="frow5" style="margin-top:8px">'+
+        fld("Journey From "+jReq,"<input value=\""+esc(it.jFrom)+"\" placeholder=\""+jPh+"\" onchange=\"upd('"+it.id+"','jFrom',this.value)\">",1)+
+        fld("From Pincode "+jReq,"<input value=\""+esc(it.jFromPin)+"\" maxlength=\"6\" inputmode=\"numeric\" placeholder=\"6 digits\" onchange=\"upd('"+it.id+"','jFromPin',this.value)\">",1)+
+        fld("Journey To "+jReq,"<input value=\""+esc(it.jTo)+"\" placeholder=\""+jPh+"\" onchange=\"upd('"+it.id+"','jTo',this.value)\">",1)+
+        fld("To Pincode "+jReq,"<input value=\""+esc(it.jToPin)+"\" maxlength=\"6\" inputmode=\"numeric\" placeholder=\"6 digits\" onchange=\"upd('"+it.id+"','jToPin',this.value)\">",1)+
+        fld("Reference Distance (KM) <span class=\"auto\">auto</span>","<input class=\"ref\" readonly value=\""+(rk==null?"—":rk)+"\" title=\"Indicative road distance between the two pincodes\">",1)+
+      '</div>':'')+
+      (isTravel?'<div class="frow4" style="margin-top:8px">'+
+        fld("KM Travel <span class=\"req\">*</span>","<input class=\"kmin\" type=\"number\" min=\"0\" step=\"1\" value=\""+(it.km===""||it.km===0?"":it.km)+"\" placeholder=\"e.g. 130\" onchange=\"upd('"+it.id+"','km',this.value)\">",1)+
+        fld("Recorded For The Day <span class=\"auto\">auto</span>","<input readonly value=\""+byDayTravelKm()+" KM on "+dd($("claimDate").value)+"\">",1)+
+        (isBike?"":fld("Rate Basis","<input readonly value=\"Actual bill — KM recorded only\">",1)+
+                   fld("Claimed Amount Source","<input readonly value=\"Entered above from the bill\">",1))+
+      '</div>'+refNote(it,rk):'')+
+      (isBike?'<div class="bikebox"><div class="note">'+esc(it.mode)+' claim — the amount is calculated from KM Travel above, so you cannot type it.</div><div class="frow4">'+
+        fld("KM Travel Used","<input readonly value=\""+(it.km||0)+"\">",1)+
+        fld("Rate Applied (₹/KM)","<input readonly value=\""+(it.rate||0)+"\">",1)+
+        fld("Claim Amount (₹)","<input readonly value=\""+(it.amt||0)+"\">",1)+
+        fld("Slab Applied","<input readonly value=\""+((byDayKm()>BIKE_SLAB.limit)?"Above 200 KM that day":"Up to 200 KM that day")+"\">",1)+
+      '</div></div>':'')+
+      '<div class="frow4" style="margin-top:8px">'+
+        fld("Description / Remarks","<input value=\""+esc(it.desc)+"\" placeholder=\"e.g. Hotel bill, 2 nights, Hazaribagh\" onchange=\"upd('"+it.id+"','desc',this.value)\">",2)+
+        fld("Supporting Bill / Receipt "+(needsBill(it)?"<span class=\"req\">*</span>":"<span class=\"auto\">not required</span>"),
+          "<div class=\"drop\" onclick=\"document.getElementById('file-"+it.id+"').click()\"><b>Attach bill</b>photo (auto-compressed) or PDF up to "+Math.round(MAXFILE/1024)+" KB</div><input type=\"file\" id=\"file-"+it.id+"\" class=\"hide\" accept=\"image/*,.pdf\" multiple onchange=\"pickFiles('"+it.id+"',this)\">",2)+
+      '</div>'+
+      ((it.att&&it.att.length)?'<div class="att">'+it.att.map((a,ai)=>'<span class="chip"><a onclick="openAtt(\''+it.id+'\','+ai+')">'+esc(a.name)+'</a><span onclick="dropAtt(\''+it.id+'\','+ai+')">×</span></span>').join("")+'</div>':'')+
+      '</div></div>';
+  }).join("");
+  totals();
+}
+
+function refNote(it,rk){
+  const msg=refStatus(it);
+  if(msg) return '<div class="refnote">'+esc(msg)+'</div>';
+  const base='Straight-line distance between '+esc(it.jFromPin)+' and '+esc(it.jToPin)+' &times; '+ROAD_FACTOR+
+    ' road factor. Reference only &mdash; approvers see this figure beside the claim.';
+  if(it.mode==="Bike"&&Number(it.km)>0&&rk>0){
+    const v=Math.round((Number(it.km)-rk)/rk*100);
+    if(v>25) return '<div class="refnote warn"><b>KM driven is '+v+'% above the reference distance.</b> Explain the detour in the remarks or your Reporting Manager will query it. '+base+'</div>';
+    return '<div class="refnote"><b>KM driven is '+(v>=0?"+":"")+v+'% against the reference distance.</b> '+base+'</div>';
+  }
+  return '<div class="refnote">'+base+'</div>';
+}
+/* While an engineer revises a rejected claim, each line carries the approver's
+   verdict so they can see exactly what to change and enter a revised amount. */
+function approverNote(it){
+  const d=lineDec(it);
+  if(!d) return "";
+  const orig = it.prevAmt!=null ? Number(it.prevAmt) : Number(it.amt)||0;
+  if(d.dec==="Rejected"){
+    return '<div class="cond" style="background:var(--red-lt);border-left-color:var(--red);color:var(--red)">'+
+      '<b>'+esc(d.stage)+' rejected this line'+(orig?' of '+money(orig):'')+'.</b> '+esc(d.rem||"")+
+      ' — enter the revised amount below, or remove the line.</div>';
+  }
+  if(d.amt!=null && Number(d.amt) < orig){
+    return '<div class="cond"><b>'+esc(d.stage)+' allowed only '+money(d.amt)+' of '+money(orig)+'.</b> '+
+      esc(d.rem||"")+' — put the revised amount below.</div>';
+  }
+  return "";
+}
+function fld(l,inner,span){ return '<div class="f'+(span===2?" wide":"")+'"><label>'+l+'</label>'+inner+'</div>'; }
+let RQ=null;
+function queueRender(){ if(RQ) clearTimeout(RQ); RQ=setTimeout(()=>{RQ=null;renderItems();},0); }
+function upd(id,k,v){
+  const it=ITEMS.find(x=>x.id===id); if(!it) return;
+  if(k==="amt"||k==="km") v=v===""?"":Math.max(0,Number(v)||0);
+  
+  const wasBike=isBikeLine(it);
+  const wasBill=needsBill(it); // <-- ADD THIS
+
+  it[k]=v;
+  if(wasBike!==isBikeLine(it)){ it.amt=""; it.km=""; it.rate=0; }
+  if(k==="mode"||k==="km"||k==="jFromPin"||k==="jToPin"){ queueRender(); return; }
+  if(k==="amt"){
+    // <-- ADD THIS CHECK -->
+    /* Crossing the Food threshold flips whether a bill is required, so the line must redraw. */
+    if(it.cat==="Food" && wasBill!==needsBill(it)){ queueRender(); return; }
+    
+    const h=document.querySelector('.item[data-id="'+id+'"] .item-h .sp');
+    if(h) h.textContent=money(it.amt);
+  }
+  totals();
+}
+function updCat(id,v){
+  const it=ITEMS.find(x=>x.id===id); if(!it) return;
+  /* Journey details apply to Travel only. Moving a line off Travel clears them so a
+     hidden From/To can never be submitted or reported against the claim. */
+  if(v!=="Travel"){ it.jFrom=""; it.jFromPin=""; it.jTo=""; it.jToPin=""; it.refKm=null; }
+  const wasBike=isBikeLine(it);
+  it.cat=v; it.mode=HEADS[v][0];
+  if(wasBike!==isBikeLine(it)){ it.amt=""; it.km=""; it.rate=0; }
+  queueRender();
+}
+const isBikeLine=it=>it.cat==="Travel"&&isSlabMode(it.mode);
+function byDayKm(){
+  return ITEMS.reduce((s,it)=>s+(isBikeLine(it)?(Number(it.km)||0):0),0);
+}
+function byDayTravelKm(){
+  return ITEMS.reduce((s,it)=>s+(it.cat==="Travel"?(Number(it.km)||0):0),0);
+}
+function applyBikeRates(){
+  ITEMS.forEach(it=>{ if(it.cat!=="Travel"){ it.km=""; } if(!isBikeLine(it)){ it.rate=0; } });
+  ITEMS.forEach(it=>{
+    if(isBikeLine(it)){
+      const dayKm=byDayKm();
+      it.rate = dayKm>BIKE_SLAB.limit ? BIKE_SLAB.high : BIKE_SLAB.low;
+      it.amt = Math.round((Number(it.km)||0)*it.rate*100)/100;
+    }
+  });
+}
+function totals(){
+  syncItemDates();
+  const amt=ITEMS.reduce((s,i)=>s+(Number(i.amt)||0),0);
+  const km=ITEMS.reduce((s,i)=>s+(i.cat==="Travel"?(Number(i.km)||0):0),0);
+  const at=ITEMS.reduce((s,i)=>s+((i.att&&i.att.length)||0),0);
+  $("tLines").textContent=ITEMS.length; $("tKm").textContent=km;
+  $("tAtt").textContent=at; $("tAmt").textContent=money(amt);
+  /* On a revision, show the resubmitted total against what was claimed last time. */
+  const was=ITEMS.reduce((s,i)=>s+(i.prevAmt!=null?Number(i.prevAmt):(Number(i.amt)||0)),0);
+  const revising=ITEMS.some(i=>i.prevAmt!=null||lineDec(i));
+  $("tAmtLbl").textContent = revising ? "Revised Total" : "Total Claimed";
+  $("tAmtWas").textContent = (revising && Math.round(was*100)!==Math.round(amt*100))
+    ? "was "+money(was) : "";
+}
+/* ================= LOCAL FILE HANDLING (PHASE 1) ================= */
+/* Short file name for the raw payload: at most 12 characters of the original name plus a 3-4 letter
+   extension (".jpg" for every compressed photo, since they are all re-encoded as JPEG). */
+const ATT_NAME_BASE = 12;
+function shortAttName(name, type){
+  name = String(name || "bill");
+  const dot = name.lastIndexOf(".");
+  const base = (dot > 0 ? name.slice(0, dot) : name).replace(/[^\w \-]/g, "").replace(/\s+/g, " ").trim().slice(0, ATT_NAME_BASE).trim() || "bill";
+  const orig = dot > 0 ? name.slice(dot + 1).toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 4) : "";
+  const ext = /^image\//.test(type || "") ? "jpg" : (/pdf/.test(type || "") ? "pdf" : (orig || "bin"));
+  return base + "." + ext;
+}
+
+/* Modified pickFiles: base64 ki jagah file ko flow me bhejkar URL link save karega */
+async function pickFiles(id, input){
+  const it = ITEMS.find(x => x.id === id); 
+  if(!it) return;
+  const files = [].slice.call(input.files); 
+  input.value = "";
+  
+  for (let f of files) {
+    if(f.type.indexOf("image") === 0) {
+      compress(f, async (d) => {
+        if(!d){ alert(f.name+" could not be read."); return; }
+        await uploadToLibraryAndSave(f.name, "image/jpeg", d, it);
+      });
+    }
+    else if(f.size > MAXFILE) {
+      alert(f.name+" is too large. Keep non-images under "+Math.round(MAXFILE/1024)+" KB.");
+    }
+    else { 
+      const r = new FileReader(); 
+      r.onload = async () => { 
+        await uploadToLibraryAndSave(f.name, f.type, r.result, it);
+      }; 
+      r.readAsDataURL(f); 
+    }
+  }
+}
+
+/* Naya function jo image ko backend bhejega */
+async function uploadToLibraryAndSave(originalName, fileType, dataUrl, item) {
+  toast("Uploading " + originalName + "...", true);
+  try {
+    // dataUrl ke aage ka 'data:image/jpeg;base64,' hatana zaroori hai taaki flow samajh sake
+    const cleanBase64 = dataUrl.split(',')[1]; 
+    const shortName = Date.now() + "_" + shortAttName(originalName, fileType);
+    
+    // Naye 'upload' flow branch ko call karein
+    const res = await api("upload", { fileName: shortName, fileData: cleanBase64 });
+    
+    // Flow se aane wale URL ko item me save karein (data ki jagah url)
+    item.att.push({ name: originalName, type: fileType, url: res.url });
+    renderItems();
+    toast("File uploaded successfully.", true);
+  } catch (err) {
+    alert("Upload failed: " + err.message);
+  }
+}
+
+/* Shrinks a photo until its data URL is at or under IMG_TARGET_BYTES: first by lowering JPEG
+   quality, then by scaling the picture down (never below ~480px on the long edge). */
+function compress(file,cb){
+  const r=new FileReader();
+  r.onload=()=>{
+    const img=new Image();
+    img.onload=()=>{
+      const limitChars=Math.ceil(IMG_TARGET_BYTES*4/3);     /* base64 is 4/3 the size of the bytes */
+      let side=Math.min(1,IMG_MAX_SIDE/Math.max(img.width,img.height)), out="";
+      for(let pass=0;pass<6;pass++){
+        const cv=document.createElement("canvas");
+        cv.width=Math.max(1,Math.round(img.width*side)); cv.height=Math.max(1,Math.round(img.height*side));
+        const cx=cv.getContext("2d");
+        cx.fillStyle="#fff"; cx.fillRect(0,0,cv.width,cv.height);   /* PNG transparency becomes white, not black */
+        cx.drawImage(img,0,0,cv.width,cv.height);
+        for(let q=0.65;q>=0.39;q-=0.1){
+          out=cv.toDataURL("image/jpeg",q);
+          if(out.length<=limitChars){ cb(out); return; }
+        }
+        if(Math.max(cv.width,cv.height)*0.8<480) break;
+        side*=0.8;
+      }
+      cb(out);                                               /* smallest we could reach */
+    };
+    img.onerror=()=>cb(null);
+    img.src=r.result;
+  };
+  r.onerror=()=>cb(null);
+  r.readAsDataURL(file);
+}
+function openAtt(id,ai){ const it=ITEMS.find(x=>x.id===id); if(it) showData(it.att[ai]); }
+function dropAtt(id,ai){ const it=ITEMS.find(x=>x.id===id); if(it){ it.att.splice(ai,1); renderItems(); } }
+function showData(a){
+  /* Purani claims mein a.data hota tha, naye system mein a.url hoga */
+  if (!a.data && !a.url) {
+    alert("This attachment has no image stored.");
+    return;
+  }
+  
+  let source = "";
+  if (a.url) {
+    // Agar relative URL hai, toh site ka address jodein
+    let fullPath = a.url;
+    if (!fullPath.startsWith("http")) {
+      // Agar flow ne sirf /TE_Receipts/... return kiya hai
+      fullPath = "https://prostarminfosys.sharepoint.com/sites/engineer-conveyance" + a.url;
+    }
+    // Space aur special characters ko fix karein
+    source = encodeURI(fullPath);
+  } else {
+    // Purani files (Base64) ke liye
+    source = a.data;
+  }
+
+  const w = window.open("", "_blank");
+  if(!w){ alert("Allow pop-ups to view attachments."); return; }
+  w.document.write('<title>'+esc(a.name)+'</title><body style="margin:0;background:#123047;display:grid;place-items:center;min-height:100vh">'+
+    (a.type.indexOf("image")===0?'<img src="'+source+'" style="max-width:100%;max-height:100vh">'
+      :'<iframe src="'+source+'" style="border:0;width:100vw;height:100vh"></iframe>')+'</body>');
+  w.document.close();
+}
+async function showClaimAtt(cid,li,ai){
+  let r=MEM.find(x=>x.id===cid); if(!r) return;
+  if(billsMissing(r)){
+    toast("Loading bill…",true);
+    try{ r=await loadOne(cid)||r; }catch(e){ alert("Could not load the bill: "+e.message); return; }
+  }
+  showData(r.items[li].att[ai]);
+}
+
+function toast(t,ok){ const el=$("toast"); el.className="msg "+(ok?"ok":"no")+" on"; el.textContent=t; window.scrollTo(0,0);
+  setTimeout(()=>{el.className="msg";},20000); }
+function validate(){
+  const bad=[];
+  const mob=$("mobile").value.trim();
+  if(mob&&!/^[6-9][0-9]{9}$/.test(mob)) bad.push("a valid 10-digit mobile number, or leave it blank");
+  const d=$("claimDate").value;
+  if(!d) bad.push("the claim date");
+  else if(d>todayISO()) bad.push("a claim date that is not in the future");
+  syncItemDates(); applyBikeRates();
+  if(!ITEMS.length) bad.push("at least one expense line");
+  ITEMS.forEach((it,i)=>{
+    const n="line "+(i+1);
+    if(needsTicket(it)&&!(it.ticket||"").trim()) bad.push("the ticket / case number on "+n);
+    if(!(it.custName||"").trim()) bad.push("the customer name on "+n);
+    if(!(it.segment||"").trim()) bad.push("the customer segment on "+n);
+    if(!(it.purpose||"").trim()) bad.push("the purpose of travel on "+n);
+    if(it.cat==="Travel"&&!(Number(it.km)>0)) bad.push("the KM travelled on "+n);
+    if(!isBikeLine(it)&&!(Number(it.amt)>0)) bad.push("a claimed amount on "+n);
+    if(it.cat==="Travel"){
+      if(!it.jFrom.trim()) bad.push("the journey from location on "+n);
+      if(!it.jTo.trim()) bad.push("the journey to location on "+n);
+      if(!pinOk(it.jFromPin)) bad.push("a valid 6-digit from pincode on "+n);
+      if(!pinOk(it.jToPin)) bad.push("a valid 6-digit to pincode on "+n);
+    }
+    if(!(it.att&&it.att.length)&&needsBill(it)) bad.push("a supporting bill on "+n+
+  (it.cat==="Food"?" — Food over ₹"+FOOD_BILL_FREE+" needs one":""));
+  });
+  return bad;
+}
+function listSummary(items,field){
+  const seen=[];
+  (items||[]).forEach(it=>{ const v=(it[field]||"").trim(); if(v&&seen.indexOf(v)<0) seen.push(v); });
+  return seen.join(", ");
+}
+
+function collect(status){
+  applyBikeRates();
+  const e=EMP[ME], claimed=ITEMS.reduce((s,i)=>s+(Number(i.amt)||0),0);
+  return {
+    id:"TX"+Date.now()+Math.floor(Math.random()*999), no:CLAIMNO, voucher:VOUCHNO,
+    by:ME, name:e.n, desig:e.d, branch:e.b, zone:e.z, mobile:$("mobile").value.trim(),
+    rmCode:e.rm||null, rgCode:e.rg||null, level:e.g, bhCode:BRANCH_HEAD[e.b]||null,
+    claimDate:dkey($("claimDate").value),
+    perFrom:$("claimDate").value, perTo:$("claimDate").value,
+    segment:listSummary(ITEMS,"segment"), custName:listSummary(ITEMS,"custName"),
+    ticket:listSummary(ITEMS,"ticket"), uid:listSummary(ITEMS,"uid"),
+    purpose:listSummary(ITEMS,"purpose"),
+    items:JSON.parse(JSON.stringify(ITEMS)),
+    kmTotal:ITEMS.reduce((s,i)=>s+(i.cat==="Travel"?(Number(i.km)||0):0),0),
+    claimed:claimed, recommended:null, approved:null, payable:null,
+    status:status, trail:[], revOf:REVOF, rev:1,
+    createdAt:new Date().toISOString(), submittedAt:null,
+    pay:{status:"Pending",ref:"",date:"",remark:"",by:null}
+  };
+}
+async function onSubmitClaim(){
+  const bad=validate();
+  if(bad.length){ toast("Add "+bad.slice(0,4).join(", ")+(bad.length>4?" and "+(bad.length-4)+" more.":"."),false); return; }
+  const list=await loadAll();
+  const clash=claimForDate(list,$("claimDate").value,EDITING);
+  if(clash){ toast(CLASH_MSG,false); checkDateClash(); return; }
+
+  const e=EMP[ME], prev=EDITING?list.find(x=>x.id===EDITING):null;
+  /* A rejected claim is corrected in place and sent back to the first approver.
+     It keeps its number and its whole history, so nothing is filed twice. */
+  if(prev && isRejected(prev.status)){
+    const hasRm = e.rm && e.rm !== e.rg;
+    const back = hasRm ? ST.SUB : (e.rg ? ST.REC : ST.HOA);
+    const to   = hasRm ? nm(e.rm) : (e.rg ? nm(e.rg) : "HO Admin");
+    const r=collect(back);
+    r.submittedAt=new Date().toISOString();
+    r.rev=(prev.rev||1)+1;
+    r.rejectedBy=null; r.rejectedStage=null;
+    r.recommended=null; r.approved=null; r.payable=null;
+    /* Record what changed, then clear last round's verdicts so the claim is judged fresh. */
+    const changed=[];
+    (prev.items||[]).forEach(old=>{
+      if(!(r.items||[]).some(x=>x.id===old.id)) changed.push("removed "+old.cat+" line of "+money(old.amt));
+    });
+    (r.items||[]).forEach((it,i)=>{
+      const d=lineDec(it);
+      const before = it.prevAmt!=null ? Number(it.prevAmt) : null;
+      /* match by line id, not position: a removed line would shift the indexes */
+      const old = (prev.items||[]).find(x=>x.id===it.id);
+      const wasClaimed = before!=null ? before : (old ? Number(old.amt) : null);
+      if(wasClaimed!=null && Number(it.amt)!==wasClaimed){
+        changed.push("line "+(i+1)+" ("+esc(it.cat)+") "+money(wasClaimed)+" → "+money(it.amt));
+      }
+      it.prevAmt = wasClaimed!=null ? wasClaimed : (it.prevAmt!=null ? it.prevAmt : Number(it.amt)||0);
+      delete it.rmDec; delete it.rmAmt; delete it.rmRem;
+      delete it.rgDec; delete it.rgAmt; delete it.rgRem;
+    });
+    r.trail.push({code:ME,act:"Resubmitted by engineer",
+      remark:(REVISION_REMARK||"Claim revised after rejection")+" — revision "+r.rev+
+             ", "+r.items.length+" line(s), revised total "+money(r.claimed)+
+             (changed.length?" ("+changed.join("; ")+")":" (no line amount changed)"),
+      ts:r.submittedAt,amt:r.claimed});
+    REVISION_REMARK="";
+    await persist(r,"Claim "+prev.no+" resubmitted to "+to+" at "+money(r.claimed)+".");
+    return;
+  }
+  if(prev&&prev.status!==ST.DRAFT){
+    const r=collect(prev.status);
+    r.submittedAt=prev.submittedAt;
+    r.trail.push({code:ME,act:"Edited by engineer",
+      remark:"Claim revised before manager action — now "+r.items.length+" line(s)",
+      ts:new Date().toISOString(),amt:r.claimed});
+    const staysWith = r.status === ST.SUB ? nm(r.rmCode) : (r.status === ST.REC ? nm(r.rgCode) : "HO Admin");
+    await persist(r,"Claim "+prev.no+" updated. It stays with "+staysWith+".");
+    return;
+  }
+  
+  // NEW BYPASS LOGIC: Skips the "To Check" stage if RM and RG are the same person
+  const hasRmStage = e.rm && e.rm !== e.rg;
+  const first = hasRmStage ? ST.SUB : (e.rg ? ST.REC : ST.HOA);
+  const to = hasRmStage ? nm(e.rm) : (e.rg ? nm(e.rg) : "HO Admin");
+  
+  const r=collect(first);
+  r.submittedAt=new Date().toISOString();
+  r.trail.push({code:ME,act:"Submitted",remark:"Routed to "+to+" as per approval level: "+e.g,ts:r.submittedAt,amt:r.claimed});
+  await persist(r,"Claim "+r.no+" for "+dd(r.claimDate)+" submitted to "+to+
+    ". You can still add lines until "+to.split(" ")[0]+" acts on it.");
+}
+$("submitBtn").addEventListener("click",()=>{ singleFlight(onSubmitClaim,"submitBtn")(); });
+
+async function persist(r, okMsg) {
+  const prev = EDITING ? MEM.find(x => x.id === EDITING) : null;
+  /* collect() mints a fresh id every time it runs, so an edit must be pinned back
+     to the identity of the claim being edited, or the save is filed as a second claim. */
+  if (prev) {
+    r.id = prev.id;
+    r.no = prev.no || r.no;
+    r.voucher = prev.voucher || r.voucher;
+    r.createdAt = prev.createdAt || r.createdAt;
+    r.submittedAt = r.submittedAt || prev.submittedAt;
+  }
+  try {
+    await saveClaimToCloud(r);          /* one "save" call: the flow adds or updates by claim id */
+    EDITING = null; REVOF = null; toast(okMsg, true); clearForm(); await refresh();
+  } catch (err) { alert("Error saving: " + err.message); }
+}
+
+/* --- HELPER TO SYNC MANAGER ACTIONS TO CLOUD --- */
+async function syncToCloud(r) {
+  await saveClaimToCloud(r);
+}
+
+function clearForm(){
+  $("mobile").value=""; EDITING=null; REVOF=null;
+  $("claimDate").value=todayISO();
+  $("dateWarn").className="msg";
+  clearItems(); stampHeader(); addItem(); checkDateClash();
+}
+
+/* Opens the rejected claim for correction. The engineer's reply is carried into
+   the trail when they resubmit, so the approver can see what changed and why. */
+function startResubmit(sc,id){
+  const el=$("rr-"+sc+"-"+id);
+  const reply=el?el.value.trim():"";
+  if(!reply){ alert("Write a short reply saying what you changed. Your manager needs it to review the claim again."); return; }
+  REVISION_REMARK=reply;
+  editClaim(id);
+}
+/* Applies the revised figures typed on the claim card and sends it straight back. */
+async function doResubmit(sc,id){
+  const k=sc+"-"+id;
+  const el=$("rr-"+k);
+  const reply=el?el.value.trim():"";
+  if(!reply){ alert("Write a short reply saying what you changed. Your manager needs it to review the claim again."); return; }
+  const [list,r]=await grab(id,x=>canResubmit(x)); if(!r) return;
+  const f=revisionFigures(k,r);
+  if(!f.kept){ alert("Every line is dropped. Withdraw the claim instead, or keep at least one line."); return; }
+  for(const L of f.lines){
+    if(L.dropped) continue;
+    if(!(L.amt>0)){
+      alert("Line "+(L.i+1)+" has no value. Enter a revised "+(L.slab?"KM":"amount")+" or tick Drop line."); return;
+    }
+  }
+  const changed=[];
+  const kept=[];
+  f.lines.forEach(L=>{
+    const it=r.items[L.i];
+    const was = it.prevAmt!=null?Number(it.prevAmt):(Number(it.amt)||0);
+    if(L.dropped){ changed.push("dropped "+it.cat+" line of "+money(was)); return; }
+    if(L.slab){ it.km=L.km; it.rate=L.rate; }
+    if(Math.round(L.amt*100)!==Math.round(was*100))
+      changed.push("line "+(L.i+1)+" ("+it.cat+") "+money(was)+" → "+money(L.amt));
+    it.amt=L.amt; it.prevAmt=was;
+    delete it.rmDec; delete it.rmAmt; delete it.rmRem;
+    delete it.rgDec; delete it.rgAmt; delete it.rgRem;
+    kept.push(it);
+  });
+  r.items=kept;
+  r.claimed=f.total;
+  r.kmTotal=kept.reduce((s,i)=>s+(i.cat==="Travel"?(Number(i.km)||0):0),0);
+  const e=EMP[r.by]||EMP[ME]||{};
+  const hasRm = e.rm && e.rm!==e.rg;
+  r.status = hasRm?ST.SUB:(e.rg?ST.REC:ST.HOA);
+  const to  = hasRm?nm(e.rm):(e.rg?nm(e.rg):"HO Admin");
+  r.rev=(r.rev||1)+1;
+  r.rejectedBy=null; r.rejectedStage=null;
+  r.recommended=null; r.approved=null; r.payable=null;
+  r.submittedAt=new Date().toISOString();
+  r.trail.push({code:ME,act:"Resubmitted by engineer",
+    remark:reply+" — revision "+r.rev+", "+r.items.length+" line(s), revised total "+money(r.claimed)+
+           (changed.length?" ("+changed.join("; ")+")":" (no amount changed)"),
+    ts:r.submittedAt,amt:r.claimed});
+  REVISION_REMARK="";
+  try { await syncToCloud(r); await refresh(); toast("Claim "+r.no+" resubmitted to "+to+" at "+money(r.claimed)+".",true); }
+  catch(err){ alert("Failed to resubmit: "+err.message); }
+}
+function loadIntoForm(r){
+  $("mobile").value=r.mobile||""; $("claimDate").value=dkey(r.claimDate||r.perFrom)||"";
+  ITEMS=JSON.parse(JSON.stringify(r.items)); IDSEQ=ITEMS.length+1; renderItems();
+}
+async function editClaim(id){
+  let r=MEM.find(x=>x.id===id); if(!r) return;
+  if(billsMissing(r)){        /* editing re-saves the whole claim, so its bills must be in memory first */
+    try{ r=await loadOne(id)||r; }catch(e){ alert("Could not open the claim: "+e.message); return; }
+  }
+  const resubmitting = canResubmit(r);
+  if(!canEditOwn(r) && !resubmitting){
+    toast("That claim has already been acted on by your manager, so it can no longer be edited.",false); return; }
+  loadIntoForm(r); EDITING=r.id; REVOF=r.revOf||null;
+  /* a record without a stored voucher number must not print "undefined" */
+  CLAIMNO=r.no||CLAIMNO; VOUCHNO=r.voucher||VOUCHNO||"";
+  $("claimNoTop").textContent=CLAIMNO; $("voucher").value=VOUCHNO;
+  $("dateWarn").className="msg";
+  $("submitBtn").textContent = resubmitting ? "Resubmit Claim"
+                             : (r.status===ST.DRAFT ? "Submit Claim" : "Save Changes");
+  gotoTab("new");
+  toast(resubmitting
+    ? "Rejected claim "+r.no+" is open. Correct the amounts or lines, then resubmit."
+    : "Claim "+r.no+" for "+dd(r.claimDate||r.perFrom)+" is open. Add a line, change what you need, then save.",
+    true);
+}
+function gotoTab(v){
+  document.querySelectorAll(".navtab").forEach(x=>x.classList.toggle("on",x.dataset.v===v));
+  document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
+  $("v-"+v).classList.add("on"); window.scrollTo(0,0);
+}
+
+function statusTag(r){
+  const m={};
+  m[ST.DRAFT]='<span class="st d">Draft</span>';
+  m[ST.SUB]='<span class="st p">With '+esc(nm(r.rmCode).split(" ")[0])+' · check</span>';
+  m[ST.HOA]='<span class="st p">With HO Admin · approval</span>';
+  m[ST.REJ]='<span class="st x">Rejected by '+esc(r.rejectedStage||"Reporting Manager")+' — revise</span>';
+  m[REJ_LEGACY]=m[ST.REJ];
+  m[ST.REC]='<span class="st r">With '+esc(nm(r.rgCode).split(" ")[0])+' · approval</span>';
+  m[ST.APP]='<span class="st a">Approved — with HO Admin</span>';
+  m[ST.PAID]='<span class="st a">Paid</span>';
+  m[ST.HOLD]='<span class="st p">Payment on hold</span>';
+  m[ST.CLOSED]='<span class="st a">Closed</span>';
+  return m[r.status]||'<span class="st d">'+esc(r.status)+'</span>';
+}
+/* Which stage, if any, the signed-in user is deciding on right now. */
+function actingStage(r){
+  if(r.status===ST.SUB && r.rmCode===ME) return "rm";
+  if(r.status===ST.REC && r.rgCode===ME) return "rg";
+  return null;
+}
+/* The decision a line already carries, latest stage first. */
+function lineDec(it){
+  if(it.rgDec) return {stage:"Regional Manager",dec:it.rgDec,rem:it.rgRem||"",amt:it.rgAmt};
+  if(it.rmDec) return {stage:"Reporting Manager",dec:it.rmDec,rem:it.rmRem||"",amt:it.rmAmt};
+  return null;
+}
+/* Amount a line is currently worth: the latest approved figure, else the claimed one. */
+function lineValue(it){
+  const d=lineDec(it);
+  if(!d) return Number(it.amt)||0;
+  if(d.dec==="Rejected") return 0;
+  return d.amt!=null?Number(d.amt):(Number(it.amt)||0);
+}
+
+function itemTable(r,acting,k){
+  const dec = (acting==="rm"||acting==="rg");
+  const rev = (acting==="rev");
+  return '<table class="itab"><tr><th>#</th><th>Ticket / Case No</th><th>UID</th><th>Customer / Segment</th><th>Purpose</th><th>Type</th><th>Mode</th><th>From → To</th>'+
+    '<th>Ref KM</th><th>KM</th><th>Rate</th><th>Description</th><th>Claimed</th>'+
+    (dec?'<th>Decision</th><th>Approved ₹</th><th>Line remark</th>'
+        :(rev?'<th>Approver decision</th><th>Revised ₹ / KM</th><th>Drop line</th>'
+             :'<th>Approver decision</th>'))+
+    '<th>Bills</th></tr>'+
+    r.items.map((it,i)=>{
+      const rk=(it.cat==="Travel")?(refKm(it.jFromPin,it.jToPin)):null;
+      let vf="";
+      if(it.mode==="Bike"&&Number(it.km)>0&&rk>0){
+        const v=Math.round((Number(it.km)-rk)/rk*100);
+        if(v>25) vf='<span class="vflag">+'+v+'%</span>';
+      }
+      const prev=lineDec(it);
+      let decCell;
+      if(dec){
+        /* the previous stage's figure is the starting point for this one */
+        const start = prev && prev.dec!=="Rejected" && prev.amt!=null ? prev.amt : (Number(it.amt)||0);
+        const rejected = prev && prev.dec==="Rejected";
+        decCell =
+          '<td><select id="ld-'+k+'-'+i+'" onchange="recalcLines(\''+k+'\','+r.items.length+')">'+
+            '<option value="Accepted"'+(rejected?"":" selected")+'>Accept</option>'+
+            '<option value="Rejected"'+(rejected?" selected":"")+'>Reject</option>'+
+          '</select></td>'+
+          '<td><input class="n" style="width:88px" type="number" min="0" id="la-'+k+'-'+i+'" value="'+start+
+            '" onchange="recalcLines(\''+k+'\','+r.items.length+')"></td>'+
+          '<td><input id="lr-'+k+'-'+i+'" style="width:150px" placeholder="required to reject" value="'+esc(prev?prev.rem:"")+'"></td>';
+      } else if(rev){
+        const slab = it.cat==="Travel" && isSlabMode(it.mode);
+        decCell = '<td>'+(prev
+          ? (prev.dec==="Rejected"
+              ? '<span style="color:var(--red);font-weight:800">Rejected</span>'
+              : '<span style="color:var(--green);font-weight:800">Accepted '+money(prev.amt!=null?prev.amt:it.amt)+'</span>')
+            +'<br><span style="font-size:9px;color:var(--muted)">'+esc(prev.stage)+(prev.rem?": "+esc(prev.rem):"")+'</span>'
+          : '—')+'</td>'+
+          '<td><input class="n" style="width:92px" type="number" min="0" id="rv-'+k+'-'+i+'" value="'+
+            (slab?(Number(it.km)||0):(Number(it.amt)||0))+'" onchange="recalcRevision(\''+k+'\',\''+r.id+'\')">'+
+            (slab?'<br><span style="font-size:9px;color:var(--violet)">KM · ₹'+(it.rate||BIKE_SLAB.low)+'/KM</span>'
+                 :'<br><span style="font-size:9px;color:var(--muted)">amount</span>')+'</td>'+
+          '<td style="text-align:center"><input type="checkbox" id="rx-'+k+'-'+i+
+            '" onchange="recalcRevision(\''+k+'\',\''+r.id+'\')" style="width:15px;height:15px;accent-color:var(--red)"></td>';
+      } else {
+        decCell = '<td>'+(prev
+          ? (prev.dec==="Rejected"
+              ? '<span style="color:var(--red);font-weight:800">Rejected</span>'
+              : '<span style="color:var(--green);font-weight:800">Accepted '+money(prev.amt!=null?prev.amt:it.amt)+'</span>')
+            +'<br><span style="font-size:9px;color:var(--muted)">'+esc(prev.stage)+(prev.rem?": "+esc(prev.rem):"")+'</span>'
+          : '—')+'</td>';
+      }
+      const strike = (prev&&prev.dec==="Rejected") ? ' style="background:var(--red-lt)"' : '';
+      return '<tr'+strike+'><td>'+(i+1)+'</td><td>'+esc(it.ticket||"—")+'</td><td>'+esc(it.uid||"—")+'</td>'+
+      '<td>'+esc(it.custName||"—")+(it.segment?'<br><span style="color:var(--muted)">'+esc(it.segment)+'</span>':"")+'</td>'+
+      '<td>'+esc(it.purpose||"—")+'</td>'+
+      '<td>'+esc(it.cat)+'</td><td>'+esc(it.mode)+'</td>'+
+      '<td>'+(it.jFrom?esc(it.jFrom)+(it.jFromPin?" ("+esc(it.jFromPin)+")":"")+" → "+esc(it.jTo)+(it.jToPin?" ("+esc(it.jToPin)+")":""):"—")+'</td>'+
+      '<td class="n">'+(rk==null?"—":rk)+'</td>'+
+      '<td class="n">'+(it.km||"—")+vf+'</td><td class="n">'+(it.rate?"₹"+it.rate:"—")+'</td><td>'+esc(it.desc||"—")+'</td>'+
+      '<td class="n">'+money(it.amt)+'</td>'+decCell+
+      '<td>'+((it.att&&it.att.length)?it.att.map((a,ai)=>'<a style="color:var(--blue);cursor:pointer" onclick="showClaimAtt(\''+r.id+'\','+i+','+ai+')">'+esc(a.name.slice(0,14))+'</a>').join("<br>"):"—")+'</td></tr>';
+    }).join("")+
+    '<tr><td colspan="12" style="text-align:right;font-weight:800">Total Claimed</td><td class="n">'+money(r.claimed)+'</td>'+
+      (dec?'<td colspan="3"></td>':(rev?'<td colspan="3" class="n" id="rvtot-'+k+'"></td>':'<td></td>'))+'<td></td></tr></table>'+
+    '<div class="refnote">Ref KM is the indicative road distance between the two pincodes (straight line &times; '+ROAD_FACTOR+
+    '). It is a cross-check for approvers, not a routed distance, and it does not change the claimed amount.'+
+    (rev?' <b>Enter the revised figure against each line, right here.</b> Bike lines take revised KM and the slab recalculates the amount; every other line takes the revised amount. Tick <b>Drop line</b> to withdraw a line completely.':'')+
+    (dec?' <b>Decide each line on its own.</b> Reduce a line to pass it at a lower value, or reject it to send the claim back to the engineer to revise that line. Any rejected line returns the whole claim; the total below adds up only the accepted lines.':'')+'</div>';
+}
+
+/* Live revised total while the engineer edits the rejected claim in place.
+   Bike lines are priced from KM by the day slab, so their amount is derived, not typed. */
+function revisionFigures(k,r){
+  const lines=[]; let slabKm=0;
+  r.items.forEach((it,i)=>{
+    const inp=$("rv-"+k+"-"+i), drop=$("rx-"+k+"-"+i);
+    const dropped=drop?drop.checked:false;
+    const raw=inp?Number(inp.value):(Number(it.amt)||0);
+    const slab=it.cat==="Travel"&&isSlabMode(it.mode);
+    if(!dropped&&slab) slabKm+=(isNaN(raw)?0:raw);
+    lines.push({i:i,dropped:dropped,raw:isNaN(raw)?0:raw,slab:slab});
+  });
+  const rate = slabKm>BIKE_SLAB.limit?BIKE_SLAB.high:BIKE_SLAB.low;
+  let total=0;
+  lines.forEach(L=>{
+    if(L.dropped){ L.amt=0; L.km=0; return; }
+    if(L.slab){ L.km=L.raw; L.rate=rate; L.amt=Math.round(L.raw*rate*100)/100; }
+    else { L.km=Number(r.items[L.i].km)||0; L.rate=0; L.amt=L.raw; }
+    total+=L.amt;
+  });
+  return {lines:lines,total:Math.round(total*100)/100,rate:rate,kept:lines.filter(L=>!L.dropped).length};
+}
+function recalcRevision(k,id){
+  const r=MEM.find(x=>x.id===id); if(!r) return;
+  const f=revisionFigures(k,r);
+  f.lines.forEach(L=>{
+    const inp=$("rv-"+k+"-"+L.i);
+    if(inp){ inp.disabled=L.dropped; inp.style.opacity=L.dropped?.45:1; }
+  });
+  const cell=$("rvtot-"+k);
+  if(cell) cell.innerHTML='<b>Revised total '+money(f.total)+'</b>'+
+    (f.kept<r.items.length?' <span style="color:var(--red)">('+(r.items.length-f.kept)+' line(s) dropped)</span>':'');
+}
+
+/* Keeps the header total in step with the per-line decisions. */
+function recalcLines(k,n){
+  let sum=0;
+  for(let i=0;i<n;i++){
+    const d=$("ld-"+k+"-"+i), a=$("la-"+k+"-"+i);
+    if(!d||!a) continue;
+    const rejected = d.value==="Rejected";
+    a.disabled = rejected;
+    a.style.opacity = rejected ? .45 : 1;
+    if(!rejected) sum += Number(a.value)||0;
+  }
+  const tot=$("am-"+k);
+  if(tot) tot.value = Math.round(sum*100)/100;
+  const note=$("ln-"+k);
+  if(note) note.textContent = "Total of accepted lines: "+money(sum);
+}
+function trailHtml(r){
+  let h="";
+  r.trail.forEach(t=>{
+    const cls=/Reject/.test(t.act)?"no":(/Approved|Paid|Closed/.test(t.act)?"ok":(/Recommended/.test(t.act)?"rc":"wt"));
+    h+='<div><b class="'+cls+'">'+esc(t.act)+" — "+esc(nm(t.code))+'</b><span class="tt">'+t.code+" · "+(EMP[t.code]?EMP[t.code].d:"Staff")+
+      (t.amt!=null?" · "+money(t.amt):"")+(t.remark?" · "+esc(t.remark):"")+" · "+dt(t.ts)+"</span></div>";
+  });
+  const waiting={};
+  waiting[ST.SUB]=[r.rmCode,"check &amp; recommendation"];
+  waiting[ST.REC]=[r.rgCode,"final approval"];
+  const w=waiting[r.status];
+  if(w&&w[0]) h+='<div><b class="wt">Waiting — '+esc(nm(w[0]))+'</b><span class="tt">'+w[0]+" · "+(EMP[w[0]]?EMP[w[0]].d:"Manager")+" · "+w[1]+"</span></div>";
+  if(r.status===ST.HOA) h+='<div><b class="wt">Waiting — HO Admin</b><span class="tt">approval and payment · no manager stage at this approval level</span></div>';
+  if(r.status===ST.APP||r.status===ST.HOLD) h+='<div><b class="wt">Waiting — HO Admin</b><span class="tt">payment processing</span></div>';
+  if(isRejected(r.status)) h+='<div><b class="wt">Waiting — '+esc(r.name)+'</b><span class="tt">revise the claim and resubmit it</span></div>';
+  return h;
+}
+
+/* Distance travelled per day, so an approver sees the engineer's whole day at a glance. */
+function kmSummary(r){
+  const byDay={};
+  (r.items||[]).forEach(it=>{ if(it.cat==="Travel"&&Number(it.km)>0) byDay[it.date]=(byDay[it.date]||0)+Number(it.km); });
+  const days=Object.keys(byDay).sort();
+  if(!days.length) return "No travel distance recorded";
+  const tot=days.reduce((s,d)=>s+byDay[d],0);
+  return tot+" KM ("+days.map(d=>dd(d)+": "+byDay[d]+" KM").join(", ")+")";
+}
+function detailHtml(r,sc){
+  const rows=[["Claim No",r.no],["Voucher No",r.voucher],["Engineer",r.name+" ("+r.by+")"],["Designation",r.desig],
+   ["Branch",r.branch],["Zone",r.zone],["Mobile",r.mobile],["Claim date",dd(r.claimDate||r.perFrom)],
+   ["Segments on this claim",r.segment||"—"],["Customers on this claim",r.custName||"—"],["Tickets on this claim",r.ticket||"—"],["UIDs on this claim",r.uid||"—"],
+   ["Approval level",r.level||"—"],
+   ["Reporting Manager",r.rmCode?nm(r.rmCode):"Not applicable at this level"],
+   ["Regional Manager",r.rgCode?nm(r.rgCode):"Not applicable at this level"],
+   ["Branch Manager",r.bhCode?nm(r.bhCode):"—"],["Submitted",dt(r.submittedAt)],
+   ["Source",r.source||"Portal entry"],
+   ["Uploaded by",r.uploadedBy?nm(r.uploadedBy)+" ("+r.uploadedBy+")":"—"],
+   ["Upload date & time",r.uploadedAt?dt(r.uploadedAt):"—"],
+   ["Upload reference",r.batch||"—"],
+   ["Total KM travelled",kmSummary(r)],
+   ["Revision",(r.rev&&r.rev>1)?("Revision "+r.rev+" (resubmitted after rejection)"):"Original claim"],
+   ["Total claimed",money(r.claimed)],["RM recommended",r.recommended==null?"—":money(r.recommended)],
+   ["Regional approved",r.approved==null?"—":money(r.approved)],["Final payable",r.payable==null?"—":money(r.payable)],
+   ["Payment status",r.pay.status],["Payment reference",r.pay.ref||"—"],["Payment date",r.pay.date?dd(r.pay.date):"—"],
+   ];
+  return '<div class="dl">'+rows.map(x=>"<div><span>"+x[0]+"</span><b>"+esc(x[1])+"</b></div>").join("")+"</div>"+
+   '<div class="sub">Purpose</div><div style="margin-bottom:11px;font-size:11.5px">'+esc(r.purpose)+"</div>"+
+   '<div class="sub">Expense lines</div>'+itemTable(r,(canResubmit(r)?"rev":actingStage(r)),sc+"-"+r.id)+
+   '<div class="sub">Approval trail</div><div class="trail">'+trailHtml(r)+"</div>";
+}
+function actionBar(r,sc){
+  const k=sc+"-"+r.id;
+  const canCheck = r.status===ST.SUB && r.rmCode===ME;
+  const canApprove = r.status===ST.REC && r.rgCode===ME;
+  const canHoApprove = r.status===ST.HOA && isHO(ME);
+  const canPay = (r.status===ST.APP||r.status===ST.HOLD) && isHO(ME);
+  const canClose = r.status===ST.PAID && isHO(ME);
+  if(canCheck) return '<div class="act">'+
+    '<div class="f"><label>Recommended amount (₹) <span class="auto">from accepted lines</span></label>'+
+      '<input type="number" min="0" id="am-'+k+'" value="'+r.claimed+'" readonly></div>'+
+    '<div class="f"><label>Overall remark</label><input id="rm-'+k+'" placeholder="Optional to recommend, required to reject the whole claim"></div>'+
+    '<span id="ln-'+k+'" style="font-size:10.5px;color:var(--muted);font-weight:700">Total of accepted lines: '+money(r.claimed)+'</span>'+
+    '<button type="button" class="btn btn-rec" onclick="doRecommend(\''+sc+'\',\''+r.id+'\')">Recommend to '+esc(nm(r.rgCode).split(" ")[0])+'</button>'+
+    '<button type="button" class="btn btn-no" onclick="doReject(\''+sc+'\',\''+r.id+'\')">Reject</button></div>';
+  if(canApprove) return '<div class="act">'+
+    '<div class="f"><label>Approved amount (₹) <span class="auto">from accepted lines</span></label>'+
+      '<input type="number" min="0" id="am-'+k+'" value="'+(r.recommended!=null?r.recommended:r.claimed)+'" readonly></div>'+
+    '<div class="f"><label>Overall remark</label><input id="rm-'+k+'" placeholder="Optional to approve, required to reject the whole claim"></div>'+
+    '<span id="ln-'+k+'" style="font-size:10.5px;color:var(--muted);font-weight:700">Total of accepted lines: '+
+      money(r.recommended!=null?r.recommended:r.claimed)+'</span>'+
+    '<button type="button" class="btn btn-go" onclick="doApprove(\''+sc+'\',\''+r.id+'\')">Approve and send to HO Admin</button>'+
+    '<button type="button" class="btn btn-no" onclick="doReject(\''+sc+'\',\''+r.id+'\')">Reject</button></div>';
+  if(canHoApprove) return '<div class="act">'+
+    '<div class="f"><label>Approved amount (₹)</label><input type="number" min="0" id="am-'+k+'" value="'+r.claimed+'"></div>'+
+    '<div class="f"><label>Your remark</label><input id="rm-'+k+'" placeholder="Optional"></div>'+
+    '<button type="button" class="btn btn-go" onclick="doHoApprove(\''+sc+'\',\''+r.id+'\')">Approve for payment</button>'+
+    '<span style="font-size:10.5px;color:var(--muted);font-weight:700">This claimant has no manager stage, so HO Admin sanctions the amount.</span></div>';
+  if(canPay) return '<div class="act">'+
+    '<div class="f"><label>Payment reference (UTR / cheque / cash)</label><input id="pr-'+k+'" value="'+esc(r.pay.ref)+'" placeholder="UTR number"></div>'+
+    '<div class="f"><label>Payment date</label><input type="date" id="pd-'+k+'" value="'+(r.pay.date||todayISO())+'"></div>'+
+    '<div class="f"><label>Payment remark</label><input id="rm-'+k+'" placeholder="Optional"></div>'+
+    '<button type="button" class="btn btn-go" onclick="doPay(\''+sc+'\',\''+r.id+'\')">Mark paid</button>'+
+    '<button type="button" class="btn btn-amb" onclick="doHold(\''+sc+'\',\''+r.id+'\')">Put on hold</button></div>';
+  if(canClose) return '<div class="act">'+
+    '<div class="f"><label>Closing remark</label><input id="rm-'+k+'" placeholder="Optional"></div>'+
+    '<button type="button" class="btn btn-go" onclick="doClose(\''+sc+'\',\''+r.id+'\')">Close claim</button></div>';
+  if(r.status===ST.DRAFT && r.by===ME) return '<div class="act">'+
+    '<button type="button" class="btn btn-main" onclick="editClaim(\''+r.id+'\')">Open draft</button>'+
+    '<button type="button" class="btn btn-no" onclick="dropDraft(\''+r.id+'\')">Delete draft</button></div>';
+  if(r.by===ME && canEditOwn(r)) return '<div class="act">'+
+    '<button type="button" class="btn btn-main" onclick="editClaim(\''+r.id+'\')">Edit claim / add a line</button>'+
+    '<span style="font-size:10.5px;color:var(--muted);font-weight:700">Open until '+
+    esc(r.rmCode?nm(r.rmCode):(r.rgCode?nm(r.rgCode):"HO Admin"))+' acts on it. After that it is locked.</span></div>';
+  if(r.by===ME && !isRejected(r.status) && actedOn(r)) return '<div class="act">'+
+    '<span style="font-size:11px;color:var(--muted);font-weight:700">This claim is locked. '+
+    'Your manager has acted on it, so lines can no longer be added, changed or removed.</span></div>';
+  if(canResubmit(r)){
+    const last=(r.trail||[]).filter(t=>t.act==="Rejected").pop();
+    return '<div class="act">'+
+      '<div class="f" style="flex:1 1 100%"><label>Rejected by '+esc(nm(last?last.code:r.rejectedBy))+
+        (r.rejectedStage?" ("+esc(r.rejectedStage)+")":"")+'</label>'+
+        '<input readonly value="'+esc(last?last.remark:"")+'"></div>'+
+      '<div class="f"><label>Your reply / what you changed <span class="req">*</span></label>'+
+        '<input id="rr-'+k+'" placeholder="e.g. KM corrected to 120 as per meter reading"></div>'+
+      '<button type="button" class="btn btn-main" onclick="doResubmit(\''+sc+'\',\''+r.id+'\')">Resubmit with revised amounts</button>'+
+      '<button type="button" class="btn" onclick="startResubmit(\''+sc+'\',\''+r.id+'\')">Open full form</button>'+
+      '<span style="font-size:10.5px;color:var(--muted);font-weight:700">Enter the revised figures in the table above, '+
+      'or open the full form to add lines and change other details. The claim keeps its number and the whole history stays on record.</span></div>';
+  }
+  return "";
+}
+/* Fills in the revised-total cell for any rejected claim on screen. */
+function primeRevisionTotals(){
+  (MEM||[]).forEach(r=>{
+    if(!canResubmit(r)) return;
+    ["mine","chk","apr","brn","rgn","ho","g"].forEach(sc=>{
+      if($("rvtot-"+sc+"-"+r.id)) recalcRevision(sc+"-"+r.id,r.id);
+    });
+  });
+}
+function card(r,pick,sc){
+  sc=sc||"g"; const k=sc+"-"+r.id;
+  const box=pick?'<input type="checkbox" class="bx" value="'+r.id+'" onclick="event.stopPropagation();countSel()">':"";
+  const val=stageAmt(r.payable)||stageAmt(r.approved)||stageAmt(r.recommended)||Number(r.claimed)||0;
+  return '<div class="rq" id="rq-'+k+'">'+
+    '<div class="rq-top" onclick="document.getElementById(\'rq-'+k+'\').classList.toggle(\'open\')">'+
+      box+'<span class="rq-no">'+esc(r.no)+'</span>'+
+      '<div class="rq-main"><b>'+esc(r.purpose)+'</b><small>'+esc(r.name)+" · "+esc(r.branch)+" · "+dd(r.claimDate||r.perFrom)+" · "+r.items.length+" line(s)</small></div>"+
+      (r.revOf?'<span class="excep">re-applied</span>':"")+
+      (r.source==="Bulk Upload"?'<span class="excep">bulk</span>':"")+
+      (r.dupFlag?'<span class="excep">duplicate</span>':"")+
+      '<span class="rq-amt">'+money(val)+"</span>"+statusTag(r)+
+      '<button type="button" class="btn" onclick="event.stopPropagation();voucher(\''+r.id+'\')">Voucher</button>'+
+    "</div>"+
+    '<div class="rq-body">'+detailHtml(r,sc)+actionBar(r,sc)+"</div></div>";
+}
+
+/* ================= ACTIONS ================= */
+async function grab(id,guard){
+  let r=null;
+  try{ r=await loadOne(id); }
+  catch(e){ alert("Could not read the claim from the server: "+e.message); return [null,null]; }
+  if(!r){ alert("That claim is no longer available."); refresh(); return [null,null]; }
+  if(guard&&!guard(r)){ alert("This claim has already moved on. Refreshing the list."); refresh(); return [null,null]; }
+  return [MEM,r];
+}
+const rem=k=>{ const e=$("rm-"+k); return e?e.value.trim():""; };
+/* Reads the per-line decisions for a claim. Returns null when a rejected line
+   has no remark, because the engineer needs to know why it was refused. */
+function readLineDecisions(k,r,stage){
+  const out=[]; let sum=0, rejected=0;
+  for(let i=0;i<r.items.length;i++){
+    const d=$("ld-"+k+"-"+i), a=$("la-"+k+"-"+i), rm=$("lr-"+k+"-"+i);
+    const claimed=Number(r.items[i].amt)||0;
+    if(!d){ out.push({dec:"Accepted",amt:claimed,rem:""}); sum+=claimed; continue; }
+    const dec=d.value, note=rm?rm.value.trim():"";
+    if(dec==="Rejected"){
+      if(!note){ alert("Line "+(i+1)+" is rejected but has no remark. Write why, so the engineer can correct it."); return null; }
+      out.push({dec:"Rejected",amt:0,rem:note}); rejected++;
+    } else {
+      let amt=a?Number(a.value):claimed;
+      if(isNaN(amt)||amt<0){ alert("Line "+(i+1)+" has an invalid approved amount."); return null; }
+      if(amt>claimed){ alert("Line "+(i+1)+" cannot be approved above the claimed "+money(claimed)+"."); return null; }
+      if(amt<claimed && !note){ alert("Line "+(i+1)+" is reduced from "+money(claimed)+" to "+money(amt)+". Add a remark saying why."); return null; }
+      out.push({dec:"Accepted",amt:amt,rem:note}); sum+=amt;
+    }
+  }
+  return {lines:out,total:Math.round(sum*100)/100,rejected:rejected,all:rejected===r.items.length};
+}
+function applyLineDecisions(r,res,stage){
+  r.items.forEach((it,i)=>{
+    const d=res.lines[i];
+    if(stage==="rm"){ it.rmDec=d.dec; it.rmAmt=d.amt; it.rmRem=d.rem; }
+    else            { it.rgDec=d.dec; it.rgAmt=d.amt; it.rgRem=d.rem; }
+  });
+}
+function lineSummary(res){
+  return res.rejected ? (res.rejected+" of "+res.lines.length+" line(s) rejected") : "all lines accepted";
+}
+const amt=k=>{ const e=$("am-"+k); return e?Number(e.value):null; };
+async function doRecommend(sc,id){
+  const k=sc+"-"+id;
+  const [list,r]=await grab(id,x=>x.status===ST.SUB&&x.rmCode===ME); if(!r) return;
+  const res=readLineDecisions(k,r,"rm"); if(!res) return;
+  applyLineDecisions(r,res,"rm");
+  /* any rejected line sends the claim back so the engineer can revise or drop that line */
+  if(res.rejected>0){
+    const note=rem(k)||(res.all?"All lines rejected":"See the line remarks");
+    r.status=ST.REJ; r.rejectedBy=ME; r.rejectedStage="Reporting Manager";
+    r.recommended=null; r.approved=null; r.payable=null;
+    r.trail.push({code:ME,act:"Rejected",remark:"[Reporting Manager] "+note+" — "+lineSummary(res),
+      ts:new Date().toISOString(),amt:null});
+  } else {
+    r.recommended=res.total;
+    /* No Regional Manager on this route: go straight to HO Admin for sanction
+       instead of parking the claim in a queue that has no owner. */
+    r.status = r.rgCode ? ST.REC : ST.HOA;
+    r.trail.push({code:ME,act:"Checked and recommended",
+      remark:(rem(k)?rem(k)+" — ":"")+lineSummary(res)+", recommended "+money(res.total)+
+             (r.rgCode?"":" — no Regional Manager on this route, sent to HO Admin"),
+      ts:new Date().toISOString(),amt:res.total});
+  }
+  
+  // REPLACE saveAll() WITH THIS:
+  try {
+    await syncToCloud(r);
+    await refresh();
+  } catch(e) {
+    alert("Failed to sync approval: " + e.message);
+  }
+}
+async function doReject(sc,id){
+  const k=sc+"-"+id;
+  const [list,r]=await grab(id,x=>(x.status===ST.SUB&&x.rmCode===ME)||(x.status===ST.REC&&x.rgCode===ME));
+  if(!r) return;
+  const rk=rem(k);
+  if(!rk){ alert("Write the reason for rejection. The engineer needs it to correct the claim."); return; }
+  const stage = r.status===ST.REC ? "Regional Manager" : "Reporting Manager";
+  r.status=ST.REJ;
+  r.rejectedBy=ME; r.rejectedStage=stage;
+  /* a rejection voids any earlier recommendation, so the amounts reset */
+  r.recommended=null; r.approved=null; r.payable=null;
+  r.trail.push({code:ME,act:"Rejected",remark:"["+stage+"] "+rk,ts:new Date().toISOString(),amt:null});
+  try { await syncToCloud(r); await refresh(); } catch(e) { alert("Failed to sync rejection: " + e.message); }
+}
+
+async function doApprove(sc,id){
+  const k=sc+"-"+id;
+  const [list,r]=await grab(id,x=>x.status===ST.REC&&x.rgCode===ME); if(!r) return;
+  const res=readLineDecisions(k,r,"rg"); if(!res) return;
+  applyLineDecisions(r,res,"rg");
+  if(res.rejected>0){
+    const note=rem(k)||(res.all?"All lines rejected":"See the line remarks");
+    r.status=ST.REJ; r.rejectedBy=ME; r.rejectedStage="Regional Manager";
+    r.recommended=null; r.approved=null; r.payable=null;
+    r.trail.push({code:ME,act:"Rejected",remark:"[Regional Manager] "+note+" — "+lineSummary(res),
+      ts:new Date().toISOString(),amt:null});
+    try { await syncToCloud(r); await refresh(); } catch(e){ alert("Failed to sync: "+e.message); }
+    return;
+  }
+  const a=res.total;
+  if(a==null||isNaN(a)||a<0){ alert("Enter the amount you are approving."); return; }
+  if(a>r.claimed){ alert("The approved amount cannot be more than the claimed amount of "+money(r.claimed)+"."); return; }
+  r.approved=a; r.payable=a; r.status=ST.APP;
+  r.trail.push({code:ME,act:"Approved",
+    remark:(rem(k)?rem(k)+" — ":"")+lineSummary(res)+", approved "+money(a),
+    ts:new Date().toISOString(),amt:a});
+  try { await syncToCloud(r); await refresh(); } catch(e) { alert("Failed to sync approval: " + e.message); }
+}
+
+async function doHoApprove(sc,id){
+  const k=sc+"-"+id;
+  const [list,r]=await grab(id,x=>x.status===ST.HOA&&isHO(ME)); if(!r) return;
+  const a=amt(k);
+  if(a==null||isNaN(a)||a<0){ alert("Enter the amount you are approving."); return; }
+  if(a>r.claimed){ alert("The approved amount cannot be more than the claimed amount of "+money(r.claimed)+"."); return; }
+  r.approved=a; r.payable=a; r.status=ST.APP;
+  r.trail.push({code:ME,act:"Approved",
+    remark:(rem(k)?rem(k)+" — ":"")+"approved "+money(a),
+    ts:new Date().toISOString(),amt:a});
+  try { await syncToCloud(r); await refresh(); } catch(e) { alert("Failed to sync HO approval: " + e.message); }
+}
+
+async function doPay(sc,id){
+  const k=sc+"-"+id;
+  const [list,r]=await grab(id,x=>(x.status===ST.APP||x.status===ST.HOLD)&&isHO(ME)); if(!r) return;
+  const ref=($("pr-"+k)||{}).value||"", d=($("pd-"+k)||{}).value||"";
+  if(!ref.trim()){ alert("Enter the payment reference before marking this claim paid."); return; }
+  r.pay={status:"Paid",ref:ref.trim(),date:d,remark:rem(k),by:ME}; r.status=ST.PAID;
+  r.trail.push({code:ME,act:"Payment processed",remark:(rem(k)?rem(k)+" · ":"")+"Ref "+ref.trim(),ts:new Date().toISOString(),amt:r.payable});
+  try { await syncToCloud(r); await refresh(); } catch(e) { alert("Failed to sync payment: " + e.message); }
+}
+
+async function doHold(sc,id){
+  const k=sc+"-"+id;
+  const [list,r]=await grab(id,x=>(x.status===ST.APP||x.status===ST.HOLD)&&isHO(ME)); if(!r) return;
+  const rk=rem(k);
+  if(!rk){ alert("Write why the payment is on hold."); return; }
+  r.pay.status="On Hold"; r.pay.remark=rk; r.pay.by=ME; r.status=ST.HOLD;
+  r.trail.push({code:ME,act:"Payment on hold",remark:rk,ts:new Date().toISOString(),amt:r.payable});
+  try { await syncToCloud(r); await refresh(); } catch(e) { alert("Failed to sync hold status: " + e.message); }
+}
+
+async function doClose(sc,id){
+  const k=sc+"-"+id;
+  const [list,r]=await grab(id,x=>x.status===ST.PAID&&isHO(ME)); if(!r) return;
+  r.status=ST.CLOSED;
+  r.trail.push({code:ME,act:"Closed",remark:rem(k),ts:new Date().toISOString(),amt:r.payable});
+  try { await syncToCloud(r); await refresh(); } catch(e) { alert("Failed to sync closure: " + e.message); }
+}
+async function dropDraft(id){
+  if(!confirm("Delete this draft?")) return;
+  let r=null;
+  try{ r=await loadOne(id); }catch(e){ alert("Could not read the draft from the server: "+e.message); return; }
+  if(r && r.by === ME && r.status === ST.DRAFT){
+    try {
+      await deleteClaimFromCloud(id);
+      MEM = MEM.filter(x => x.id !== id);
+      await refresh();
+      toast("Draft deleted.", true);
+    } catch(e) {
+      alert("Failed to delete from cloud: " + e.message);
+    }
+  } else {
+    toast("That draft could not be found — it may already have been deleted, or it's no longer a draft.", false);
+  }
+}
+function countSel(){
+  const n=document.querySelectorAll(".bx:checked").length;
+  $("bulkCount").textContent=n;
+  $("bulkbar").classList.toggle("on",document.querySelectorAll(".bx").length>0);
+}
+function selectAll(on){ document.querySelectorAll(".bx").forEach(b=>b.checked=on); countSel(); }
+async function bulkRecommend(){
+  const ids=[].slice.call(document.querySelectorAll(".bx:checked")).map(b=>b.value);
+  if(!ids.length){ alert("Tick at least one claim."); return; }
+  if(!confirm("Recommend "+ids.length+" claim(s) at the full claimed amount?")) return;
+  
+  let successCount = 0, failed = 0;
+  for (const id of ids) {
+    try {
+      const r = await loadOne(id);          /* the latest saved copy, with its bills */
+      if (!r || r.status !== ST.SUB || r.rmCode !== ME) { failed++; continue; }
+      r.recommended = r.claimed;
+      r.status = ST.REC;
+      r.trail.push({code:ME,act:"Checked and recommended",remark:"Recommended in bulk at claimed value",ts:new Date().toISOString(),amt:r.claimed});
+      await syncToCloud(r);
+      successCount++;
+    } catch(e) {
+      failed++; console.error("Failed to sync claim " + id, e);
+    }
+  }
+  toast(successCount + " claim(s) recommended" + (failed ? ", " + failed + " could not be recommended (already moved on or a server error)." : "."), !failed);
+  selectAll(false);
+  await refresh();
+}
+
+/* One save at a time. A second click while the first is still travelling to SharePoint used to
+   create a duplicate claim (submit) or a duplicate trail entry (approve). */
+let ACTION_BUSY = false;
+function singleFlight(fn, btnId){
+  return async function(){
+    if (ACTION_BUSY) return;
+    ACTION_BUSY = true;
+    const btn = btnId ? $(btnId) : null, label = btn ? btn.textContent : "";
+    if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+    document.body.style.cursor = "progress";
+    try { return await fn.apply(this, arguments); }
+    finally {
+      ACTION_BUSY = false; document.body.style.cursor = "";
+      if (btn) { btn.disabled = false; if (btn.textContent === "Saving…") btn.textContent = label; }
+    }
+  };
+}
+["doRecommend","doReject","doApprove","doHoApprove","doPay","doHold","doClose","doResubmit","dropDraft","bulkRecommend"]
+  .forEach(n => { window[n] = singleFlight(window[n]); });
+
+/* ================= PRINTABLE VOUCHER ================= */
+function voucher(id){
+  const r=MEM.find(x=>x.id===id); if(!r) return;
+  const grp={};
+  r.items.forEach(it=>{
+    const k=(it.cat==="Travel"&&it.mode==="Bike")?"Bike KM Claim":it.cat;
+    if(!grp[k]) grp[k]={amt:0,det:[]};
+    grp[k].amt+=Number(it.amt)||0;
+    grp[k].det.push(k==="Bike KM Claim"?(dd(it.date)+": "+it.km+" KM × ₹"+it.rate):(dd(it.date)+": "+(it.desc||it.mode)+(it.jFrom?" ("+it.jFrom+" → "+it.jTo+")":"")));
+  });
+  const ratio=r.approved!=null&&r.claimed>0?r.approved/r.claimed:null;
+  const lines=Object.keys(grp).map(k=>'<tr><td><b>'+esc(k)+'</b></td><td>'+esc(grp[k].det.join("; "))+'</td>'+
+    '<td class="n">'+money(grp[k].amt)+'</td><td class="n">'+(ratio==null?"—":money(Math.round(grp[k].amt*ratio)))+'</td></tr>').join("");
+  const atts=[]; r.items.forEach((it,i)=>it.att.forEach(a=>atts.push("L"+(i+1)+": "+a.name)));
+  const remarkOf=act=>{ const t=r.trail.filter(x=>x.act.indexOf(act)>-1).pop(); return t?(t.remark||"No remark")+" — "+nm(t.code):"Pending"; };
+  const h='<!DOCTYPE html><html><head><meta charset="utf-8"><title>'+esc(r.voucher)+'</title><style>'+
+  'body{font-family:"Segoe UI",Arial,sans-serif;font-size:11px;color:#123047;margin:0;padding:18px;background:#fff}'+
+  '.sheet{max-width:790px;margin:0 auto;border:1px solid #c9dae6}'+
+  '.hd{display:flex;align-items:center;gap:14px;padding:10px 14px;border-bottom:1px solid #c9dae6;background:#f7fbfd}'+
+  '.hd img{width:160px}.hd .t{flex:1;text-align:center}.hd .t b{font-size:15px;color:#0b3f7a;display:block}'+
+  '.hd .t span{font-size:11px;color:#5d7c93;font-weight:700;letter-spacing:.5px}'+
+  'table{width:100%;border-collapse:collapse}td,th{border:1px solid #c9dae6;padding:5px 7px;vertical-align:top}'+
+  'th{background:#e7f1f7;color:#0b3f7a;font-size:9px;text-transform:uppercase;letter-spacing:.4px;text-align:left}'+
+  '.n{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}'+
+  '.kv td:nth-child(odd){background:#f2f8fb;font-size:9px;text-transform:uppercase;letter-spacing:.3px;color:#5d7c93;font-weight:800;width:15%}'+
+  '.sec{background:#1e5fa8;color:#fff;padding:4px 8px;font-size:10px;font-weight:800;letter-spacing:.5px}'+
+  '.sign td{height:52px;font-size:9px;color:#5d7c93;font-weight:700;vertical-align:bottom;text-align:center}'+
+  '.tot td{font-weight:800;background:#f2f8fb}.grand td{background:#e2f5ec;color:#0a6b42;font-size:12px}'+
+  '@media print{body{padding:0}.noprint{display:none}}</style></head><body>'+
+  '<div class="noprint" style="max-width:790px;margin:0 auto 10px"><button onclick="window.print()" style="font:inherit;font-weight:700;background:#1e5fa8;color:#fff;border:0;border-radius:4px;padding:7px 16px;cursor:pointer">Print / Save as PDF</button></div>'+
+  '<div class="sheet"><div class="hd"><img src="'+LOGO+'"><div class="t"><b>PROSTARM INFO SYSTEMS LTD.</b><span>Travel Expense Claim Voucher</span></div></div>'+
+  '<table class="kv">'+
+  '<tr><td>Branch</td><td>'+esc(r.branch)+'</td><td>Voucher Date</td><td>'+dd((r.submittedAt||r.createdAt).slice(0,10))+'</td><td>Voucher No</td><td>'+esc(r.voucher)+'</td></tr>'+
+  '<tr><td>Claim No</td><td>'+esc(r.no)+'</td><td>Engineer</td><td>'+esc(r.name)+'</td><td>Employee ID</td><td>'+esc(r.by)+'</td></tr>'+
+  '<tr><td>Designation</td><td>'+esc(r.desig)+'</td><td>Zone</td><td>'+esc(r.zone)+'</td><td>Claim Period</td><td>'+dd(r.perFrom)+' to '+dd(r.perTo)+'</td></tr>'+
+  '<tr><td>Reporting Mgr</td><td>'+esc(r.rmCode?nm(r.rmCode):"Not applicable")+'</td><td>Regional Mgr</td><td>'+esc(r.rgCode?nm(r.rgCode):"Not applicable")+'</td><td>Branch Mgr</td><td>'+esc(r.bhCode?nm(r.bhCode):"—")+'</td></tr>'+
+  '<tr><td>Customer</td><td>'+esc(r.custName)+'</td><td>Segment</td><td>'+esc(r.segment)+'</td><td>Ticket / UID</td><td>'+esc(r.ticket+(r.uid?" / "+r.uid:""))+'</td></tr>'+
+  '<tr><td>Purpose</td><td colspan="5">'+esc(r.purpose)+'</td></tr></table>'+
+  '<div class="sec">EXPENSE SUMMARY</div>'+
+  '<table><tr><th>Expense Type</th><th>Description</th><th style="text-align:right">Claimed Amount</th><th style="text-align:right">Approved Amount</th></tr>'+lines+
+  '<tr class="tot"><td colspan="2">Total Claimed Amount</td><td class="n">'+money(r.claimed)+'</td><td class="n">—</td></tr>'+
+  '<tr class="tot"><td colspan="2">Reporting Manager Recommended Amount</td><td class="n">—</td><td class="n">'+(r.recommended==null?"—":money(r.recommended))+'</td></tr>'+
+  '<tr class="tot"><td colspan="2">Regional Manager Approved Amount</td><td class="n">—</td><td class="n">'+(r.approved==null?"—":money(r.approved))+'</td></tr>'+
+  '<tr class="grand"><td colspan="2">FINAL PAYABLE AMOUNT</td><td class="n">—</td><td class="n">'+(r.payable==null?"—":money(r.payable))+'</td></tr></table>'+
+  '<div class="sec">EXPENSE LINES</div>'+
+  '<table><tr><th>#</th><th>Ticket / UID</th><th>Customer</th><th>Type</th><th>Mode</th><th>From → To</th><th style="text-align:right">Ref KM</th><th style="text-align:right">KM</th><th style="text-align:right">Rate</th><th>Description</th><th style="text-align:right">Amount</th></tr>'+
+  r.items.map((it,i)=>'<tr><td>'+(i+1)+'</td><td>'+esc((it.ticket||"—")+(it.uid?" / "+it.uid:""))+'</td><td>'+esc(it.custName||"—")+'</td><td>'+esc(it.cat)+'</td><td>'+esc(it.mode)+'</td><td>'+(it.jFrom?esc(it.jFrom+" → "+it.jTo):"—")+'</td><td class="n">'+((it.cat==="Travel"&&refKm(it.jFromPin,it.jToPin)!=null)?refKm(it.jFromPin,it.jToPin):"—")+'</td><td class="n">'+(it.km||"—")+'</td><td class="n">'+(it.rate?"₹"+it.rate:"—")+'</td><td>'+esc(it.desc||"—")+'</td><td class="n">'+money(it.amt)+'</td></tr>').join("")+'</table>'+
+  '<table><tr><td style="font-size:9px;color:#5d7c93">Ref KM = indicative road distance between the journey pincodes (straight line &times; '+ROAD_FACTOR+'), shown for approver reference only.</td></tr></table>'+
+  '<div class="sec">DISTANCE RECORD</div><table><tr><td>'+esc(kmSummary(r))+'</td></tr></table>'+
+  '<div class="sec">SUPPORTING ATTACHMENTS</div><table><tr><td>'+(atts.length?esc(atts.join(" | ")):"No attachment uploaded")+'</td></tr></table>'+
+  '<div class="sec">APPROVAL REMARKS</div><table class="kv">'+
+  '<tr><td>Reporting Mgr</td><td>'+esc(remarkOf("recommended"))+'</td></tr>'+
+  '<tr><td>Regional Mgr</td><td>'+esc(remarkOf("Approved"))+'</td></tr>'+
+  '<tr><td>HO Admin</td><td>'+esc(r.pay.remark||(r.pay.status==="Pending"?"Pending":"No remark"))+'</td></tr>'+
+  '<tr><td>Payment Status</td><td>'+esc(r.pay.status)+(r.pay.date?" on "+dd(r.pay.date):"")+'</td></tr>'+
+  '<tr><td>Payment Ref</td><td>'+esc(r.pay.ref||"—")+'</td></tr></table>'+
+  '<table class="sign"><tr><td>Prepared By<br><b>'+esc(r.name)+'</b></td><td>Checked / Recommended By<br><b>'+esc(nm(r.rmCode))+'</b></td>'+
+  '<td>Approved By<br><b>'+esc(r.rgCode?nm(r.rgCode):(r.trail.filter(t=>t.act==="Approved").pop()?nm(r.trail.filter(t=>t.act==="Approved").pop().code):"HO Admin"))+'</b></td><td>Payment Processed By<br><b>'+esc(r.pay.by?nm(r.pay.by):"HO Admin")+'</b></td></tr></table>'+
+  '</div></body></html>';
+  const w=window.open("","_blank");
+  if(!w){ alert("Allow pop-ups to print the voucher."); return; }
+  w.document.write(h); w.document.close();
+}
+
+/* ================= HO ADMIN FILTERS + EXPORT ================= */
+function opts(id,arr,first){
+  $(id).innerHTML='<option value="">'+first+'</option>'+arr.map(a=>'<option value="'+esc(a[0])+'">'+esc(a[1])+'</option>').join("");
+}
+function buildHoFilters(){
+  if(!isHO(ME)) return;
+  codes = Object.keys(EMP);
+  opts("hEmp",codes.map(c=>[c,EMP[c].n+" — "+c]),"All employees");
+  opts("hZone",[...new Set(Object.values(EMP).map(e=>e.z))].sort().map(z=>[z,z]),"All zones");
+  opts("hBranch",[...new Set(Object.values(EMP).map(e=>e.b))].sort().map(b=>[b,b]),"All branches");
+  opts("hRm",[...new Set(Object.values(EMP).map(e=>e.m).filter(c=>c&&EMP[c]))]
+        .sort((a,b)=>String(EMP[a].n||"").localeCompare(String(EMP[b].n||"")))
+        .map(c=>[c,EMP[c].n]),"All reporting managers");
+  opts("hStatus",Object.values(ST).map(s=>[s,s]),"All claim statuses");
+  opts("hPay",["Pending","Paid","On Hold"].map(s=>[s,s]),"All payment statuses");
+  ["hEmp","hZone","hBranch","hRm","hStatus","hPay","hFrom","hTo"].forEach(i=>$(i).addEventListener("change",refresh));
+  $("hReset").addEventListener("click",()=>{ ["hEmp","hZone","hBranch","hRm","hStatus","hPay","hFrom","hTo"].forEach(i=>$(i).value=""); refresh(); });
+}
+/* Wired once at load so the buttons work whenever the HO tab is reachable. */
+/* Everyone can export, but only what their role already lets them see:
+   an engineer their own claims, a manager their team over the report dates,
+   HO Admin the whole filtered set. */
+function scopeMine(){ return (MEM||[]).filter(r=>cleanCode(r.by)===cleanCode(ME)); }
+/* Everything this person checks as L1, whatever stage it has since reached. Scoping to
+   the pending queue alone would make the payment file permanently empty, because nothing
+   waiting to be checked has cleared approval yet. */
+function scopeCheck(){
+  return (MEM||[]).filter(r=>cleanCode(r.rmCode)===cleanCode(ME) && r.status!==ST.DRAFT);
+}
+/* Everything this person approves as L2. */
+function scopeApprove(){
+  return (MEM||[]).filter(r=>cleanCode(r.rgCode)===cleanCode(ME) && r.status!==ST.DRAFT);
+}
+function scopeTeam(){
+  const team={};
+  Object.keys(EMP).forEach(c=>{ if(EMP[c]&&EMP[c].rm===ME) team[c]=1; });
+  const [from,to]=trRange();
+  return (MEM||[]).filter(r=>{
+    if(!team[cleanCode(r.by)]) return false;
+    if(r.status===ST.DRAFT||isRejected(r.status)) return false;
+    return trInRange(dkey(r.claimDate||r.perFrom),from,to);
+  });
+}
+function bind(id,fn){
+  const el=$(id);
+  if(el&&!el.dataset.wired){ el.dataset.wired="1"; el.addEventListener("click",fn); }
+}
+function wireExportButtons(){
+  bind("xlPay",     ()=>runExport(exportPayment,"Payment file",   true,  ()=>hoFilter(MEM||[]), "the HO Admin filters", "All"));
+  bind("xlCrm",     ()=>runExport(exportCrm,    "CRM format file",false, ()=>hoFilter(MEM||[]), "the HO Admin filters", "All"));
+  bind("mineXlPay", ()=>runExport(exportPayment,"Payment file",   true,  scopeMine, "your own claims", ME));
+  bind("mineXlCrm", ()=>runExport(exportCrm,    "CRM format file",false, scopeMine, "your own claims", ME));
+  bind("chkXlPay",  ()=>runExport(exportPayment,"Payment file",   true,  scopeCheck,   "the claims you check", "Check_"+ME));
+  bind("chkXlCrm",  ()=>runExport(exportCrm,    "CRM format file",false, scopeCheck,   "the claims you check", "Check_"+ME));
+  bind("aprXlPay",  ()=>runExport(exportPayment,"Payment file",   true,  scopeApprove, "the claims you approve", "Approve_"+ME));
+  bind("aprXlCrm",  ()=>runExport(exportCrm,    "CRM format file",false, scopeApprove, "the claims you approve", "Approve_"+ME));
+  bind("teamXlPay", ()=>runExport(exportPayment,"Payment file",   true,  scopeTeam, "your team over the selected dates", "Team_"+ME));
+  bind("teamXlCrm", ()=>runExport(exportCrm,    "CRM format file",false, scopeTeam, "your team over the selected dates", "Team_"+ME));
+}
+const PAYABLE_STATES=[ST.APP,ST.HOLD,ST.PAID,ST.CLOSED];
+let EXPORT_TAG="";
+function runExport(fn,label,approvedOnly,scope,scopeName,tag){
+  EXPORT_TAG=tag||"";
+  try{
+    let rows=(scope?scope():hoFilter(MEM||[]))||[];
+    if(approvedOnly){
+      const before=rows.length;
+      rows=rows.filter(r=>PAYABLE_STATES.indexOf(r.status)>-1);
+      if(!rows.length){
+        alert("No approved claims in "+(scopeName||"the current filters")+".\n\n"+before+
+          " claim(s) are in view but none has cleared approval yet, so there is nothing to pay.");
+        return;
+      }
+    }
+    if(!rows.length){ alert("Nothing to export in "+(scopeName||"the current filters")+"."); return; }
+    fn(rows);
+  }catch(e){
+    console.error(label+" export failed:",e);
+    alert("The "+label+" could not be built: "+e.message+
+      "\n\nOne of the claims in view is missing data. Narrow the filters to find it, or send this message to IT.");
+  }
+}
+function hoFilter(list){
+  const v=i=>$(i)?$(i).value:"";
+  return list.filter(r=>{
+    if(r.status===ST.DRAFT) return false;
+    if(v("hEmp")&&r.by!==v("hEmp")) return false;
+    if(v("hZone")&&r.zone!==v("hZone")) return false;
+    if(v("hBranch")&&r.branch!==v("hBranch")) return false;
+    if(v("hRm")&&r.rmCode!==v("hRm")) return false;
+    if(v("hStatus")&&r.status!==v("hStatus")) return false;
+    if(v("hPay")&&((r.pay&&r.pay.status)||"")!==v("hPay")) return false;
+    const ap=((Array.isArray(r.trail)?r.trail:[]).filter(t=>String(t&&t.act||"")==="Approved").pop()||{}).ts;
+    if(v("hFrom")&&(!ap||dkey(ap)<dkey(v("hFrom")))) return false;
+    if(v("hTo")&&(!ap||dkey(ap)>dkey(v("hTo")))) return false;
+    return true;
+  });
+}
+/* ================= XLSX WRITER =================
+   Writes a real multi-sheet .xlsx in the browser: a ZIP of XML parts, stored
+   uncompressed so no compression library is needed. CSV cannot carry a second
+   sheet, and an HTML table renamed .xls makes Excel refuse the file, so the
+   workbook is built properly here. */
+const CRC_TABLE=(function(){
+  const t=new Int32Array(256);
+  for(let n=0;n<256;n++){
+    let c=n;
+    for(let k=0;k<8;k++) c = (c&1) ? (0xEDB88320 ^ (c>>>1)) : (c>>>1);
+    t[n]=c;
+  }
+  return t;
+})();
+function crc32(bytes){
+  let c=-1;
+  for(let i=0;i<bytes.length;i++) c = (c>>>8) ^ CRC_TABLE[(c ^ bytes[i]) & 0xFF];
+  return (c ^ -1) >>> 0;
+}
+const utf8 = s => new TextEncoder().encode(s);
+
+/* ZIP with stored (uncompressed) entries — valid and accepted by Excel. */
+function zipStore(files){
+  const chunks=[], central=[];
+  let offset=0;
+  const u16=v=>[v&0xFF,(v>>>8)&0xFF];
+  const u32=v=>[v&0xFF,(v>>>8)&0xFF,(v>>>16)&0xFF,(v>>>24)&0xFF];
+  files.forEach(f=>{
+    const name=utf8(f.name), data=f.bytes, crc=crc32(data);
+    const local=[].concat([0x50,0x4b,0x03,0x04],u16(20),u16(0),u16(0),u16(0),u16(0),
+      u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0));
+    chunks.push(new Uint8Array(local),name,data);
+    central.push([].concat([0x50,0x4b,0x01,0x02],u16(20),u16(20),u16(0),u16(0),u16(0),u16(0),
+      u32(crc),u32(data.length),u32(data.length),u16(name.length),u16(0),u16(0),u16(0),u16(0),
+      u32(0),u32(offset),Array.from(name)));
+    offset += local.length + name.length + data.length;
+  });
+  const cd=[].concat.apply([],central);
+  const end=[].concat([0x50,0x4b,0x05,0x06],u16(0),u16(0),u16(files.length),u16(files.length),
+    u32(cd.length),u32(offset),u16(0));
+  chunks.push(new Uint8Array(cd), new Uint8Array(end));
+  let total=0; chunks.forEach(c=>total+=c.length);
+  const out=new Uint8Array(total); let p=0;
+  chunks.forEach(c=>{ out.set(c,p); p+=c.length; });
+  return out;
+}
+
+const xesc = s => String(s==null?"":s)
+  .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+  .replace(/"/g,"&quot;").replace(/\x00-\x08\x0B\x0C\x0E-\x1F/g,"");
+const colName = n => { let s=""; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=(n-m-1)/26; } return s; };
+
+/* rows: array of arrays. Each cell is a value, or {v:value, s:styleIndex}. */
+function sheetXml(rows, widths){
+  let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+    '<sheetViews><sheetView workbookViewId="0">'+
+    '<pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/>'+
+    '</sheetView></sheetViews>';
+  if(widths&&widths.length){
+    x+='<cols>'+widths.map((w,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>').join("")+'</cols>';
+  }
+  x+='<sheetData>';
+  rows.forEach((row,ri)=>{
+    x+='<row r="'+(ri+1)+'">';
+    row.forEach((cell,ci)=>{
+      const obj = (cell&&typeof cell==="object"&&!(cell instanceof Date)) ? cell : {v:cell,s:0};
+      const ref = colName(ci+1)+(ri+1);
+      const st  = obj.s ? ' s="'+obj.s+'"' : '';
+      const v   = obj.v;
+      if(v===null||v===undefined||v===""){ x+='<c r="'+ref+'"'+st+'/>'; return; }
+      if(typeof v==="number"&&isFinite(v)){ x+='<c r="'+ref+'"'+st+'><v>'+v+'</v></c>'; return; }
+      x+='<c r="'+ref+'"'+st+' t="inlineStr"><is><t xml:space="preserve">'+xesc(v)+'</t></is></c>';
+    });
+    x+='</row>';
+  });
+  return x+'</sheetData></worksheet>';
+}
+
+/* 0 plain · 1 header · 2 branch subtotal · 3 grand total · 4 plain bordered */
+const STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+'<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
+'<fonts count="4">'+
+ '<font><sz val="10"/><name val="Calibri"/></font>'+
+ '<font><b/><color rgb="FFFFFFFF"/><sz val="10"/><name val="Calibri"/></font>'+
+ '<font><b/><sz val="10"/><name val="Calibri"/></font>'+
+ '<font><b/><color rgb="FF0A6B42"/><sz val="10"/><name val="Calibri"/></font>'+
+'</fonts>'+
+'<fills count="5">'+
+ '<fill><patternFill patternType="none"/></fill>'+
+ '<fill><patternFill patternType="gray125"/></fill>'+
+ '<fill><patternFill patternType="solid"><fgColor rgb="FF1E5FA8"/><bgColor indexed="64"/></patternFill></fill>'+
+ '<fill><patternFill patternType="solid"><fgColor rgb="FFFDF1DE"/><bgColor indexed="64"/></patternFill></fill>'+
+ '<fill><patternFill patternType="solid"><fgColor rgb="FFE2F5EC"/><bgColor indexed="64"/></patternFill></fill>'+
+'</fills>'+
+'<borders count="2"><border/>'+
+ '<border><left style="thin"><color rgb="FFC9DAE6"/></left><right style="thin"><color rgb="FFC9DAE6"/></right>'+
+ '<top style="thin"><color rgb="FFC9DAE6"/></top><bottom style="thin"><color rgb="FFC9DAE6"/></bottom></border>'+
+'</borders>'+
+'<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
+'<cellXfs count="5">'+
+ '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'+
+ '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1">'+
+   '<alignment vertical="center" wrapText="1"/></xf>'+
+ '<xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+ '<xf numFmtId="0" fontId="3" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+ '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>'+
+'</cellXfs>'+
+'<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'+
+'</styleSheet>';
+
+/* sheets: [{name, rows, widths}] */
+function xlsxDownload(fileName, sheets){
+  const parts=[];
+  parts.push({name:"[Content_Types].xml", bytes:utf8(
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">'+
+    '<Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>'+
+    '<Default Extension="xml" ContentType="application/xml"/>'+
+    '<Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+
+    sheets.map((s,i)=>'<Override PartName="/xl/worksheets/sheet'+(i+1)+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join("")+
+    '<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+
+    '</Types>')});
+  parts.push({name:"_rels/.rels", bytes:utf8(
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    '<Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/>'+
+    '</Relationships>')});
+  parts.push({name:"xl/workbook.xml", bytes:utf8(
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" '+
+    'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>'+
+    sheets.map((s,i)=>'<sheet name="'+xesc(s.name)+'" sheetId="'+(i+1)+'" r:id="rId'+(i+1)+'"/>').join("")+
+    '</sheets></workbook>')});
+  parts.push({name:"xl/_rels/workbook.xml.rels", bytes:utf8(
+    '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
+    '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+
+    sheets.map((s,i)=>'<Relationship Id="rId'+(i+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet'+(i+1)+'.xml"/>').join("")+
+    '<Relationship Id="rId'+(sheets.length+1)+'" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/>'+
+    '</Relationships>')});
+  parts.push({name:"xl/styles.xml", bytes:utf8(STYLES_XML)});
+  sheets.forEach((s,i)=>parts.push({name:"xl/worksheets/sheet"+(i+1)+".xml",
+    bytes:utf8(sheetXml(s.rows, s.widths))}));
+
+  const blob=new Blob([zipStore(parts)],
+    {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  const file=fileName.replace(/\.(csv|xls)$/i,".xlsx");
+  if(window.navigator&&window.navigator.msSaveOrOpenBlob){ window.navigator.msSaveOrOpenBlob(blob,file); return; }
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url; a.download=file; a.style.display="none";
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(url); a.remove(); },5000);
+}
+
+/* ---- how each journey mode is counted on the summary ---- */
+const TRIP_BIKE   = ["Bike","Own Vehicle"];
+const TRIP_PUBLIC = ["Bus","Train","Metro","Ferry"];
+/* Value of a claim for reporting: what will actually be paid where that is known. */
+function claimValue(r){
+  return stageAmt(r.payable)||stageAmt(r.approved)||stageAmt(r.recommended)||Number(r.claimed)||0;
+}
+/* One row per engineer, grouped by branch, with branch subtotals and a grand total. */
+function summarySheet(list){
+  const head=["Branch","Engineer ID","Engineer","Claim From Date","Claim To Date","Days Count",
+    "KM Travel","Expense Claim","No of Bike Trips","No of Public Trans Trip","No of Other Mode Trips","Total Trips"];
+  const by={};
+  list.forEach(r=>{
+    const code=r.by||"", key=(r.branch||"")+"|"+code;
+    const g = by[key] || (by[key]={branch:r.branch||"",code:code,name:r.name||(EMP[code]?EMP[code].n:""),
+      dates:{}, km:0, amt:0, bike:0, pub:0, oth:0});
+    const d=dkey(r.claimDate||r.perFrom);
+    if(d) g.dates[d]=1;
+    g.amt += claimValue(r);
+    (Array.isArray(r.items)?r.items:[]).forEach(it=>{
+      if(it.cat!=="Travel") return;
+      g.km += Number(it.km)||0;
+      if(TRIP_BIKE.indexOf(it.mode)>-1) g.bike++;
+      else if(TRIP_PUBLIC.indexOf(it.mode)>-1) g.pub++;
+      else g.oth++;
+    });
+  });
+  const rows=[head.map(h=>({v:h,s:1}))];
+  const groups=Object.keys(by).map(k=>by[k])
+    .sort((a,b)=>(a.branch||"").localeCompare(b.branch||"")||(a.name||"").localeCompare(b.name||""));
+  let branch=null, bt=null;
+  const blank={v:"",s:0};
+  const pushSubtotal=()=>{
+    if(!bt) return;
+    rows.push([{v:branch+" Total",s:2},{v:"",s:2},{v:"",s:2},
+      {v:bt.from?dd(bt.from):"",s:2},{v:bt.to?dd(bt.to):"",s:2},{v:bt.days,s:2},{v:bt.km,s:2},{v:bt.amt,s:2},
+      {v:bt.bike,s:2},{v:bt.pub,s:2},{v:bt.oth,s:2},{v:bt.bike+bt.pub+bt.oth,s:2}]);
+  };
+  const grand={days:0,km:0,amt:0,bike:0,pub:0,oth:0,from:"",to:""};
+  groups.forEach(g=>{
+    if(g.branch!==branch){ pushSubtotal(); branch=g.branch; bt={days:0,km:0,amt:0,bike:0,pub:0,oth:0,from:"",to:""}; }
+    const ds=Object.keys(g.dates).sort();
+    const from=ds[0]||"", to=ds[ds.length-1]||"";
+    rows.push([{v:g.branch,s:4},{v:g.code,s:4},{v:g.name,s:4},
+      {v:from?dd(from):"",s:4},{v:to?dd(to):"",s:4},{v:ds.length,s:4},
+      {v:Math.round(g.km),s:4},{v:Math.round(g.amt*100)/100,s:4},
+      {v:g.bike,s:4},{v:g.pub,s:4},{v:g.oth,s:4},{v:g.bike+g.pub+g.oth,s:4}]);
+    [bt,grand].forEach(t=>{
+      t.days+=ds.length; t.km+=g.km; t.amt+=g.amt; t.bike+=g.bike; t.pub+=g.pub; t.oth+=g.oth;
+      if(from&&(!t.from||from<t.from)) t.from=from;
+      if(to&&(!t.to||to>t.to)) t.to=to;
+    });
+    bt.from=bt.from||from; bt.to=bt.to||to;
+  });
+  pushSubtotal();
+  if(groups.length){
+    rows.push([{v:"Grand Total",s:3},{v:"",s:3},{v:"",s:3},
+      {v:grand.from?dd(grand.from):"",s:3},{v:grand.to?dd(grand.to):"",s:3},{v:grand.days,s:3},
+      {v:Math.round(grand.km),s:3},{v:Math.round(grand.amt*100)/100,s:3},
+      {v:grand.bike,s:3},{v:grand.pub,s:3},{v:grand.oth,s:3},
+      {v:grand.bike+grand.pub+grand.oth,s:3}]);
+  }
+  /* branch subtotal rows carry their own from/to, filled from the first engineer in the branch */
+  return {name:"Summary", rows:rows,
+    widths:[16,12,26,15,15,10,11,14,14,20,20,11]};
+}
+function detailSheet(name, head, rows, widths){
+  return {name:name,
+    rows:[head.map(h=>({v:h,s:1}))].concat(rows.map(r=>r.map(v=>({v:v,s:4})))),
+    widths:widths||head.map(()=>16)};
+}
+
+function exportPayment(list){
+  const head=["Claim No","Voucher No","Employee ID","Employee Name","Designation","Branch","Zone","Mobile",
+    "Approval Level","Reporting Manager","Regional Manager","Branch Manager","Claim Date","Customer Segment","Customer Name",
+    "Ticket / Case No","UID","Purpose","Lines","Total KM Travelled","Total Reference KM","Total Claimed","RM Recommended","RM Recommended On",
+    "Regional Approved","Regional Approved On","Final Payable","Claim Status","Payment Status","Payment Reference",
+    "Payment Date","RM Remark","Regional Remark","HO Remark","Re-applied Against"];
+  const rows=list.map(r=>{
+    const trail=Array.isArray(r.trail)?r.trail:[];
+    const items=Array.isArray(r.items)?r.items:[];
+    const pay=r.pay||{};
+    const rec=trail.filter(t=>String(t&&t.act||"").indexOf("recommended")>-1).pop()||{};
+    const app=trail.filter(t=>String(t&&t.act||"")==="Approved").pop()||{};
+    let refTotal=0;
+    items.forEach(i=>{ try{ if(i.cat==="Travel"){ const k=refKm(i.jFromPin,i.jToPin); refTotal+=k||0; } }catch(e){} });
+    return [r.no,r.voucher,r.by,r.name,r.desig,r.branch,r.zone,r.mobile,r.level||"",
+      r.rmCode?nm(r.rmCode):"",r.rgCode?nm(r.rgCode):"",r.bhCode?nm(r.bhCode):"",
+      dkey(r.claimDate||r.perFrom),r.segment,r.custName,r.ticket,r.uid,r.purpose,items.length,
+      items.reduce((s,i)=>s+(i.cat==="Travel"?(Number(i.km)||0):0),0),
+      refTotal,
+      r.claimed,r.recommended,rec.ts?String(rec.ts).slice(0,10):"",
+      r.approved,app.ts?String(app.ts).slice(0,10):"",r.payable,r.status,
+      pay.status||"",pay.ref||"",pay.date||"",
+      rec.remark||"",app.remark||"",pay.remark||"",r.revOf||""];
+  });
+  if(!rows.length){ alert("Nothing matches the current filters, so there is nothing to export."); return; }
+  xlsxDownload("Prostarm_Travel_Claims_Payment_"+(EXPORT_TAG?EXPORT_TAG+"_":"")+todayISO()+".xlsx",
+    [summarySheet(list), detailSheet("Payment Detail",head,rows)]);
+}
+function exportCrm(list){
+  const skipped=[];
+  const head=["Branch","Emp ID","Emp Name","Ticket / Case No","UID","Customer Name","Customer Segment","Journey Date",
+    "Journey From","Journey From Pincode","Journey To","Journey To Pincode","Expenses Type","Travel Mode / Expense Mode",
+    "Km Travel","Day KM (Engineer)","Reference KM (Pincode)","Rate/KM","Total Claim","Approval Status","Claim No","Approved Amount","Payment Status","Payment Reference"];
+  const rows=[];
+  list.forEach(r=>{
+   const items=Array.isArray(r.items)?r.items:[];
+   const pay=r.pay||{};
+   try{
+    items.forEach(it=>rows.push([r.branch,r.by,r.name,it.ticket||r.ticket,it.uid||r.uid,it.custName||r.custName,it.segment||r.segment,it.date,
+    it.jFrom,it.jFromPin,it.jTo,it.jToPin,it.cat,it.mode,it.km||"",
+    r.items.reduce((s,x)=>s+(x.cat==="Travel"&&x.date===it.date?(Number(x.km)||0):0),0)||"",
+    (it.cat==="Travel"&&refKm(it.jFromPin,it.jToPin)!=null)?refKm(it.jFromPin,it.jToPin):"",
+    it.rate||"",it.amt,r.status,r.no,
+    r.approved==null?"":r.approved,pay.status||"",pay.ref||""]));
+   }catch(e){ skipped.push(r.no||r.id); }
+  });
+  if(skipped.length) alert("These claims were skipped because their line data could not be read: "+skipped.join(", "));
+  if(!rows.length){ alert("Nothing matches the current filters, so there is nothing to export."); return; }
+  xlsxDownload("Prostarm_Travel_Claims_CRM_Format_"+(EXPORT_TAG?EXPORT_TAG+"_":"")+todayISO()+".xlsx",
+    [summarySheet(list), detailSheet("CRM Detail",head,rows)]);
+}
+
+/* ================= MINIMAL XLSX READER ================= */
+function inflateRaw(data){
+  let pos=0, bitBuf=0, bitCnt=0;
+  const out=[];
+  const bits=n=>{
+    while(bitCnt<n){ bitBuf|=data[pos++]<<bitCnt; bitCnt+=8; }
+    const v=bitBuf&((1<<n)-1); bitBuf>>>=n; bitCnt-=n; return v;
+  };
+  const build=lens=>{
+    const max=Math.max.apply(null,lens), bl=new Array(max+1).fill(0);
+    for(const l of lens) if(l) bl[l]++;
+    const next=new Array(max+1).fill(0);
+    let code=0;
+    for(let i=1;i<=max;i++){ code=(code+bl[i-1])<<1; next[i]=code; }
+    const map={};
+    for(let i=0;i<lens.length;i++){
+      const l=lens[i];
+      if(l) map[l+"_"+(next[l]++)]=i;
+    }
+    return {map:map,max:max};
+  };
+  const decode=t=>{
+    let code=0;
+    for(let len=1;len<=t.max;len++){
+      code=(code<<1)|bits(1);
+      const v=t.map[len+"_"+code];
+      if(v!==undefined) return v;
+    }
+    throw new Error("bad huffman code");
+  };
+  const LB=[3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258];
+  const LE=[0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0];
+  const DB=[1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577];
+  const DE=[0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
+  let fixedL=null, fixedD=null;
+  for(;;){
+    const last=bits(1), type=bits(2);
+    if(type===0){
+      bitBuf=0; bitCnt=0;
+      const len=data[pos]|(data[pos+1]<<8); pos+=4;
+      for(let i=0;i<len;i++) out.push(data[pos++]);
+    } else {
+      let lt,dt;
+      if(type===1){
+        if(!fixedL){
+          const l=new Array(288);
+          for(let i=0;i<288;i++) l[i]=i<144?8:i<256?9:i<280?7:8;
+          fixedL=build(l); fixedD=build(new Array(30).fill(5));
+        }
+        lt=fixedL; dt=fixedD;
+      } else if(type===2){
+        const hlit=bits(5)+257, hdist=bits(5)+1, hclen=bits(4)+4;
+        const ord=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];
+        const cl=new Array(19).fill(0);
+        for(let i=0;i<hclen;i++) cl[ord[i]]=bits(3);
+        const ct=build(cl), lens=[];
+        while(lens.length<hlit+hdist){
+          const sym=decode(ct);
+          if(sym<16) lens.push(sym);
+          else if(sym===16){ const p=lens[lens.length-1], n=bits(2)+3; for(let i=0;i<n;i++) lens.push(p); }
+          else if(sym===17){ const n=bits(3)+3; for(let i=0;i<n;i++) lens.push(0); }
+          else { const n=bits(7)+11; for(let i=0;i<n;i++) lens.push(0); }
+        }
+        lt=build(lens.slice(0,hlit)); dt=build(lens.slice(hlit));
+      } else throw new Error("bad block type");
+      for(;;){
+        const sym=decode(lt);
+        if(sym===256) break;
+        if(sym<256) out.push(sym);
+        else {
+          const li=sym-257, len=LB[li]+bits(LE[li]);
+          const ds=decode(dt), dist=DB[ds]+bits(DE[ds]);
+          let start=out.length-dist;
+          for(let i=0;i<len;i++) out.push(out[start+i]);
+        }
+      }
+    }
+    if(last) break;
+  }
+  return new Uint8Array(out);
+}
+
+function unzip(buf){
+  const b=new Uint8Array(buf), dv=new DataView(buf);
+  let eocd=-1;
+  for(let i=b.length-22;i>=0 && i>b.length-70000;i--){
+    if(dv.getUint32(i,true)===0x06054b50){ eocd=i; break; }
+  }
+  if(eocd<0) throw new Error("Not a valid .xlsx file (no zip directory found).");
+  const count=dv.getUint16(eocd+10,true);
+  let p=dv.getUint32(eocd+16,true);
+  const files={}, dec=new TextDecoder("utf-8");
+  for(let i=0;i<count;i++){
+    if(dv.getUint32(p,true)!==0x02014b50) break;
+    const method=dv.getUint16(p+10,true);
+    const csize=dv.getUint32(p+20,true);
+    const nlen=dv.getUint16(p+28,true);
+    const elen=dv.getUint16(p+30,true);
+    const clen=dv.getUint16(p+32,true);
+    const lho=dv.getUint32(p+42,true);
+    const name=dec.decode(b.subarray(p+46,p+46+nlen));
+    const lnlen=dv.getUint16(lho+26,true), lelen=dv.getUint16(lho+28,true);
+    const start=lho+30+lnlen+lelen;
+    const raw=b.subarray(start,start+csize);
+    if(name.indexOf(".xml")>-1 || name.indexOf(".rels")>-1){
+      try{ files[name]=dec.decode(method===0?raw:inflateRaw(raw)); }
+      catch(e){ }
+    }
+    p+=46+nlen+elen+clen;
+  }
+  return files;
+}
+const colIndex=ref=>{
+  let n=0;
+  for(let i=0;i<ref.length;i++){
+    const c=ref.charCodeAt(i);
+    if(c<65||c>90) break;
+    n=n*26+(c-64);
+  }
+  return n;
+};
+const excelDate=n=>{
+  const d=new Date(Date.UTC(1899,11,30)+Math.round(n)*86400000);
+  return d.getUTCFullYear()+"-"+pad(d.getUTCMonth()+1)+"-"+pad(d.getUTCDate());
+};
+
+function readSheet(buf,wanted){
+  const files=unzip(buf), P=new DOMParser();
+  const wbXml=files["xl/workbook.xml"];
+  if(!wbXml) throw new Error("This does not look like an Excel workbook.");
+  const rels=P.parseFromString(files["xl/_rels/workbook.xml.rels"]||"<x/>","application/xml");
+  const relMap={};
+  [].forEach.call(rels.getElementsByTagName("Relationship"),n=>{
+    relMap[n.getAttribute("Id")]=n.getAttribute("Target").replace(/^\/?xl\//,"");
+  });
+  let target=null, names=[];
+  [].forEach.call(P.parseFromString(wbXml,"application/xml").getElementsByTagName("sheet"),n=>{
+    const nm=n.getAttribute("name"); names.push(nm);
+    const rid=n.getAttribute("r:id")||n.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships","id");
+    if(nm===wanted) target=relMap[rid]||("worksheets/sheet"+(names.length)+".xml");
+  });
+  if(!target) throw new Error('Sheet "'+wanted+'" not found. This file has: '+names.join(", "));
+  const sxml=files["xl/"+target];
+  if(!sxml) throw new Error("Could not read the sheet data from this file.");
+  const shared=[];
+  if(files["xl/sharedStrings.xml"]){
+    [].forEach.call(P.parseFromString(files["xl/sharedStrings.xml"],"application/xml").getElementsByTagName("si"),si=>{
+      let t="";
+      [].forEach.call(si.getElementsByTagName("t"),n=>{ t+=n.textContent; });
+      shared.push(t);
+    });
+  }
+  const grid={};
+  [].forEach.call(P.parseFromString(sxml,"application/xml").getElementsByTagName("row"),row=>{
+    const rn=parseInt(row.getAttribute("r"),10);
+    const cells={};
+    [].forEach.call(row.getElementsByTagName("c"),c=>{
+      const ref=c.getAttribute("r")||"", t=c.getAttribute("t");
+      const vEl=c.getElementsByTagName("v")[0];
+      let val=null;
+      if(t==="inlineStr"){
+        const is=c.getElementsByTagName("t")[0];
+        val=is?is.textContent:null;
+      } else if(vEl){
+        const raw=vEl.textContent;
+        if(t==="s") val=shared[parseInt(raw,10)];
+        else if(t==="str"||t==="e") val=raw;
+        else { const num=parseFloat(raw); val=isNaN(num)?raw:num; }
+      }
+      if(val!==null&&val!=="") cells[colIndex(ref)]=val;
+    });
+    if(Object.keys(cells).length) grid[rn]=cells;
+  });
+  return grid;
+}
+
+/* ================= BULK UPLOAD ================= */
+const SHEET_NAME="Claim Upload Template";
+const HDR_ROW=2, DATA_ROW=3, MAX_ROWS=3250;   /* matches the rows in the issued template */
+const BCOL={ticket:1,uid:2,custName:3,segment:4,purpose:5,date:6,expType:7,
+  fromLoc:8,fromPin:9,toLoc:10,toPin:11,mode:12,km:13,amount:14,
+  eng:15,claimType:19,category:20,dept:21,currency:24,project:25};
+const BHDR=[[1,"Ticket ID"],[2,"UID"],[3,"Customer Name"],[4,"Customer Segment"],
+  [5,"Purpose Of Travel"],[6,"Journey Date"],[7,"Expense Type"],[15,"Engineer ID"]];
+const TYPE_MAP={"Travel":"Travel","Hotel":"Hotel","Food":"Food","Misc":"Misc"};
+const TYPE_DEFAULT_MODE={"Hotel":"Hotel","Food":"Restaurants","Misc":"Others"};
+let BATCH=null;
+
+function bToast(t,ok){ const e=$("bToast"); e.className="msg "+(ok?"ok":"no")+" on"; e.textContent=t;
+  setTimeout(()=>{e.className="msg";},20000); }
+
+$("bDrop").addEventListener("click",()=>$("bFile").click());
+["dragover","dragenter"].forEach(ev=>$("bDrop").addEventListener(ev,e=>{
+  e.preventDefault(); $("bDrop").style.borderColor="var(--teal)"; }));
+["dragleave","drop"].forEach(ev=>$("bDrop").addEventListener(ev,e=>{
+  e.preventDefault(); $("bDrop").style.borderColor=""; }));
+$("bDrop").addEventListener("drop",e=>{ if(e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); });
+$("bFile").addEventListener("change",e=>{ if(e.target.files[0]) handleFile(e.target.files[0]); e.target.value=""; });
+$("bClear").addEventListener("click",()=>{ BATCH=null; $("bResult").className="hide"; });
+
+let BUSY=false;
+function handleFile(f){
+  /* The issued template carries thousands of formula rows, so unzipping and
+     reading it takes a moment. Say so, and refuse a second file until done,
+     or the user clicks again thinking nothing happened. */
+  if(BUSY){ bToast("Still reading the last file. Give it a moment.",false); return; }
+  if(!/\.xlsx$/i.test(f.name)){ bToast("Upload the .xlsx template. Older .xls files and CSV are not read.",false); return; }
+  if(f.size>6*1024*1024){ bToast("That file is "+Math.round(f.size/1048576)+" MB. Split the batch so each file stays under 5 MB.",false); return; }
+  BUSY=true;
+  const drop=$("bDrop"), label=drop?drop.innerHTML:"";
+  if(drop) drop.innerHTML="<b>Reading "+esc(f.name)+"</b>checking every row against the master";
+  const done=()=>{ BUSY=false; if(drop) drop.innerHTML=label; };
+  const r=new FileReader();
+  r.onload=()=>{
+    /* let the browser paint the reading state before the parse blocks it */
+    setTimeout(async()=>{
+      try{
+        const grid=readSheet(r.result,SHEET_NAME);
+        await parseBatch(grid,f.name);
+      }catch(err){ bToast("Could not read that file: "+err.message,false); }
+      finally{ done(); }
+    },30);
+  };
+  r.onerror=()=>{ done(); bToast("The file could not be opened. Try saving it again from Excel.",false); };
+  r.readAsArrayBuffer(f);
+}
+
+const cellStr=v=>v==null?"":String(v).trim();
+const cellNum=v=>{ if(v==null||v==="") return null; const n=Number(v); return isNaN(n)?null:n; };
+
+async function parseBatch(grid,fileName){
+  const hdr=grid[HDR_ROW];
+  if(!hdr){ bToast("Row 2 of the sheet has no column headers. Use the issued template.",false); return; }
+  const missing=BHDR.filter(h=>cellStr(hdr[h[0]]).toLowerCase().indexOf(h[1].toLowerCase())<0).map(h=>h[1]);
+  if(missing.length){
+    bToast("This file does not match the issued template — "+missing.join(", ")+
+      " not found in the expected column"+(missing.length>1?"s":"")+
+      ". Download the current template and re-enter, or check that no columns were inserted or deleted.",false);
+    return; }
+  const existing=await loadAll();
+  const rows=[];
+  Object.keys(grid).map(Number).filter(n=>n>=DATA_ROW).sort((a,b)=>a-b).forEach(rn=>{
+    const c=grid[rn];
+    const rec={xl:rn,
+      ticket:cellStr(c[BCOL.ticket]), uid:cellStr(c[BCOL.uid]), dateRaw:c[BCOL.date],
+      custName:cellStr(c[BCOL.custName]), segment:cellStr(c[BCOL.segment]),
+      purpose:cellStr(c[BCOL.purpose]), expType:cellStr(c[BCOL.expType]),
+      fromLoc:cellStr(c[BCOL.fromLoc]), fromPin:cellStr(c[BCOL.fromPin]),
+      toLoc:cellStr(c[BCOL.toLoc]), toPin:cellStr(c[BCOL.toPin]),
+      mode:cellStr(c[BCOL.mode]), km:cellNum(c[BCOL.km]), amount:cellNum(c[BCOL.amount]),
+      eng:cellStr(c[BCOL.eng]), claimType:cellStr(c[BCOL.claimType]),
+      category:cellStr(c[BCOL.category]), dept:cellStr(c[BCOL.dept]),
+      currency:cellStr(c[BCOL.currency]), project:cellStr(c[BCOL.project]),
+      err:[], warn:[]};
+    const filled=[rec.ticket,rec.custName,rec.purpose,rec.expType,rec.fromLoc,rec.toLoc,rec.eng,rec.mode].some(v=>v!=="")||rec.dateRaw!=null;
+    if(filled) rows.push(rec);
+  });
+  if(!rows.length){ bToast("No claim rows found. Enter data from row 3 downwards.",false); return; }
+  if(rows.length>MAX_ROWS){ bToast("That file has "+rows.length+" rows. The limit is "+MAX_ROWS+" per upload.",false); return; }
+
+  const today=todayISO();
+  const seen={};
+  rows.forEach(r=>{
+    if(r.dateRaw==null||r.dateRaw==="") r.err.push("Journey Date is blank");
+    else if(typeof r.dateRaw==="number") r.date=excelDate(r.dateRaw);
+    else {
+      const m=String(r.dateRaw).match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+      if(m) r.date=m[3]+"-"+pad(m[2])+"-"+pad(m[1]);
+      else r.err.push("Journey Date is not a valid date — format the cell as a date");
+    }
+    if(r.date&&r.date>today) r.err.push("Journey Date cannot be a future date");
+    if(!r.ticket && SITE_HEADS.indexOf(r.expType)>-1)
+      r.err.push("Ticket ID / Case ID is required on "+r.expType+" lines");
+    if(!r.custName) r.err.push("Customer Name is blank");
+    if(!r.segment) r.err.push("Customer Segment is blank");
+    if(!r.purpose) r.err.push("Purpose Of Travel is blank");
+    if(!r.expType) r.err.push("Expense Type is blank");
+    else if(!TYPE_MAP[r.expType]) r.err.push('Expense Type "'+r.expType+'" is not Travel, Hotel, Food or Misc');
+    const travel = r.expType==="Travel";
+    if(travel){
+      if(!r.fromLoc) r.err.push("Journey From Location is blank");
+      if(!r.toLoc) r.err.push("Journey To Location is blank");
+      if(!/^[1-9][0-9]{5}$/.test(r.fromPin)) r.err.push("From Pincode must be exactly 6 digits");
+      if(!/^[1-9][0-9]{5}$/.test(r.toPin)) r.err.push("To Pincode must be exactly 6 digits");
+      if(r.fromPin===r.toPin&&r.fromLoc&&r.fromLoc===r.toLoc) r.err.push("From and To are the same location");
+      if(!r.mode) r.err.push("Journey Mode is blank");
+      else if(HEADS.Travel.indexOf(r.mode)<0) r.err.push('Journey Mode "'+r.mode+'" is not in the master list');
+      if(!(r.km>0)) r.err.push("KM Travel is required on every Travel row");
+      else if(r.km>3000) r.err.push("KM Travel of "+r.km+" is beyond the 3000 KM limit for one day");
+      if(isSlabMode(r.mode)){
+        if(r.amount!=null) r.err.push("Leave Claimed Amount blank for "+r.mode+" — the KM slab is applied here");
+      } else if(!(r.amount>0)) r.err.push("Claimed Amount is required for this Journey Mode");
+    } else {
+      if(r.mode) r.err.push("Journey Mode applies to Travel rows only — leave it blank");
+      if(r.km!=null) r.err.push("KM Travel applies to Travel rows only — leave it blank");
+      if(!(r.amount>0)) r.err.push("Claimed Amount is required for "+(r.expType||"this")+" rows");
+    }
+    if(r.amount!=null&&r.amount>500000) r.err.push("Claimed Amount is beyond the 500000 per line limit");
+    if(!r.eng) r.err.push("Engineer ID is blank");
+    else if(!EMP[r.eng]) r.err.push("Engineer ID "+r.eng+" is not in the employee master");
+    else if(!canUploadFor(r.eng)) r.err.push(EMP[r.eng].n+" does not report to you and is not in your branch");
+    if(!r.claimType) r.err.push("Claim Type is blank");
+    if(!r.category) r.err.push("Travel Category is blank");
+    if(!r.dept) r.err.push("Department is blank");
+    if(!r.project) r.err.push("Project / Service Type is blank");
+    if(r.currency&&r.currency!=="INR") r.err.push("Claim Currency must be INR");
+    if(r.eng&&r.date){
+      const k=[r.eng,r.date,r.ticket||"-",r.expType,r.mode].join("|");
+      if(seen[k]) r.warn.push("Repeats row "+seen[k]+" — same engineer, date, ticket, type and mode");
+      else seen[k]=r.xl;
+    }
+  });
+
+  const groups={};
+  rows.forEach(r=>{ if(r.eng&&r.date) (groups[r.eng+"|"+r.date]=groups[r.eng+"|"+r.date]||[]).push(r); });
+  Object.keys(groups).forEach(k=>{
+    const g=groups[k], h=g[0];
+    const held=existing.find(c=>cleanCode(c.by)===cleanCode(h.eng)
+      && dkey(c.claimDate||c.perFrom)===dkey(h.date) && !isRejected(c.status));
+    if(held) g.forEach(r=>r.err.push("An expense claim already exists for "+dd(h.date)+" ("+held.no+", "+held.status+
+      "). Add these lines by editing that claim instead of uploading them again"));
+    g.forEach(r=>{ r.groupKey=k; r.groupSize=g.length; });
+  });
+
+  const dayKm={}, dayAll={};
+  rows.forEach(r=>{
+    if(r.err.length) return;
+    if(r.expType==="Travel"){
+      dayAll[r.eng+"|"+r.date]=(dayAll[r.eng+"|"+r.date]||0)+(r.km||0);
+      if(isSlabMode(r.mode)) dayKm[r.eng+"|"+r.date]=(dayKm[r.eng+"|"+r.date]||0)+r.km;
+    }
+  });
+  rows.forEach(r=>{
+    if(r.err.length) return;
+    if(r.expType==="Travel"&&isSlabMode(r.mode)){
+      const tot=dayKm[r.eng+"|"+r.date]||0;
+      r.rate=tot>BIKE_SLAB.limit?BIKE_SLAB.high:BIKE_SLAB.low;
+      r.value=Math.round(r.km*r.rate*100)/100;
+      r.slabKm=tot;
+    } else { r.rate=0; r.value=r.amount; }
+    r.dayKm=dayAll[r.eng+"|"+r.date]||0;
+    r.refKm=r.expType==="Travel"?refKm(r.fromPin,r.toPin):null;
+  });
+
+  BATCH={file:fileName,rows:rows,
+    ref:"UPL-"+todayISO().replace(/-/g,"")+"-"+String(Date.now()).slice(-4)};
+  renderBatch();
+}
+
+function canUploadFor(code){
+  if(isHO(ME)) return true;
+  const e=EMP[code];
+  return e.rm===ME || e.rg===ME || e.b===EMP[ME].b;
+}
+
+function renderBatch(){
+  const rows=BATCH.rows, ok=rows.filter(r=>!r.err.length), bad=rows.length-ok.length;
+  const dup=ok.filter(r=>r.warn.length).length;
+  const claimCount=Object.keys(ok.reduce((m,r)=>{ m[r.eng+"|"+r.date]=1; return m; },{})).length;
+  $("bResult").className="";
+  $("bTotal").textContent=rows.length;
+  $("bOk").textContent=ok.length;
+  $("bBad").textContent=bad;
+  $("bClaims").textContent=claimCount;
+  $("bKm").textContent=ok.reduce((s,r)=>s+(r.expType==="Travel"?(r.km||0):0),0)+" KM";
+  $("bVal").textContent=money(ok.reduce((s,r)=>s+r.value,0));
+  $("bRows").innerHTML='<table class="itab"><tr><th>Excel row</th><th>Ticket</th><th>Date</th><th>Engineer</th>'+
+    '<th>Type</th><th>Journey</th><th>Ref KM</th><th>Mode</th><th>KM</th><th>Day KM</th><th>Rate</th>'+
+    '<th>Value</th><th>Uploaded By (Rep. Mgr)</th><th>Branch</th><th>Approver</th><th>Result</th></tr>'+
+    rows.map(r=>{
+      const e=EMP[r.eng];
+      const appr=e?(e.rg?nm(e.rg):"HO Admin"):"—";
+      const flag=(r.expType==="Travel"&&isSlabMode(r.mode)&&r.refKm>0&&r.km>r.refKm*1.25)
+        ? '<span class="vflag">+'+Math.round((r.km-r.refKm)/r.refKm*100)+'%</span>':"";
+      const tone=r.err.length?"":(r.warn.length?' style="background:var(--amber-lt)"':"");
+      const result=r.err.length
+        ? '<span style="color:var(--red);font-weight:700">'+esc(r.err.join(" · "))+'</span>'
+        : (r.warn.length
+           ? '<span style="color:var(--amber);font-weight:800">OK — DUPLICATE</span><br>'+
+             '<span style="color:var(--amber);font-weight:600;font-size:10px">'+esc(r.warn.join(" · "))+'</span>'
+           : '<span style="color:var(--green);font-weight:800">OK</span>');
+      return '<tr'+tone+'><td>'+r.xl+'</td><td>'+esc(r.ticket||"—")+'</td><td>'+(r.date?dd(r.date):"—")+'</td>'+
+        '<td>'+esc(e?e.n:r.eng||"—")+'</td>'+
+        '<td>'+(r.groupSize?esc(r.groupSize+" line"+(r.groupSize>1?"s":"")+" → 1 claim"):"—")+'</td>'+
+        '<td>'+esc(r.expType||"—")+'</td>'+
+        '<td>'+(r.expType==="Travel"?esc(r.fromLoc+" ("+r.fromPin+") → "+r.toLoc+" ("+r.toPin+")"):"—")+'</td>'+
+        '<td class="n">'+(r.refKm==null?"—":r.refKm)+'</td>'+
+        '<td>'+esc(r.mode||"—")+'</td><td class="n">'+(r.km||"—")+flag+'</td>'+
+        '<td class="n">'+(r.expType==="Travel"?(r.dayKm||"—"):"—")+'</td>'+
+        '<td class="n">'+(r.rate?"₹"+r.rate:"—")+'</td><td class="n">'+(r.err.length?"—":money(r.value))+'</td>'+
+        '<td>'+esc(e?(e.rm?nm(e.rm)+(e.rm===ME?"":" ⚠"):"No Reporting Manager stage"):"—")+'</td>'+
+        '<td>'+esc(e?e.b:"—")+'</td>'+
+        '<td>'+esc(appr)+'</td><td>'+result+'</td></tr>';
+    }).join("")+'</table>'+
+    '<div class="refnote"><b>KM</b> is recorded on every Travel row whatever the mode, and <b>Day KM</b> is that engineer\'s '+
+    'total distance for the date across this file. Only Bike and Own Vehicle rows are priced from KM — the slab is decided '+
+    'on the self-driven KM of the day, so two such legs on one date can push the whole day to ₹'+BIKE_SLAB.high+'/KM. '+
+    'One engineer on one date becomes <b>one claim</b> with several lines. Ticket, UID, Customer, Segment and Purpose are captured per line, so a single day can cover several tickets and customers. '+
+    'Amber rows repeat an identical line; they are allowed and will upload, so check they are genuine. '+
+    '<b>Uploaded By</b> and <b>Branch</b> come from each engineer\'s own record, so one file can cover several branches. '+
+    'A ⚠ marks a row whose Reporting Manager is not you — the claim still uploads, but the trail records that you raised it, not that manager. '+
+    'The upload date and time are stamped by the portal now, not taken from the sheet. '+
+    'Bulk rows carry no bills — attach supporting documents in the claim before the approver reviews it.</div>';
+  $("bCommit").disabled = ok.length===0;
+  $("bCommit").textContent = "Create "+claimCount+" claim"+(claimCount===1?"":"s")+" from "+ok.length+" line"+(ok.length===1?"":"s");
+}
+
+$("bPartial").addEventListener("change",()=>{ if(BATCH) renderBatch(); });
+
+$("bCommit").addEventListener("click",async()=>{
+  if(!BATCH) return;
+  const rows=BATCH.rows, ok=rows.filter(r=>!r.err.length), bad=rows.length-ok.length;
+  if(!ok.length){ bToast("Nothing to create. Every row has an error.",false); return; }
+  if(bad&&!$("bPartial").checked){
+    bToast(bad+" row(s) failed validation. Fix them and upload again, or tick the partial upload box to create only the "+ok.length+" valid rows.",false);
+    return;
+  }
+  const nClaims=Object.keys(ok.reduce((m,r)=>{ m[r.eng+"|"+r.date]=1; return m; },{})).length;
+  if(!confirm("Create "+nClaims+" claim(s) from "+ok.length+" line(s), worth "+money(ok.reduce((s,r)=>s+r.value,0))+
+    "?\nEach one is routed straight to the Regional Manager for approval.")) return;
+
+  const list=await loadAll(), now=new Date().toISOString();
+  const groups={};
+  ok.forEach(r=>{ const k=r.eng+"|"+r.date; (groups[k]=groups[k]||[]).push(r); });
+  let made=0;
+  let left = [];
+
+  // Replaced with a for...of loop to await the Cloud API correctly
+  for (const k of Object.keys(groups)) {
+    const g=groups[k], e=EMP[g[0].eng], first=g[0];
+    const cdate=first.date;
+    const items=g.map((r,i)=>({id:"L"+(i+1),date:r.date,ticket:r.ticket,uid:r.uid,
+      custName:r.custName,segment:r.segment,purpose:r.purpose,
+      cat:TYPE_MAP[r.expType]||"Misc",
+      mode:r.expType==="Travel"?r.mode:(TYPE_DEFAULT_MODE[r.expType]||"Others"),
+      jFrom:r.expType==="Travel"?r.fromLoc:"", jFromPin:r.expType==="Travel"?r.fromPin:"",
+      jTo:r.expType==="Travel"?r.toLoc:"",    jToPin:r.expType==="Travel"?r.toPin:"",
+      km:r.expType==="Travel"?r.km:"", rate:r.rate, amt:r.value, refKm:r.refKm,
+      desc:r.claimType+" · "+r.category+" · "+r.project+" (Excel row "+r.xl+")"+
+           (r.warn.length?" · DUPLICATE FLAGGED: "+r.warn.join("; "):""), att:[]}));
+    const claimed=items.reduce((s,i)=>s+i.amt,0);
+    const bc=e.b.split("_")[0], d=new Date();
+    const seq=String(Date.now()).slice(-4)+String(made+1);
+    
+    const r={
+      id:"TX"+Date.now()+made+Math.floor(Math.random()*999),
+      no:"TC/"+bc+"/"+String(d.getFullYear()).slice(2)+pad(d.getMonth()+1)+"/"+seq,
+      voucher:"TV/"+bc+"/"+String(d.getFullYear()).slice(2)+pad(d.getMonth()+1)+"/"+seq,
+      by:g[0].eng, name:e.n, desig:e.d, branch:e.b, zone:e.z, mobile:"",
+      rmCode:e.rm||null, rgCode:e.rg||null, level:e.g, bhCode:BRANCH_HEAD[e.b]||null,
+      claimDate:cdate, perFrom:cdate, perTo:cdate,
+      segment:listSummary(g,"segment"), custName:listSummary(g,"custName"),
+      ticket:listSummary(g,"ticket"), uid:listSummary(g,"uid"),
+      purpose:listSummary(g,"purpose"), items:items,
+      kmTotal:items.reduce((s,i)=>s+(i.cat==="Travel"?(Number(i.km)||0):0),0),
+      dupFlag:g.some(r=>r.warn.length),
+      claimed:claimed, recommended:claimed, approved:null, payable:null,
+      status:e.rg?ST.REC:ST.HOA, trail:[], revOf:null, rev:1,
+      uploadOnBehalf:(e.rm&&e.rm!==ME)?e.rm:null,
+      source:"Bulk Upload", batch:BATCH.ref, batchFile:BATCH.file,
+      uploadedBy:ME, uploadedAt:now,          
+      createdAt:now, submittedAt:now,
+      pay:{status:"Pending",ref:"",date:"",remark:"",by:null}
+    };
+    r.trail.push({code:ME,act:"Submitted",remark:"Bulk upload "+BATCH.ref+" from "+BATCH.file+
+      " · raised on behalf of "+e.n+" · stamped "+dt(now),ts:now,amt:claimed});
+    r.trail.push({code:ME,act:"Checked and recommended",remark:
+      (r.uploadOnBehalf
+        ? "Uploaded by "+nm(ME)+", who is NOT this engineer's Reporting Manager ("+nm(r.uploadOnBehalf)+"). Verify before approving."
+        : "Recommended at claimed value by the Reporting Manager who uploaded the file.")+
+      " No bills attached at upload."+
+      (r.dupFlag?" DUPLICATE TICKET AND DATE FLAGGED AT UPLOAD — confirm before approving.":""),ts:now,amt:claimed});
+    
+    try {
+      await saveClaimToCloud(r);
+      made++;
+    } catch(err) {
+      g.forEach(row => { row.err.push("Cloud sync failed: " + err.message); left.push(row); });
+    }
+  }
+  
+  BATCH=null; $("bResult").className="hide";
+  bToast(made+" claim(s) created from "+ok.length+" line(s) and sent for approval."+
+    (left.length?" "+left.length+" failed row(s) were not uploaded.":""),true);
+  await refresh();
+});
+
+$("bCsv").addEventListener("click",()=>{
+  if(!BATCH){ bToast("Load a file first.",false); return; }
+  const head=["Excel Row","Ticket ID","UID","Journey Date","Expense Type","Engineer ID","Branch Name","Journey From",
+    "From Pincode","Journey To","To Pincode","Journey Mode","KM Travel","Day KM","Claimed Amount","Result","Warning"];
+  const rows=BATCH.rows.map(r=>[r.xl,r.ticket,r.uid,r.date||r.dateRaw,r.expType,r.eng,EMP[r.eng]?EMP[r.eng].b:"",
+    r.fromLoc,r.fromPin,r.toLoc,r.toPin,r.mode,r.km==null?"":r.km,r.dayKm||"",
+    r.amount==null?"":r.amount,r.err.length?r.err.join(" | "):"OK",r.warn.join(" | ")]);
+  xlsxDownload("Bulk_Upload_Result_"+BATCH.ref+".xlsx",[detailSheet("Upload Result",head,rows)]);
+});
+
+/* ================= REFRESH ================= */
+function list(el,rows,emptyTitle,emptyLine,pick,sc){
+  $(el).innerHTML=rows.length?rows.map(r=>card(r,pick,sc)).join("")
+    :'<div class="empty"><b>'+emptyTitle+'</b>'+emptyLine+'</div>';
+}
+function kpi(rows){
+  return rows.map((x,i)=>'<div class="kpi'+(i===0?" total":"")+'" style="--accent:'+(x[2]||"var(--blue)")+'">'+
+    '<span class="lbl">'+x[0]+'</span><span class="val">'+x[1]+"</span></div>").join("");
+}
+async function refresh(){
+  try{ return await refreshInner(); }
+  catch(e){
+    console.error("refresh failed:",e);
+    const el=$("toast");
+    if(el){ el.className="msg no on"; el.textContent="Some claim data could not be read ("+e.message+"). Press Refresh, or contact IT if it persists."; }
+  }
+}
+async function refreshInner(){
+  if(!ME) return;
+  const all=await loadAll();
+  const when=r=>String(r.submittedAt||r.createdAt||r.claimDate||"");
+  const sort=a=>a.slice().sort((x,y)=>when(y).localeCompare(when(x)));
+
+  const mine=sort(all.filter(r=>r.by===ME));
+  const check=sort(all.filter(r=>r.status===ST.SUB&&r.rmCode===ME));
+  const appr=sort(all.filter(r=>r.status===ST.REC&&r.rgCode===ME));
+  const hoAll=isHO(ME)?sort(hoFilter(all)):[];
+
+  $("cMine").textContent=mine.length; $("cCheck").textContent=check.length;
+  $("cApprove").textContent=appr.length;
+  const hoQueue=r=>r.status===ST.APP||r.status===ST.HOLD||r.status===ST.HOA;
+  $("cHo").textContent=all.filter(hoQueue).length;
+  const pending=check.length+appr.length+(isHO(ME)?all.filter(hoQueue).length:0);
+  $("bell").innerHTML=pending?'Pending with you<span class="dot">'+pending+'</span>':"";
+
+  list("mineList",mine,"No claims yet","Raise one from the New Claim tab.",false,"mine");
+  list("checkList",check,"Nothing to check","Claims from your team will land here.",true,"chk");
+  list("approveList",appr,"Nothing to approve","Claims recommended by reporting managers will land here.",false,"apr");
+  list("hoList",hoAll,"No claims match","Change the filters above to widen the search.",false,"ho");
+  countSel();
+  primeRevisionTotals();
+
+  if(isHO(ME)){
+    $("hCount").textContent=hoAll.length;
+    $("hApproved").textContent=money(hoAll.filter(r=>r.approved!=null).reduce((s,r)=>s+r.approved,0));
+    $("hPending").textContent=money(hoAll.filter(r=>r.status===ST.APP||r.status===ST.HOLD).reduce((s,r)=>s+(r.payable||0),0));
+    $("hAwait").textContent=hoAll.filter(r=>r.status===ST.HOA).length;
+    $("hPaid").textContent=money(hoAll.filter(r=>r.pay.status==="Paid").reduce((s,r)=>s+(r.payable||0),0));
+  }
+
+  const paidMine=mine.filter(r=>r.pay.status==="Paid");
+  $("kpis").innerHTML=kpi([
+    ["Pending with you",pending,"var(--teal)"],
+    ["My claims",mine.length,"var(--blue)"],
+    ["In progress",mine.filter(r=>[ST.SUB,ST.REC,ST.HOA,ST.APP,ST.HOLD].indexOf(r.status)>-1).length,"var(--amber)"],
+    ["My approved value",money(mine.filter(r=>r.approved!=null).reduce((s,r)=>s+r.approved,0)),"var(--green)"],
+    ["Paid to me",money(paidMine.reduce((s,r)=>s+(r.payable||0),0)),"var(--navy)"]
+  ]);
+}
+
+/* ================= INITIALIZE & EXCEL MAPPING ================= */
+async function initializeApp() {
+  let SESSION_USER = null;
+  try {
+    SESSION_USER = await ecSessionGet('activeUser');
+  } catch(e) {
+    SESSION_USER = null;
+  }
+
+  if (!SESSION_USER) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  if (typeof SESSION_USER === "string") {
+    try { SESSION_USER = JSON.parse(SESSION_USER); }
+    catch(e) { SESSION_USER = { username: SESSION_USER, access: "Both" }; }
+  }
+
+  if (!SESSION_USER || !SESSION_USER.username) {
+    window.location.href = 'index.html';
+    return;
+  }
+
+  const rawAccess = SESSION_USER.access || "";
+  const access = String(rawAccess).trim().toLowerCase();
+  
+  // Must match the same substring check used at login (index.html),
+  // otherwise a valid AccessLevel like "Travel Expenses" or
+  // "Travel Expense, HO Admin" would log in fine but get bounced here.
+  if (!access.includes('travel expense')) {
+    alert("You do not have access to Travel Expenses.");
+    window.location.href = 'index.html';
+    return;
+  }
+  const code = String(SESSION_USER.username).trim().toUpperCase();
+
+  try {
+    const rawResponse = await api("bootstrap", { empCode: code });   /* TE_Users list, no passwords */
+    const excelData = rawResponse.value ? rawResponse.value : rawResponse;
+
+    if (!Array.isArray(excelData) || !excelData.length) {
+      throw new Error("Empty config data from server.");
+    }
+
+    EMP = {};
+    BRANCH_HEAD = {};
+    HO_ADMIN = [];
+
+    excelData.forEach(row => {
+      const getVal = (key) => {
+        const foundKey = Object.keys(row).find(k => k.toLowerCase() === key.toLowerCase());
+        return foundKey ? row[foundKey] : undefined;
+      };
+
+      const rawEmp = getVal('EmpCode') || getVal('Title');
+      const act = getVal('Active');
+      if (act === false || act === 0 || /^(false|no|0)$/i.test(String(act === undefined ? '' : act))) return;
+	  if (!rawEmp) return;
+	  const empCode = String(rawEmp).trim().toUpperCase();
+
+      const designation = String(getVal('Designation') || "").trim();
+      const desigLower = designation.toLowerCase();
+
+      /* The approval level decides how many stages a claim passes through, so take it
+         from the master when the master states it. Reading it from the designation text
+         is only a fallback: two people can share a job title and sit at different levels,
+         and a renamed designation would silently reroute their claims. */
+      const statedLevel = getVal('ApprovalLevel') || getVal('Approval Level')
+                       || getVal('ExpenseGroup')  || getVal('Expense Group');
+      let roleGroup = null;
+      if (statedLevel) {
+        const lv = String(statedLevel).trim().toLowerCase();
+        if (lv.indexOf("l1 ho admin") === 0 || lv === "ho admin") roleGroup = "HO Admin";
+        else if (lv.indexOf("l1 regional manager") === 0 || lv === "regional manager") roleGroup = "Regional Manager";
+        else if (lv.indexOf("l1 reporting manager") === 0 || lv === "reporting manager") roleGroup = "Reporting Manager";
+      }
+      if (!roleGroup) {
+        roleGroup = "Reporting Manager";
+        if (desigLower.includes("final approving authority") || desigLower.includes("dgm") || desigLower.includes("ho admin")) {
+          roleGroup = "HO Admin";
+        } else if (desigLower.includes("regional manager") || desigLower.includes("state manager")) {
+          roleGroup = "Regional Manager";
+        }
+      }
+
+      const rawMgr = getVal('ManagerCode');
+      const cleanMgr = rawMgr ? String(rawMgr).trim().toUpperCase() : null;
+
+      EMP[empCode] = {
+        n: getVal('FullName'),
+        b: getVal('Branch'),
+        d: designation,
+        m: cleanMgr,
+        rm: cleanMgr,
+        rg: null,
+        z: getVal('Zone'),
+        g: roleGroup
+      };
+
+      if (desigLower.includes("final approving authority") || desigLower.includes("dgm operations")) {
+        if (HO_ADMIN.indexOf(empCode) < 0) HO_ADMIN.push(empCode);
+      }
+
+      if (desigLower.includes("state manager") || desigLower.includes("branch manager")) {
+        BRANCH_HEAD[getVal('Branch')] = empCode;
+      }
+    });
+
+    for (const empCode in EMP) {
+      let directMgr = EMP[empCode].m;
+
+      if (directMgr && EMP[directMgr]) {
+        const mgrDesig = String(EMP[directMgr].d || "").toLowerCase();
+
+        if (mgrDesig.includes("state manager") || mgrDesig.includes("regional manager")) {
+          let cur = directMgr;
+          let regionalMgr = null;
+          for (let i = 0; i < 5; i++) {
+            if (!EMP[cur] || !EMP[cur].m) break;
+            let upperMgr = EMP[cur].m;
+            if (!EMP[upperMgr]) break;
+            let upperDesig = String(EMP[upperMgr].d || "").toLowerCase();
+            if (upperDesig.includes("regional manager")) {
+              regionalMgr = upperMgr;
+              break;
+            }
+            cur = upperMgr;
+          }
+          EMP[empCode].rg = regionalMgr || directMgr;
+        } else {
+          let cur = empCode;
+          let regionalMgr = null;
+          for (let i = 0; i < 5; i++) {
+            if (!EMP[cur] || !EMP[cur].m) break;
+            let mgrCode = EMP[cur].m;
+            if (!EMP[mgrCode]) break;
+            let d = String(EMP[mgrCode].d || "").toLowerCase();
+            if (d.includes("regional manager") || d.includes("state manager")) {
+              regionalMgr = mgrCode;
+              break;
+            }
+            cur = mgrCode;
+          }
+          EMP[empCode].rg = regionalMgr;
+        }
+      }
+    }
+
+    if (HO_ADMIN.length === 0) {
+      /* No employee in the master is tagged as HO Admin by designation (no "Final
+         Approving Authority" / "DGM" / "HO Admin" match). There used to be two
+         specific employee codes hardcoded here as a fallback — removed, since a
+         stale or wrong code silently misroutes every HO-stage claim to someone
+         who may no longer hold that role. Fix this in the master data instead:
+         set ApprovalLevel/ExpenseGroup to "HO Admin" for whoever should hold it. */
+      console.warn("No employee in the master is tagged as HO Admin. HO-stage claims will have nowhere to go until the master data is corrected.");
+    }
+
+    /* The employee master still names approvers who are not themselves in it
+       (a manager who left, or was never loaded). Left alone, those claims are
+       routed to a code nobody can sign in as, so they sit in a queue that never
+       opens. Every approver is resolved to somebody who actually exists. */
+    const DESIG_RANK = [
+      ["final approving authority",7],["dgm",6],["regional manager",5],["state manager",4],
+      ["branch manager",4],["deputy manager",3],["manager",3],["co-ordinator",2],
+      ["coordinator",2],["senior executive",2],["executive",1]
+    ];
+    const rankOf = c => {
+      const d = String((EMP[c]||{}).d || "").toLowerCase();
+      for (const [k,v] of DESIG_RANK) if (d.includes(k)) return v;
+      return 0;
+    };
+    /* The nearest real supervisor, not the most senior one: someone in the engineer's
+       own branch first, then a regional manager in the same zone, and only then
+       HO Admin. Picking the highest rank would send routine claims to the Final
+       Approving Authority, which is worse than the gap it patches. */
+    const standIn = (self) => {
+      const e = EMP[self];
+      const pick = (test, minRank) => {
+        let best = null;
+        for (const c in EMP) {
+          if (c === self) continue;
+          if (rankOf(c) < minRank) continue;
+          if (!test(EMP[c])) continue;
+          /* lowest sufficient rank wins */
+          if (!best || rankOf(c) < rankOf(best)) best = c;
+        }
+        return best;
+      };
+      return pick(x => x.b === e.b && x.g !== "HO Admin", 3)          /* branch supervisor */
+          || pick(x => x.z === e.z && x.g === "Regional Manager", 4)  /* zone regional */
+          || pick(x => x.b === e.b, 3)                                /* branch, any role */
+          || null;                                                    /* falls to HO Admin */
+    };
+
+    let repaired = 0;
+    for (const c in EMP) {
+      const e = EMP[c];
+      if (e.rm && !EMP[e.rm]) { e.mgrMissing = e.rm; e.rm = null; }
+      if (e.rg && !EMP[e.rg]) { e.rgMissing = e.rg; e.rg = null; }
+      if (!e.rm && !e.rg && (e.mgrMissing || e.rgMissing)) {
+        const alt = standIn(c);
+        if (alt) { e.rg = alt; e.mgrStandIn = alt; }
+        repaired++;
+      } else if (!e.rg && e.rm && e.rgMissing) {
+        /* L1 is fine but L2 is gone. Without this the claim stalls after
+           recommendation, held by a code nobody can sign in as. */
+        const alt = standIn(c);
+        if (alt && alt !== e.rm) { e.rg = alt; e.rgStandIn = alt; }
+        repaired++;
+      }
+      if (e.rm && e.rm === e.rg) e.rm = null;   /* one stage, not the same person twice */
+    }
+    if (repaired) console.warn("Approval route repaired for " + repaired + " employee(s) whose recorded manager is not in the master.");
+
+    codes = Object.keys(EMP);
+
+  } catch(err) {
+    console.error("Failed to fetch config", err);
+    document.getElementById("loading").innerHTML = '<div style="padding:20px;text-align:center;color:#c0392b">Error loading employee data: ' + err.message + '</div>';
+    return;
+  }
+
+  document.getElementById("loading").style.display = "none";
+
+  if (!EMP[code]) {
+    alert("Your user code (" + code + ") is not authorized for Travel Expense Claims.");
+    window.location.href = 'index.html';
+    return;
+  }
+
+  enterApp(code);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  initializeApp();
+});
+</script>
+<script src="pincode-data.js" defer></script>
+</body>
+</html>

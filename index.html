@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#063E6E">
+<title>Sign in — Engineer Conveyance | Prostarm</title>
+<link rel="icon" href="Prostarm_Logo.png">
+<style>
+/* Palette sampled from the Prostarm mark: brand blue, cyan sweep, power-button red,
+   wordmark grey. Red appears only where something has gone wrong, which is the same
+   job it does in the logo. */
+:root{
+  --blue:#0065B3;
+  --blue-deep:#063E6E;
+  --blue-ink:#04304F;
+  --cyan:#009FD9;
+  --red:#EC1D25;
+  --grey:#58595B;
+  --ink:#1B2A38;
+  --line:#DCE6EF;
+  --paper:#FFFFFF;
+  --wash:#F4F8FC;
+  --sans:"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;font-family:var(--sans);color:var(--ink);background:var(--wash);
+  -webkit-font-smoothing:antialiased;
+}
+.shell{min-height:100%;display:grid;grid-template-columns:1.15fr 1fr}
+
+/* ---------- left: brand field ---------- */
+.brand{
+  position:relative;overflow:hidden;padding:44px 56px;
+  background:
+    radial-gradient(120% 90% at 12% 8%, #0A6FC0 0%, rgba(10,111,192,0) 55%),
+    linear-gradient(160deg,var(--blue-deep) 0%,var(--blue-ink) 100%);
+  color:#fff;display:flex;flex-direction:column;
+}
+.mark{width:92px;height:auto;display:block}
+.brand-body{margin-top:auto;margin-bottom:auto;max-width:none}
+.brand h1{
+  margin:0;font-size:46px;line-height:1.04;font-weight:800;letter-spacing:-.024em;max-width:14ch;
+}
+.brand h1 span{display:block;color:#8FD3F4;font-weight:300;letter-spacing:-.01em}
+.brand p{
+  margin:20px 0 0;font-size:15.5px;line-height:1.6;color:#C6DEF2;max-width:44ch;font-weight:400;
+}
+.stamp{
+  margin-top:34px;display:flex;gap:34px;flex-wrap:wrap;max-width:56ch;
+  border-top:1px solid rgba(255,255,255,.16);padding-top:18px;
+}
+.stamp div{font-size:12.5px;color:#9EC5E4;line-height:1.45;flex:0 0 auto}
+.stamp b{display:block;font-size:19px;color:#fff;font-weight:700;letter-spacing:-.01em}
+.foot{margin-top:auto;padding-top:28px;font-size:12px;color:#7FA9CC;line-height:1.6}
+
+/* The route figure is the one deliberate flourish: it draws the thing the app records,
+   a journey between two pincodes. Sits behind the text, never competes with it. */
+.route{position:absolute;right:34px;top:56px;width:400px;max-width:48%;opacity:.5;pointer-events:none}
+
+/* ---------- right: sign in ---------- */
+.panel{
+  background:var(--paper);display:flex;align-items:center;justify-content:center;
+  padding:44px 40px;border-left:1px solid var(--line);
+}
+.form{width:100%;max-width:352px}
+.wordmark{width:196px;height:auto;display:block;margin-bottom:40px}
+.form h2{margin:0;font-size:23px;font-weight:700;letter-spacing:-.015em;color:var(--blue-ink)}
+.form .lede{margin:7px 0 26px;font-size:14px;color:var(--grey);line-height:1.55}
+.field{margin-bottom:16px}
+label{display:block;font-size:12.5px;font-weight:600;color:var(--blue-ink);margin-bottom:6px}
+input{
+  width:100%;font:inherit;font-size:15px;color:var(--ink);background:#fff;
+  border:1.5px solid var(--line);border-radius:7px;padding:11px 13px;
+  transition:border-color .14s ease, box-shadow .14s ease;
+}
+input::placeholder{color:#A8B8C6}
+input:hover{border-color:#BFD2E2}
+input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(0,101,179,.15)}
+.btn-main{
+  width:100%;margin-top:8px;font:inherit;font-size:15px;font-weight:700;color:#fff;
+  background:var(--blue);border:0;border-radius:7px;padding:13px;cursor:pointer;
+  letter-spacing:.01em;transition:background .14s ease, transform .06s ease;
+}
+.btn-main:hover{background:#00579B}
+.btn-main:active{transform:translateY(1px)}
+.btn-main:focus-visible{outline:3px solid rgba(0,159,217,.55);outline-offset:2px}
+.hint{
+  margin-top:22px;padding-top:18px;border-top:1px solid var(--line);
+  font-size:12.5px;color:var(--grey);line-height:1.65;
+}
+.hint a{color:var(--blue);text-decoration:none;font-weight:600}
+.hint a:hover{text-decoration:underline}
+
+/* Message styles the sign-in script drives: .msg, .msg.no, .msg.ok */
+.msg{
+  border-radius:7px;padding:11px 13px;font-size:13.5px;margin-bottom:18px;
+  font-weight:600;display:none;line-height:1.45;
+}
+.msg.no{background:#FDECEC;border:1px solid #F6C4C6;color:#B4141B}
+.msg.ok{background:#EAF4FB;border:1px solid #C2DDEF;color:var(--blue-ink)}
+
+@media (max-width:960px){
+  .shell{grid-template-columns:1fr;grid-template-rows:auto 1fr}
+  .brand{padding:26px 28px 30px}
+  .brand-body{margin-top:24px;margin-bottom:0;max-width:none}
+  .brand h1{font-size:31px;max-width:none}
+  .brand p{margin-top:12px;font-size:14.5px;max-width:52ch}
+  .stamp{margin-top:20px;padding-top:14px;gap:22px;max-width:none}
+  .stamp b{font-size:17px}
+  .foot{display:none}
+  .route{width:190px;right:-26px;top:auto;bottom:-30px;max-width:50%;opacity:.26}
+  .panel{border-left:0;padding:32px 28px 44px;align-items:flex-start}
+  .wordmark{width:168px;margin-bottom:28px}
+}
+@media (max-width:420px){
+  .brand h1{font-size:27px}
+  .stamp div:last-child{display:none}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important}
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <section class="brand">
+    <img class="mark" src="Prostarm_Logo.png" alt="Prostarm">
+
+    <svg class="route" viewBox="0 0 520 300" fill="none" aria-hidden="true">
+      <path d="M34 250 C 140 250, 156 132, 250 132 S 372 176, 430 108"
+            stroke="#5FC4EE" stroke-width="2.5" stroke-dasharray="9 11" stroke-linecap="round" opacity=".75"/>
+      <circle cx="34" cy="250" r="9" fill="none" stroke="#8FD3F4" stroke-width="2.5"/>
+      <circle cx="34" cy="250" r="3" fill="#8FD3F4"/>
+      <circle cx="250" cy="132" r="6" fill="none" stroke="#5FC4EE" stroke-width="2"/>
+      <path d="M430 62 c-13 0-23.5 10.5-23.5 23.5 0 17.6 23.5 36.5 23.5 36.5s23.5-18.9 23.5-36.5C453.5 72.5 443 62 430 62z"
+            fill="none" stroke="#8FD3F4" stroke-width="2.5"/>
+      <circle cx="430" cy="85.5" r="7" fill="#8FD3F4"/>
+    </svg>
+
+    <div class="brand-body">
+      <h1>Engineer<span>Conveyance</span></h1>
+      <p>Record a day of site visits as one claim: the journey, the stay, meals and
+         incidentals. Then follow it from your manager to payment.</p>
+
+      <div class="stamp">
+        <div><b>One claim</b>per engineer, per day</div>
+        <div><b>Three steps</b>manager, region, then HO</div>
+        <div><b>19 branches</b>across seven zones</div>
+      </div>
+
+    </div>
+
+    <div class="foot">
+      Prostarm Info Systems Limited<br>
+      Service Operations
+    </div>
+  </section>
+
+  <main class="panel">
+    <div class="form">
+      <img class="wordmark" src="ProstarM.png" alt="Prostarm — Power Redefined">
+
+      <h2>Sign in</h2>
+      <p class="lede">Use the User ID and password issued by your HO.</p>
+
+      <div class="msg no" id="loginErr"></div>
+
+      <div class="field">
+        <label for="loginUser">User ID</label>
+        <input type="text" id="loginUser" placeholder="User ID" autocomplete="username"
+               autocapitalize="characters" spellcheck="false">
+      </div>
+
+      <div class="field">
+        <label for="loginPass">Password</label>
+        <input type="password" id="loginPass" placeholder="Your password" autocomplete="current-password">
+      </div>
+
+      <button class="btn-main" id="loginBtn">Sign in</button>
+
+      <p class="hint">
+        Forgotten your password, or the app says you have no access?
+        Ask your reporting manager to raise it with Service Operations.
+      </p>
+    </div>
+  </main>
+
+</div>
+
+<script src="app-config.js"></script>
+<script>
+/* ---------- IndexedDB session store ----------
+   Replaces sessionStorage: the signed-in user (username + access level) is
+   kept in an IndexedDB database shared with Travel_Expense_Approval.html,
+   instead of the browser's session storage. No sessionStorage/localStorage
+   read is needed anywhere in this flow. */
+const EC_DB_NAME = "prostarm_ec";
+const EC_DB_VERSION = 1;
+const EC_STORE_SESSION = "session";
+
+function ecIdbOpen() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(EC_DB_NAME, EC_DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(EC_STORE_SESSION)) {
+        db.createObjectStore(EC_STORE_SESSION);
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+async function ecSessionSet(key, value) {
+  const db = await ecIdbOpen();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(EC_STORE_SESSION, "readwrite");
+    tx.objectStore(EC_STORE_SESSION).put(value, key);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function attemptLogin() {
+  const user = document.getElementById("loginUser").value.trim();
+  const pass = document.getElementById("loginPass").value;
+  const err = document.getElementById("loginErr");
+  const btn = document.getElementById("loginBtn");
+  if (btn.disabled) return;                 // a second click or Enter while the first is still running
+
+  if (!user || !pass) {
+    err.className = "msg no"; err.style.display = "block";
+    err.textContent = "Please enter both username and password.";
+    return;
+  }
+
+  try {
+    err.className = "msg ok"; err.style.display = "block";
+    err.textContent = "Authenticating... Please wait.";
+    btn.disabled = true; btn.textContent = "Signing in…";
+
+    // Call the single TE_API flow (action: login), with a timeout so a stalled flow
+    // doesn't leave the person staring at "Authenticating..." forever.
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 30000);
+    let response, raw;
+    try {
+      if (!window.EC_API_URL || /PASTE_/.test(window.EC_API_URL)) throw new Error("The flow URL is not set. Edit app-config.js.");
+      response = await fetch(window.EC_API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', username: user, password: pass }),
+        signal: ctrl.signal
+      });
+      raw = await response.text();
+    } finally {
+      clearTimeout(timer);
+    }
+
+    if (!response.ok) {
+      throw new Error("The sign-in flow returned " + response.status + " " + response.statusText + ". Check that the flow is turned on and the URL in app-config.js is current.");
+    }
+
+    let result;
+    try { result = raw ? JSON.parse(raw) : {}; }
+    catch (e) { throw new Error("The sign-in flow did not return a valid response."); }
+    // The flow answers { ok:false, error:"..." } when something inside it failed. Show that,
+    // instead of pretending the password was wrong.
+    if (result && result.ok === false) throw new Error(result.error || "The sign-in flow reported an error.");
+    if (result && result.data && typeof result.data === "object") result = result.data;   // { ok:true, data:{...} }
+
+    if (result.isValid === true || String(result.isValid).toLowerCase() === "true") {
+      // 1. Catch the AccessLevel column from the TE_Users list
+      const rawAccess = result.AccessLevel || result.accessLevel || result['Access Level'] || "";
+      const accessLower = String(rawAccess).trim().toLowerCase();
+      
+      // 2. Catch the exact Username column (fallback to what the user typed)
+      const validUser = result.Username || result.username || result.empCode || user;
+      
+      // 3. Use .includes() to safely ignore accidental spaces in the list
+      if (accessLower.includes('travel expense')) {
+        await ecSessionSet('activeUser', {
+          username: String(validUser).trim().toUpperCase(),
+          access: String(rawAccess).trim()
+        });
+        window.location.replace('Travel_Expense_Approval.html');   // replace: Back must not return to a filled sign-in form
+      } else {
+        err.className = "msg no"; err.style.display = "block";
+        err.textContent = "You do not have permission to access Travel Expenses.";
+      }
+    } else {
+      err.className = "msg no"; err.style.display = "block";
+      err.textContent = "Invalid username or password. Please try again.";
+    }
+
+  } catch (error) {
+    console.error("Login Error:", error);
+    err.className = "msg no"; err.style.display = "block";
+    // Say what actually went wrong. A bare "Error connecting" hid a wrong flow URL, a flow
+    // that was switched off, and a flow error alike.
+    err.textContent = error.name === "AbortError"
+      ? "The sign-in flow took too long to respond. Please try again."
+      : error instanceof TypeError
+        ? "Could not reach the server. Check your internet connection and try again."
+        : error.message;
+  } finally {
+    btn.disabled = false; btn.textContent = "Sign in";
+  }
+}
+
+document.getElementById("loginBtn").addEventListener("click", attemptLogin);
+
+document.getElementById("loginPass").addEventListener("keydown", function(event) {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    attemptLogin();
+  }
+});
+</script>
+</body>
+</html>
