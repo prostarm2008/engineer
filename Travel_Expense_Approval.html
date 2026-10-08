@@ -1054,7 +1054,7 @@ function enterApp(c){
   $("bWho").textContent=e.n+" ("+c+")";
   $("bBranch").textContent=e.b;
   $("bRegion").textContent=e.z;
-  $("bRoute").textContent=e.rg?nm(e.rg)+" · Regional Manager":"HO Admin";
+  $("bRoute").textContent=e.rg?nm(e.rg)+" · "+((EMP[e.rg]&&EMP[e.rg].g)||"Approver"):"HO Admin";
   stampHeader(); clearItems(); addItem(); route(); buildHoFilters(); wireExportButtons(); refresh();
 }
 
@@ -1125,7 +1125,7 @@ function route(){
     '<span class="tag v">checks &amp; recommends · '+TAT.rec+'</span></div></li>';
   
   if(e.rg) html+='<li class="fin"><div class="nd">A</div><div class="rl">'+esc(nm(e.rg))+
-    '<small>'+esc(EMP[e.rg]?EMP[e.rg].d:"Regional Manager")+'</small><span class="cd">'+e.rg+' · Regional Manager</span>'+
+    '<small>'+esc(EMP[e.rg]?EMP[e.rg].d:"Approver")+'</small><span class="cd">'+e.rg+' · '+esc((EMP[e.rg]&&EMP[e.rg].g)||"Approver")+'</span>'+
     '<span class="tag g">approves final amount · '+TAT.app+'</span></div></li>';
     
   html+='<li class="pay"><div class="nd">₹</div><div class="rl">HO Admin<small>'+
@@ -1156,7 +1156,7 @@ function route(){
          :'This claim is routed to HO Admin instead.')+
       ' Ask HR to set the correct ManagerCode.';
   }
-  if(bh&&bh!==e.rm&&bh!==ME) why+=' <b>'+esc(nm(bh))+'</b> can see this claim as Branch Manager but takes no action.';
+  if(bh&&bh!==e.rm&&bh!==e.rg&&bh!==ME) why+=' <b>'+esc(nm(bh))+'</b> can see this claim as Branch Manager but takes no action.';
   
   $("why").innerHTML=why;
 }
