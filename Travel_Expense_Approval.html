@@ -1130,18 +1130,20 @@ function route(){
     
   html+='<li class="pay"><div class="nd">₹</div><div class="rl">HO Admin<small>'+
     hoList.map(c=>esc(nm(c))).join(" / ")+'</small><span class="cd">'+
-    (stages(ME)?"payment processing":"approval and payment")+'</span>'+
-    '<span class="tag a">'+(stages(ME)?"pays &amp; closes · ":"approves, pays &amp; closes · ")+TAT.pay+'</span></div></li>';
+    ((e.rg||!hasRmStage)&&stages(ME)?"payment processing":"approval and payment")+'</span>'+
+    '<span class="tag a">'+((e.rg||!hasRmStage)&&stages(ME)?"pays &amp; closes · ":"approves, pays &amp; closes · ")+TAT.pay+'</span></div></li>';
   $("chain").innerHTML=html;
   
   $("slabTag").textContent = stages(ME)===2 ? "1 recommendation → 1 approval → payment"
+    : (hasRmStage&&!e.rg) ? "1 recommendation → HO Admin approval & payment"
     : stages(ME)===1 ? "1 approval → payment" : "Straight to HO Admin";
   
   const bh=BRANCH_HEAD[e.b];
-  let why='Your approval level is <b>'+esc(e.g)+'</b>. '+esc(LEVEL_ROUTE[e.g]||"")+'. ';
+  const lvlName = (e.g==="Reporting Manager" && !isReporting(ME)) ? "Engineer" : e.g;
+  let why='Your level is <b>'+esc(lvlName)+'</b>. '+esc(LEVEL_ROUTE[e.g]||"")+'. ';
   
   if(hasRmStage) why+='Your claim reaches <b>'+esc(nm(e.rm))+'</b> first, and only he can send it back to you for correction. '+
-    'After his recommendation the claim is locked for him and moves to <b>'+esc(nm(e.rg))+'</b>, who fixes the final approved amount.';
+    'After his recommendation the claim is locked for him and moves to <b>'+(e.rg?esc(nm(e.rg)):'HO Admin')+'</b>, who fixes the final approved amount'+(e.rg?'.':' and processes payment.');
   else if(e.rg) why+='There is no separate Reporting Manager stage at your level, so the claim goes straight to <b>'+esc(nm(e.rg))+'</b> for final approval.';
   else why+='There is no manager stage at your level, so HO Admin sanctions the amount and processes payment.';
   
