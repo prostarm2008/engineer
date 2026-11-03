@@ -653,9 +653,23 @@ const HEADS = {
   "Food":["Breakfast","Lunch","Dinner","Tea - Snack","Restaurants","Others"],
   "Misc":["Stationary","Photocopy","Printing","Courier","Toll / Parking","Others"]
 };
+/* Two different ideas were sharing one test, which is how Own Vehicle kilometres ended
+   up inside the bike band. They are now separate:
+     SLAB_MODES      — the value is worked out from KM, so the engineer types no amount
+                       and attaches no bill
+     the bike band   — counts Bike kilometres only. Own Vehicle, Bus, Train and the rest
+                       never move an engineer across the 200 KM line. */
 const SLAB_MODES=["Bike","Own Vehicle"];
 const isSlabMode=m=>SLAB_MODES.indexOf(m)>-1;
 const BIKE_SLAB = {limit:200, low:4, high:3};
+const OWN_VEHICLE_RATE = 8;        /* flat, per KM, with no band */
+const isBandMode=m=>m==="Bike";
+/* The rate for one line, given that engineer's Bike kilometres for the day. */
+function rateForMode(mode,bikeDayKm){
+  if(mode==="Own Vehicle") return OWN_VEHICLE_RATE;
+  if(mode==="Bike") return bikeDayKm>BIKE_SLAB.limit ? BIKE_SLAB.high : BIKE_SLAB.low;
+  return 0;
+}
 /* A bill is not required on small Food claims. Above this value one is. */
 const FOOD_BILL_FREE = 400;
 /* Customer segments offered on every line. */
@@ -1222,7 +1236,9 @@ function renderItems(){
         fld("KM Travel Used","<input readonly value=\""+(it.km||0)+"\">",1)+
         fld("Rate Applied (₹/KM)","<input readonly value=\""+(it.rate||0)+"\">",1)+
         fld("Claim Amount (₹)","<input readonly value=\""+(it.amt||0)+"\">",1)+
-        fld("Slab Applied","<input readonly value=\""+((byDayKm()>BIKE_SLAB.limit)?"Above 200 KM that day":"Up to 200 KM that day")+"\">",1)+
+        fld("Rate Basis","<input readonly value=\""+(it.mode==="Own Vehicle"
+             ? "Own Vehicle · flat ₹"+OWN_VEHICLE_RATE+"/KM"
+             : ((byDayKm()>BIKE_SLAB.limit)?"Bike · above "+BIKE_SLAB.limit+" KM that day":"Bike · up to "+BIKE_SLAB.limit+" KM that day"))+"\">",1)+
       '</div></div>':'')+
       '<div class="frow4" style="margin-top:8px">'+
         fld("Description / Remarks","<input value=\""+esc(it.desc)+"\" placeholder=\"e.g. Hotel bill, 2 nights, Hazaribagh\" onchange=\"upd('"+it.id+"','desc',this.value)\">",2)+
@@ -1298,18 +1314,19 @@ function updCat(id,v){
   queueRender();
 }
 const isBikeLine=it=>it.cat==="Travel"&&isSlabMode(it.mode);
+/* Bike kilometres for this claim's date. Only Bike counts towards the band. */
 function byDayKm(){
-  return ITEMS.reduce((s,it)=>s+(isBikeLine(it)?(Number(it.km)||0):0),0);
+  return ITEMS.reduce((s,it)=>s+((it.cat==="Travel"&&isBandMode(it.mode))?(Number(it.km)||0):0),0);
 }
 function byDayTravelKm(){
   return ITEMS.reduce((s,it)=>s+(it.cat==="Travel"?(Number(it.km)||0):0),0);
 }
 function applyBikeRates(){
   ITEMS.forEach(it=>{ if(it.cat!=="Travel"){ it.km=""; } if(!isBikeLine(it)){ it.rate=0; } });
+  const dayKm=byDayKm();
   ITEMS.forEach(it=>{
     if(isBikeLine(it)){
-      const dayKm=byDayKm();
-      it.rate = dayKm>BIKE_SLAB.limit ? BIKE_SLAB.high : BIKE_SLAB.low;
+      it.rate = rateForMode(it.mode,dayKm);
       it.amt = Math.round((Number(it.km)||0)*it.rate*100)/100;
     }
   });
@@ -1775,7 +1792,7 @@ function itemTable(r,acting,k){
           : '—')+'</td>'+
           '<td><input class="n" style="width:92px" type="number" min="0" id="rv-'+k+'-'+i+'" value="'+
             (slab?(Number(it.km)||0):(Number(it.amt)||0))+'" onchange="recalcRevision(\''+k+'\',\''+r.id+'\')">'+
-            (slab?'<br><span style="font-size:9px;color:var(--violet)">KM · ₹'+(it.rate||BIKE_SLAB.low)+'/KM</span>'
+            (slab?'<br><span style="font-size:9px;color:var(--violet)">KM · ₹'+(it.rate||rateForMode(it.mode,0))+'/KM</span>'
                  :'<br><span style="font-size:9px;color:var(--muted)">amount</span>')+'</td>'+
           '<td style="text-align:center"><input type="checkbox" id="rx-'+k+'-'+i+
             '" onchange="recalcRevision(\''+k+'\',\''+r.id+'\')" style="width:15px;height:15px;accent-color:var(--red)"></td>';
@@ -1815,14 +1832,16 @@ function revisionFigures(k,r){
     const dropped=drop?drop.checked:false;
     const raw=inp?Number(inp.value):(Number(it.amt)||0);
     const slab=it.cat==="Travel"&&isSlabMode(it.mode);
-    if(!dropped&&slab) slabKm+=(isNaN(raw)?0:raw);
-    lines.push({i:i,dropped:dropped,raw:isNaN(raw)?0:raw,slab:slab});
+    /* only Bike kilometres build the band, even while the engineer is retyping them */
+    if(!dropped&&it.cat==="Travel"&&isBandMode(it.mode)) slabKm+=(isNaN(raw)?0:raw);
+    lines.push({i:i,dropped:dropped,raw:isNaN(raw)?0:raw,slab:slab,mode:it.mode});
   });
   const rate = slabKm>BIKE_SLAB.limit?BIKE_SLAB.high:BIKE_SLAB.low;
   let total=0;
   lines.forEach(L=>{
     if(L.dropped){ L.amt=0; L.km=0; return; }
-    if(L.slab){ L.km=L.raw; L.rate=rate; L.amt=Math.round(L.raw*rate*100)/100; }
+    if(L.slab){ const rt=rateForMode(L.mode,slabKm);
+                L.km=L.raw; L.rate=rt; L.amt=Math.round(L.raw*rt*100)/100; }
     else { L.km=Number(r.items[L.i].km)||0; L.rate=0; L.amt=L.raw; }
     total+=L.amt;
   });
@@ -2634,7 +2653,7 @@ function exportCrm(list){
   const skipped=[];
   const head=["Branch","Emp ID","Emp Name","Ticket / Case No","UID","Customer Name","Customer Segment","Journey Date",
     "Journey From","Journey From Pincode","Journey To","Journey To Pincode","Expenses Type","Travel Mode / Expense Mode",
-    "Km Travel","Day KM (Engineer)","Reference KM (Pincode)","Rate/KM","Total Claim","Approval Status","Claim No","Approved Amount","Payment Status","Payment Reference"];
+    "Km Travel","Day KM (all modes)","Bike Day KM (band)","Reference KM (Pincode)","Rate/KM","Total Claim","Approval Status","Claim No","Approved Amount","Payment Status","Payment Reference"];
   const rows=[];
   list.forEach(r=>{
    const items=Array.isArray(r.items)?r.items:[];
@@ -2643,6 +2662,8 @@ function exportCrm(list){
     items.forEach(it=>rows.push([r.branch,r.by,r.name,it.ticket||r.ticket,it.uid||r.uid,it.custName||r.custName,it.segment||r.segment,it.date,
     it.jFrom,it.jFromPin,it.jTo,it.jToPin,it.cat,it.mode,it.km||"",
     r.items.reduce((s,x)=>s+(x.cat==="Travel"&&x.date===it.date?(Number(x.km)||0):0),0)||"",
+    /* the figure the bike rate is decided on: Bike kilometres for that date only */
+    r.items.reduce((s,x)=>s+(x.cat==="Travel"&&isBandMode(x.mode)&&x.date===it.date?(Number(x.km)||0):0),0)||"",
     (it.cat==="Travel"&&refKm(it.jFromPin,it.jToPin)!=null)?refKm(it.jFromPin,it.jToPin):"",
     it.rate||"",it.amt,r.status,r.no,
     r.approved==null?"":r.approved,pay.status||"",pay.ref||""]));
@@ -2983,14 +3004,14 @@ async function parseBatch(grid,fileName){
     if(r.err.length) return;
     if(r.expType==="Travel"){
       dayAll[r.eng+"|"+r.date]=(dayAll[r.eng+"|"+r.date]||0)+(r.km||0);
-      if(isSlabMode(r.mode)) dayKm[r.eng+"|"+r.date]=(dayKm[r.eng+"|"+r.date]||0)+r.km;
+      if(isBandMode(r.mode)) dayKm[r.eng+"|"+r.date]=(dayKm[r.eng+"|"+r.date]||0)+r.km;
     }
   });
   rows.forEach(r=>{
     if(r.err.length) return;
     if(r.expType==="Travel"&&isSlabMode(r.mode)){
       const tot=dayKm[r.eng+"|"+r.date]||0;
-      r.rate=tot>BIKE_SLAB.limit?BIKE_SLAB.high:BIKE_SLAB.low;
+      r.rate=rateForMode(r.mode,tot);
       r.value=Math.round(r.km*r.rate*100)/100;
       r.slabKm=tot;
     } else { r.rate=0; r.value=r.amount; }
@@ -3021,7 +3042,7 @@ function renderBatch(){
   $("bKm").textContent=ok.reduce((s,r)=>s+(r.expType==="Travel"?(r.km||0):0),0)+" KM";
   $("bVal").textContent=money(ok.reduce((s,r)=>s+r.value,0));
   $("bRows").innerHTML='<table class="itab"><tr><th>Excel row</th><th>Ticket</th><th>Date</th><th>Engineer</th>'+
-    '<th>Type</th><th>Journey</th><th>Ref KM</th><th>Mode</th><th>KM</th><th>Day KM</th><th>Rate</th>'+
+    '<th>Type</th><th>Journey</th><th>Ref KM</th><th>Mode</th><th>KM</th><th>Day KM<br><span style="font-weight:400">all modes</span></th><th>Bike Day KM</th><th>Rate</th>'+
     '<th>Value</th><th>Uploaded By (Rep. Mgr)</th><th>Branch</th><th>Approver</th><th>Result</th></tr>'+
     rows.map(r=>{
       const e=EMP[r.eng];
@@ -3043,14 +3064,17 @@ function renderBatch(){
         '<td class="n">'+(r.refKm==null?"—":r.refKm)+'</td>'+
         '<td>'+esc(r.mode||"—")+'</td><td class="n">'+(r.km||"—")+flag+'</td>'+
         '<td class="n">'+(r.expType==="Travel"?(r.dayKm||"—"):"—")+'</td>'+
+        '<td class="n">'+(r.slabKm?r.slabKm:"—")+'</td>'+
         '<td class="n">'+(r.rate?"₹"+r.rate:"—")+'</td><td class="n">'+(r.err.length?"—":money(r.value))+'</td>'+
         '<td>'+esc(e?(e.rm?nm(e.rm)+(e.rm===ME?"":" ⚠"):"No Reporting Manager stage"):"—")+'</td>'+
         '<td>'+esc(e?e.b:"—")+'</td>'+
         '<td>'+esc(appr)+'</td><td>'+result+'</td></tr>';
     }).join("")+'</table>'+
-    '<div class="refnote"><b>KM</b> is recorded on every Travel row whatever the mode, and <b>Day KM</b> is that engineer\'s '+
-    'total distance for the date across this file. Only Bike and Own Vehicle rows are priced from KM — the slab is decided '+
-    'on the self-driven KM of the day, so two such legs on one date can push the whole day to ₹'+BIKE_SLAB.high+'/KM. '+
+    '<div class="refnote"><b>KM</b> is recorded on every Travel row whatever the mode. <b>Day KM</b> is that engineer\'s '+
+    'total distance for the date across every mode, shown for information only. <b>Bike Day KM</b> is the figure the rate '+
+    'is actually decided on. Only Bike and Own Vehicle rows are priced from KM — the band is decided '+
+    'on the Bike kilometres of that day alone, so two bike legs on one date can push the whole day to ₹'+BIKE_SLAB.high+'/KM. '+
+    'Own Vehicle is separate, a flat ₹'+OWN_VEHICLE_RATE+'/KM, and its distance never counts towards the bike band. '+
     'One engineer on one date becomes <b>one claim</b> with several lines. Ticket, UID, Customer, Segment and Purpose are captured per line, so a single day can cover several tickets and customers. '+
     'Amber rows repeat an identical line; they are allowed and will upload, so check they are genuine. '+
     '<b>Uploaded By</b> and <b>Branch</b> come from each engineer\'s own record, so one file can cover several branches. '+
@@ -3144,9 +3168,9 @@ $("bCommit").addEventListener("click",async()=>{
 $("bCsv").addEventListener("click",()=>{
   if(!BATCH){ bToast("Load a file first.",false); return; }
   const head=["Excel Row","Ticket ID","UID","Journey Date","Expense Type","Engineer ID","Branch Name","Journey From",
-    "From Pincode","Journey To","To Pincode","Journey Mode","KM Travel","Day KM","Claimed Amount","Result","Warning"];
+    "From Pincode","Journey To","To Pincode","Journey Mode","KM Travel","Day KM (all modes)","Bike Day KM (band)","Claimed Amount","Result","Warning"];
   const rows=BATCH.rows.map(r=>[r.xl,r.ticket,r.uid,r.date||r.dateRaw,r.expType,r.eng,EMP[r.eng]?EMP[r.eng].b:"",
-    r.fromLoc,r.fromPin,r.toLoc,r.toPin,r.mode,r.km==null?"":r.km,r.dayKm||"",
+    r.fromLoc,r.fromPin,r.toLoc,r.toPin,r.mode,r.km==null?"":r.km,r.dayKm||"",r.slabKm||"",
     r.amount==null?"":r.amount,r.err.length?r.err.join(" | "):"OK",r.warn.join(" | ")]);
   xlsxDownload("Bulk_Upload_Result_"+BATCH.ref+".xlsx",[detailSheet("Upload Result",head,rows)]);
 });
