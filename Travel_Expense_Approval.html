@@ -191,6 +191,25 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
   border-radius:6px;padding:9px 10px}
 .act .f{flex:1 1 190px}
 .empty{border:1px dashed var(--line);border-radius:6px;padding:30px 16px;text-align:center;color:var(--muted);font-weight:600}
+/* Team Report hierarchy: a solid branch bar, a pale employee bar beneath it, and the
+   claims inside that. The +/- square is the affordance; the whole bar is clickable. */
+.hbar{display:flex;align-items:center;gap:10px;border-radius:7px;padding:9px 13px;cursor:pointer;
+  user-select:none;margin-bottom:7px;transition:filter .12s ease}
+.hbar:hover{filter:brightness(1.06)}
+.hbar .tog{flex:0 0 20px;width:20px;height:20px;border-radius:4px;display:flex;align-items:center;
+  justify-content:center;font-weight:800;font-size:14px;line-height:1}
+.hbar .hTtl{font-size:13.5px;font-weight:800;letter-spacing:-.01em}
+.hbar .hSub{font-size:10.5px;font-weight:600;opacity:.85;margin-top:1px}
+.hbar .hAmt{margin-left:auto;font-size:13.5px;font-weight:800;white-space:nowrap}
+.hbar-br{background:linear-gradient(180deg,#4c93d6,#2f72b8);color:#fff;
+  box-shadow:0 1px 2px rgba(11,63,122,.18)}
+.hbar-br .tog{background:rgba(255,255,255,.22);color:#fff}
+.hbar-emp{background:#eef6fc;color:var(--navy);border:1px solid #d6e6f3;margin-left:26px}
+.hbar-emp .tog{background:#fff;color:var(--blue);border:1px solid #cfe0ee}
+.hbar-emp .hSub{color:var(--muted);opacity:1}
+.hkids{margin-left:0}
+.hbody{margin:0 0 10px 52px}
+.hzero{opacity:.62}
 .trTbl{width:100%;border-collapse:collapse;font-size:12px}
 .trTbl th{background:var(--tile);color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.3px;
   font-weight:800;text-align:left;padding:7px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -396,6 +415,14 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
   <div class="view" id="v-approve">
     <div class="card"><h3>Waiting For Your Approval<em>Recommended by Reporting Manager</em></h3>
       <div class="body">
+        <div class="bulk" id="aprBulkbar">
+          <span><b id="aprBulkCount">0</b> selected</span>
+          <div class="sp">
+            <button type="button" class="btn" onclick="selectAll(true,'apr')">Select all</button>
+            <button type="button" class="btn" onclick="selectAll(false,'apr')">Clear</button>
+            <button type="button" class="btn btn-go" onclick="bulkApprove()">Approve selected at recommended value</button>
+          </div>
+        </div>
         <div class="trBar" style="padding:0 0 10px">
           <span style="font-size:10.5px;color:var(--muted);font-weight:700">Export every claim that comes to you for approval</span>
           <div style="margin-left:auto;display:flex;gap:6px">
@@ -408,14 +435,31 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
 
   <!-- TEAM REPORT -->
   <div class="view" id="v-teamreport">
-    <div class="card"><h3>Team Report — Travel Claims by User<em>Your direct reports only</em></h3>
+    <div class="card"><h3>Team Report — Travel Claims by User<em id="trScopeNote">Your direct reports</em></h3>
       <div class="body">
         <div class="cond">Travel claim totals for the people who report to you, over the dates you choose.
           Totals use the approved amount where a claim has been approved, otherwise the claimed amount.
-          Drafts and rejected claims are left out.</div>
+          Drafts and rejected claims are left out. Open any employee to see their individual claims and
+          where each one has reached.</div>
         <div class="trBar">
           <div class="f" style="flex:0 0 150px"><label>From date</label><input type="date" id="trFrom"></div>
           <div class="f" style="flex:0 0 150px"><label>To date</label><input type="date" id="trTo"></div>
+          <div class="f" style="flex:0 0 210px"><label>Team</label>
+            <select id="trScope">
+              <option value="direct">Direct reports only</option>
+              <option value="all">Direct and indirect reports</option>
+              <option value="indirect">Indirect reports only</option>
+            </select>
+          </div>
+          <div class="f" style="flex:0 0 180px"><label>Branch</label>
+            <select id="trBranch"><option value="">All branches</option></select>
+          </div>
+          <div class="f" style="flex:0 0 165px"><label>Segregate</label>
+            <select id="trGroup">
+              <option value="branch">Branch wise</option>
+              <option value="none">Employee list</option>
+            </select>
+          </div>
           <div class="f" style="flex:0 0 170px"><label>Quick pick</label>
             <select id="trPeriod">
               <option value="month">This calendar month</option>
@@ -428,10 +472,15 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
           <div style="margin-left:auto;display:flex;gap:6px">
             <button type="button" class="btn btn-go" id="teamXlPay">Download Payment File</button>
             <button type="button" class="btn" id="teamXlCrm">Download CRM Format</button>
+            <button type="button" class="btn" onclick="trExpandAll(true)">Expand all</button>
+            <button type="button" class="btn" onclick="trExpandAll(false)">Collapse all</button>
             <button type="button" class="btn" id="trRefresh">Refresh</button>
           </div>
         </div>
         <div class="msg" id="trToast"></div>
+        <div class="trBar" style="padding:0 0 6px">
+          <span id="trCount" style="font-size:11px;color:var(--muted);font-weight:700"></span>
+        </div>
         <div id="trTableWrap"><div class="empty"><b>No data yet</b>Open this tab to load your team's totals.</div></div>
         <div class="trNote" id="trFootnote"></div>
       </div></div>
@@ -506,6 +555,31 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
           <div class="tbox"><span>Approved value</span><b id="hApproved">₹0</b></div>
           <div class="tbox"><span>Pending payment</span><b id="hPending">₹0</b></div>
           <div class="tbox"><span>Paid value</span><b id="hPaid">₹0</b></div>
+        </div>
+        <div class="cond" style="margin-top:10px">Settle a whole payment run from one file.
+          Download the sheet, fill in the UTR and the payment date against each voucher, then upload it.
+          Every row is checked against the live claim before anything is marked paid.</div>
+        <div class="trBar" style="padding:0 0 10px">
+          <span style="font-size:10.5px;color:var(--muted);font-weight:700">Bulk payment update</span>
+          <div style="margin-left:auto;display:flex;gap:6px">
+            <button type="button" class="btn" id="payTemplate">Download payment sheet</button>
+            <button type="button" class="btn btn-go" id="payPick">Upload UTR file</button>
+          </div>
+        </div>
+        <input type="file" id="payFile" class="hide" accept=".xlsx">
+        <div class="msg" id="payToast"></div>
+        <div id="payResult" class="hide">
+          <div class="tot" style="margin:10px 0">
+            <div class="tbox"><span>Rows read</span><b id="payTotal">0</b></div>
+            <div class="tbox"><span>Ready to settle</span><b id="payOk" style="color:var(--green)">0</b></div>
+            <div class="tbox"><span>Rows with errors</span><b id="payBad" style="color:var(--red)">0</b></div>
+            <div class="tbox"><span>Value to settle</span><b id="payVal">₹0</b></div>
+          </div>
+          <div class="act">
+            <button type="button" class="btn btn-main" id="payCommit">Mark paid</button>
+            <button type="button" class="btn" id="payClear">Discard file</button>
+          </div>
+          <div id="payRows" style="margin-top:10px"></div>
         </div>
         <div id="hoList"></div>
       </div></div>
@@ -918,22 +992,102 @@ function trInRange(dateStr,from,to){
 }
 
 let TR_ROWS=[]; 
+/* Everyone beneath this person in the reporting chain, however many levels down.
+   A guard stops a circular ManagerCode — which the master has had before — from
+   looping for ever. */
+function teamBelow(code){
+  const direct={}, indirect={};
+  Object.keys(EMP).forEach(c=>{ if(EMP[c]&&cleanCode(EMP[c].m)===cleanCode(code)) direct[c]=1; });
+  let frontier=Object.keys(direct), guard=0;
+  while(frontier.length && guard++ < 12){
+    const next=[];
+    frontier.forEach(m=>{
+      Object.keys(EMP).forEach(c=>{
+        if(EMP[c]&&cleanCode(EMP[c].m)===cleanCode(m)&&!direct[c]&&!indirect[c]&&c!==code){
+          indirect[c]=1; next.push(c);
+        }
+      });
+    });
+    frontier=next;
+  }
+  return {direct:Object.keys(direct), indirect:Object.keys(indirect)};
+}
+const cssSafe=s=>String(s).replace(/[^A-Za-z0-9_-]/g,"_");
+/* One fold for both levels. Closing a branch leaves its employees closed too, so
+   reopening it does not dump every claim on screen at once. */
+function hToggle(id,bar){
+  const box=$(id); if(!box) return;
+  const open=box.style.display==="none";
+  box.style.display=open?"":"none";
+  const t=bar&&bar.querySelector(".tog"); if(t) t.textContent=open?"\u2212":"+";
+  if(!open) box.querySelectorAll(".hbody,.hkids").forEach(k=>{
+    k.style.display="none";
+    const p=k.previousElementSibling; if(p&&p.querySelector) { const q=p.querySelector(".tog"); if(q) q.textContent="+"; }
+  });
+}
+/* Folds every employee row of one branch, detail rows included. */
+function trToggleBranch(tr){
+  const b=cssSafe(tr.dataset.br||"");
+  const rows=document.querySelectorAll("tr.br-"+b);
+  const open=rows.length? rows[0].style.display==="none" : true;
+  rows.forEach(x=>{
+    if(x.classList.contains("tr-detail")){ x.style.display="none"; }
+    else { x.style.display = open ? "" : "none"; }
+  });
+  const c=tr.querySelector(".tr-bcv");
+  if(c) c.style.transform = open ? "rotate(90deg)" : "";
+}
+function trExpandAll(open){
+  document.querySelectorAll("#trTableWrap .hkids,#trTableWrap .hbody")
+    .forEach(k=>{ k.style.display=open?"":"none"; });
+  document.querySelectorAll("#trTableWrap .hbar .tog")
+    .forEach(t=>{ if(t.textContent) t.textContent=open?"\u2212":"+"; });
+}
+function trToggle(code){
+  const row=document.querySelector('tr.tr-detail[data-for="'+code+'"]');
+  if(!row) return;
+  const open=row.style.display==="none";
+  row.style.display=open?"":"none";
+  const c=document.querySelector('tr.tr-emp[data-code="'+code+'"] .tr-cv');
+  if(c) c.style.transform=open?"rotate(90deg)":"";
+}
+/* Where a claim has reached, in the words a manager would use. */
+function claimStage(r){
+  if(r.status===ST.PAID)   return {t:"Paid"+((r.pay&&r.pay.ref)?" · "+r.pay.ref:""),c:"var(--green)"};
+  if(r.status===ST.CLOSED) return {t:"Closed",c:"var(--muted)"};
+  if(r.status===ST.HOLD)   return {t:"Payment on hold",c:"var(--amber)"};
+  if(r.status===ST.APP)    return {t:"Pending with HO Admin · payment",c:"var(--blue)"};
+  if(r.status===ST.HOA)    return {t:"Pending with HO Admin · approval",c:"var(--blue)"};
+  if(r.status===ST.REC)    return {t:"Pending with "+(r.rgCode?nm(r.rgCode):"Regional Manager"),c:"var(--violet)"};
+  if(r.status===ST.SUB)    return {t:"Pending with "+(r.rmCode?nm(r.rmCode):"Reporting Manager"),c:"var(--violet)"};
+  if(isRejected(r.status)) return {t:"Rejected · with the engineer",c:"var(--red)"};
+  if(r.status===ST.DRAFT)  return {t:"Draft",c:"var(--muted)"};
+  return {t:r.status||"—",c:"var(--muted)"};
+}
+
 async function renderTeamReport(){
-  const reportees=Object.keys(EMP).filter(c=>EMP[c]&&EMP[c].rm===ME)
-        .sort((a,b)=>String(EMP[a].n||"").localeCompare(String(EMP[b].n||"")));
+  const scope=($("trScope")&&$("trScope").value)||"direct";
+  const team=teamBelow(ME);
+  const pick = scope==="all" ? team.direct.concat(team.indirect)
+             : scope==="indirect" ? team.indirect : team.direct;
+  const isIndirect={}; team.indirect.forEach(c=>isIndirect[c]=1);
+  const reportees=pick.slice().sort((a,b)=>String(EMP[a].n||"").localeCompare(String(EMP[b].n||"")));
+  if($("trScopeNote")) $("trScopeNote").textContent =
+    scope==="all" ? "Direct and indirect reports" : scope==="indirect" ? "Indirect reports" : "Your direct reports";
   $("cTeamOver").textContent="0";
   if(!reportees.length){
-    $("trTableWrap").innerHTML='<div class="empty"><b>No direct reports</b>Nobody currently reports to you in Travel Expense.</div>';
+    $("trTableWrap").innerHTML='<div class="empty"><b>Nobody to show</b>'+
+      (scope==="indirect" ? "None of your reports has anybody reporting to them."
+                          : "Nobody currently reports to you in Travel Expense.")+'</div>';
     return;
   }
   $("trTableWrap").innerHTML='<div class="empty"><b>Loading…</b>Fetching travel claim totals for your team.</div>';
   $("trFootnote").textContent="";
 
   const [from,to]=trRange();
-
   const travelAll=await loadAll(20000);
-  const travelByEmp={}, claimCount={}, lastClaim={};
-  reportees.forEach(c=>{ travelByEmp[c]=0; claimCount[c]=0; lastClaim[c]=""; });
+  const travelByEmp={}, claimCount={}, lastClaim={}, claimsByEmp={};
+  reportees.forEach(c=>{ travelByEmp[c]=0; claimCount[c]=0; lastClaim[c]=""; claimsByEmp[c]=[]; });
   travelAll.forEach(r=>{
     const by=cleanCode(r.by);
     if(!travelByEmp.hasOwnProperty(by)) return;
@@ -942,37 +1096,98 @@ async function renderTeamReport(){
     if(!trInRange(d,from,to)) return;
     travelByEmp[by]+=Number(r.approved!=null?r.approved:r.claimed)||0;
     claimCount[by]+=1;
+    claimsByEmp[by].push(r);
     if(!lastClaim[by]||d>lastClaim[by]) lastClaim[by]=d;
   });
 
   TR_ROWS=reportees.map(c=>({
-    code:c, name:EMP[c].n, branch:EMP[c].b,
-    travel:travelByEmp[c]||0, claims:claimCount[c]||0, last:lastClaim[c]||""
+    code:c, name:EMP[c].n, branch:EMP[c].b, indirect:!!isIndirect[c],
+    travel:travelByEmp[c]||0, claims:claimCount[c]||0, last:lastClaim[c]||"",
+    rows:claimsByEmp[c].sort((a,b)=>String(dkey(b.claimDate||b.perFrom)).localeCompare(String(dkey(a.claimDate||a.perFrom))))
   })).sort((a,b)=>b.travel-a.travel);
 
   const grand=TR_ROWS.reduce((s,r)=>s+r.travel,0);
   const claims=TR_ROWS.reduce((s,r)=>s+r.claims,0);
   $("cTeamOver").textContent=claims;
 
-  let h='<table class="trTbl"><thead><tr><th>Employee</th><th>Branch</th>'+
-    '<th style="text-align:right">Claims</th><th style="text-align:right">Travel Claimed</th>'+
-    '<th>Last claim date</th><th style="text-align:right">Share</th></tr></thead><tbody>';
-  TR_ROWS.forEach(r=>{
+  /* the branch list follows whoever is in the team, so it never offers an empty branch */
+  const brAll=[...new Set(TR_ROWS.map(r=>r.branch||"Branch not set"))].sort();
+  const bsel=$("trBranch");
+  if(bsel){
+    const keep=bsel.value;
+    bsel.innerHTML='<option value="">All branches</option>'+
+      brAll.map(b=>'<option'+(keep===b?" selected":"")+'>'+esc(b)+'</option>').join("");
+    if(keep&&brAll.indexOf(keep)<0) bsel.value="";
+  }
+  const brPick=(bsel&&bsel.value)||"";
+  const shown=brPick?TR_ROWS.filter(r=>(r.branch||"Branch not set")===brPick):TR_ROWS;
+  const grp=($("trGroup")&&$("trGroup").value)||"branch";
+
+  const claimTable=r=> r.rows.length
+    ? '<table class="itab" style="margin:0"><tr><th>Claim No</th><th>Claim date</th><th>Purpose</th>'+
+      '<th>Lines</th><th class="n">Claimed</th><th class="n">Approved</th><th>Status</th><th>Payment</th></tr>'+
+      r.rows.map(y=>{
+        const st=claimStage(y), pay=(y.pay&&y.pay.status)||"Pending";
+        return '<tr><td>'+esc(y.no||"—")+'</td><td>'+dd(y.claimDate||y.perFrom)+'</td>'+
+          '<td>'+esc(y.purpose||"—")+'</td>'+
+          '<td class="n">'+((y.__slim?(Number(y.lineCount)||0):(y.items||[]).length)||"—")+'</td>'+
+          '<td class="n">'+money(y.claimed)+'</td>'+
+          '<td class="n">'+(stageAmt(y.approved)?money(y.approved):"—")+'</td>'+
+          '<td><span style="font-weight:700;color:'+st.c+'">'+esc(st.t)+'</span></td>'+
+          '<td>'+esc(pay)+((y.pay&&y.pay.date)?" · "+dd(y.pay.date):"")+'</td></tr>';
+      }).join("")+'</table>'
+    : '<div class="empty" style="margin:0"><b>No claims in this period</b>Widen the dates to see more.</div>';
+
+  const empBar=r=>{
+    const id="emp-"+cssSafe(r.code);
     const share = grand>0 ? Math.round(r.travel/grand*100) : 0;
-    h+='<tr data-code="'+r.code+'">'+
-      '<td><b>'+esc(r.name)+'</b><br><span style="color:var(--muted);font-size:10px">'+r.code+'</span></td>'+
-      '<td>'+esc(r.branch)+'</td>'+
-      '<td class="n">'+r.claims+'</td>'+
-      '<td class="n">'+money(r.travel)+'</td>'+
-      '<td>'+(r.last?dd(r.last):"—")+'</td>'+
-      '<td class="n">'+share+'%</td></tr>';
-  });
-  h+='<tr style="font-weight:800;background:var(--tile)"><td colspan="2">Team total</td>'+
-     '<td class="n">'+claims+'</td><td class="n">'+money(grand)+'</td><td></td><td class="n">100%</td></tr>';
-  h+="</tbody></table>";
-  $("trTableWrap").innerHTML = TR_ROWS.length ? h
+    return '<div class="hbar hbar-emp'+(r.claims?"":" hzero")+'" onclick="hToggle(\''+id+'\',this)">'+
+        '<span class="tog">+</span>'+
+        '<div><div class="hTtl">'+esc(r.name)+'</div>'+
+          '<div class="hSub">'+esc(r.code)+' · '+esc(r.branch)+' · '+(r.indirect?"Indirect":"Direct")+
+          ' · '+r.claims+' claim'+(r.claims===1?"":"s")+
+          (r.last?' · last '+dd(r.last):"")+' · '+share+'% of the team</div></div>'+
+        '<div class="hAmt">'+money(r.travel)+'</div></div>'+
+      '<div class="hbody" id="'+id+'" style="display:none">'+claimTable(r)+'</div>';
+  };
+
+  let h="";
+  if(grp==="branch"){
+    const byBr={};
+    shown.forEach(r=>{ const b=r.branch||"Branch not set"; (byBr[b]=byBr[b]||[]).push(r); });
+    const order=Object.keys(byBr).sort((a,b)=>
+      byBr[b].reduce((s,r)=>s+r.travel,0)-byBr[a].reduce((s,r)=>s+r.travel,0)||a.localeCompare(b));
+    order.forEach(b=>{
+      const g=byBr[b], id="br-"+cssSafe(b);
+      const bt=g.reduce((s,r)=>s+r.travel,0), bc=g.reduce((s,r)=>s+r.claims,0);
+      const withClaims=g.filter(r=>r.claims>0).length;
+      h+='<div class="hbar hbar-br'+(bc?"":" hzero")+'" onclick="hToggle(\''+id+'\',this)">'+
+          '<span class="tog">+</span>'+
+          '<div><div class="hTtl">'+esc(b.replace(/^[A-Z]{2}_/,""))+'</div>'+
+            '<div class="hSub">'+esc(b)+' · '+g.length+' employee'+(g.length===1?"":"s")+
+            ' · '+withClaims+' with claims · '+bc+' claim'+(bc===1?"":"s")+'</div></div>'+
+          '<div class="hAmt">'+money(bt)+'</div></div>'+
+        '<div class="hkids" id="'+id+'" style="display:none">'+g.map(empBar).join("")+'</div>';
+    });
+    $("trCount").textContent=order.length+" branch"+(order.length===1?"":"es")+" · "+
+      shown.reduce((s,r)=>s+r.claims,0)+" claims";
+  } else {
+    h=shown.map(empBar).join("");
+    $("trCount").textContent=shown.length+" employee"+(shown.length===1?"":"s")+" · "+
+      shown.reduce((s,r)=>s+r.claims,0)+" claims";
+  }
+
+  const tShown=shown.reduce((s,r)=>s+r.travel,0), cShown=shown.reduce((s,r)=>s+r.claims,0);
+  h+='<div class="hbar" style="background:var(--tile);color:var(--navy);border:1px solid var(--line);cursor:default">'+
+     '<span class="tog" style="background:transparent;border:0"></span>'+
+     '<div><div class="hTtl">'+(brPick?esc(brPick)+" total":"Team total")+'</div>'+
+       '<div class="hSub" style="color:var(--muted)">'+cShown+' claim'+(cShown===1?"":"s")+'</div></div>'+
+     '<div class="hAmt">'+money(tShown)+'</div></div>';
+  $("trTableWrap").innerHTML = shown.length ? h
     : '<div class="empty"><b>No claims in this period</b>Widen the dates to see more.</div>';
-  $("trFootnote").textContent="Showing "+dd(from)+" to "+dd(to)+
+  $("trFootnote").textContent="Showing "+dd(from)+" to "+dd(to)+" · "+reportees.length+" employee(s), "+
+    (scope==="all" ? team.direct.length+" direct and "+team.indirect.length+" indirect"
+     : scope==="indirect" ? "indirect reports only" : "direct reports only")+
     ". Totals use the approved amount where a claim has been approved, otherwise the claimed amount. "+
     "Drafts and rejected claims are excluded.";
 }
@@ -987,6 +1202,9 @@ $("trPeriod").addEventListener("change",()=>{
   $("trPeriod").value="custom"; renderTeamReport();
 }));
 $("trRefresh").addEventListener("click",()=>{ MEM_AT=0; renderTeamReport(); });
+$("trScope")&&$("trScope").addEventListener("change",()=>renderTeamReport());
+$("trBranch")&&$("trBranch").addEventListener("change",()=>renderTeamReport());
+$("trGroup")&&$("trGroup").addEventListener("change",()=>renderTeamReport());
 document.querySelectorAll(".navtab").forEach(t=>t.addEventListener("click",()=>{
   document.querySelectorAll(".navtab").forEach(x=>x.classList.remove("on"));
   document.querySelectorAll(".view").forEach(x=>x.classList.remove("on"));
@@ -2182,12 +2400,52 @@ async function dropDraft(id){
     toast("That draft could not be found — it may already have been deleted, or it's no longer a draft.", false);
   }
 }
-function countSel(){
-  const n=document.querySelectorAll(".bx:checked").length;
-  $("bulkCount").textContent=n;
-  $("bulkbar").classList.toggle("on",document.querySelectorAll(".bx").length>0);
+/* Two queues now carry tick boxes, so every count is scoped to its own list.
+   Counting across both would let a manager approve claims from the other tab. */
+function boxes(sc){
+  const el = sc==="apr" ? $("approveList") : $("checkList");
+  return el ? [].slice.call(el.querySelectorAll(".bx")) : [];
 }
-function selectAll(on){ document.querySelectorAll(".bx").forEach(b=>b.checked=on); countSel(); }
+function countSel(){
+  [["chk","bulkCount","bulkbar"],["apr","aprBulkCount","aprBulkbar"]].forEach(([sc,cnt,bar])=>{
+    const all=boxes(sc), n=all.filter(b=>b.checked).length;
+    if($(cnt)) $(cnt).textContent=n;
+    if($(bar)) $(bar).classList.toggle("on",all.length>0);
+  });
+}
+function selectAll(on,sc){
+  if(sc) boxes(sc).forEach(b=>b.checked=on);
+  else document.querySelectorAll(".bx").forEach(b=>b.checked=on);
+  countSel();
+}
+/* Approves every ticked claim at the amount the reporting manager recommended.
+   Anything that has moved on since the list was drawn is skipped and reported. */
+async function bulkApprove(){
+  const ids=boxes("apr").filter(b=>b.checked).map(b=>b.value);
+  if(!ids.length){ alert("Tick at least one claim."); return; }
+  const picked=ids.map(id=>MEM.find(x=>x.id===id)).filter(Boolean);
+  const total=picked.reduce((s,r)=>s+(stageAmt(r.recommended)||Number(r.claimed)||0),0);
+  if(!confirm("Approve "+ids.length+" claim(s) at the recommended amount, "+money(total)+" in total?\n\n"+
+              "Each claim goes forward for payment. Approve one at a time instead if any needs a line checked."))
+    return;
+  let done=0; const skipped=[];
+  for(const id of ids){
+    try{
+      const r=await loadOne(id);
+      if(!r || r.status!==ST.REC || cleanCode(r.rgCode)!==cleanCode(ME)){ skipped.push(r&&r.no||id); continue; }
+      const amt = stageAmt(r.recommended) || Number(r.claimed) || 0;
+      if(!(amt>0)){ skipped.push(r.no||id); continue; }
+      r.approved=amt; r.payable=amt; r.status=ST.APP;
+      r.trail.push({code:ME,act:"Approved",
+        remark:"Approved in bulk at the recommended amount "+money(amt),
+        ts:new Date().toISOString(),amt:amt});
+      await syncToCloud(r); done++;
+    }catch(e){ skipped.push(id); }
+  }
+  toast(done+" claim(s) approved"+(skipped.length?". These were skipped because they had already moved on: "+skipped.join(", "):"."), !skipped.length);
+  selectAll(false,"apr");
+  await refresh();
+}
 async function bulkRecommend(){
   const ids=[].slice.call(document.querySelectorAll(".bx:checked")).map(b=>b.value);
   if(!ids.length){ alert("Tick at least one claim."); return; }
@@ -2331,7 +2589,11 @@ function scopeApprove(){
 }
 function scopeTeam(){
   const team={};
-  Object.keys(EMP).forEach(c=>{ if(EMP[c]&&EMP[c].rm===ME) team[c]=1; });
+  const t=teamBelow(ME);
+  const scope=($("trScope")&&$("trScope").value)||"direct";
+  const pick = scope==="all" ? t.direct.concat(t.indirect)
+             : scope==="indirect" ? t.indirect : t.direct;
+  pick.forEach(c=>team[c]=1);
   const [from,to]=trRange();
   return (MEM||[]).filter(r=>{
     if(!team[cleanCode(r.by)]) return false;
@@ -3175,6 +3437,137 @@ $("bCsv").addEventListener("click",()=>{
   xlsxDownload("Bulk_Upload_Result_"+BATCH.ref+".xlsx",[detailSheet("Upload Result",head,rows)]);
 });
 
+
+/* ================= HO ADMIN: BULK PAYMENT UPDATE =================
+   One file settles a payment run. The voucher number is the key, because that is what
+   appears on the bank advice. Every row is checked against the live claim first: an
+   unknown voucher, a claim that is not yet approved, and a claim already paid are each
+   refused by name rather than paid twice. */
+const PAY_SHEET="Payment Update";
+const PCOL={voucher:1,utr:2,payDate:3,remark:4};
+let PAYBATCH=null;
+function payToast(t,ok){ const e=$("payToast"); if(!e) return;
+  e.className="msg "+(ok?"ok":"no")+" on"; e.textContent=t;
+  setTimeout(()=>{ e.className="msg"; },8000); }
+
+function paymentSheet(){
+  const due=(MEM||[]).filter(r=>r.status===ST.APP||r.status===ST.HOLD);
+  const head=["Voucher No","UTR / Payment Reference","Payment Date (DD-MM-YYYY)","Remark",
+              "Claim No","Engineer","Branch","Payable Amount","Current Status"];
+  const rows=due.map(r=>[r.voucher||"",( r.pay&&r.pay.ref)||"",dd(new Date().toISOString().slice(0,10)),"",
+                         r.no||"",r.name||"",r.branch||"",Number(r.payable)||0,r.status]);
+  if(!rows.length){
+    payToast("No approved claims are waiting for payment, so the sheet is blank. Fill the voucher numbers by hand if you need to.",true);
+    rows.push(["TV/MH/2611/0001","","","","","","",0,""]);
+  }
+  xlsxDownload("Prostarm_Payment_Update_"+new Date().toISOString().slice(0,10)+".xlsx",
+    [detailSheet(PAY_SHEET,head,rows,[22,26,24,26,22,24,16,16,30])]);
+}
+
+$("payPick")&&$("payPick").addEventListener("click",()=>$("payFile").click());
+$("payTemplate")&&$("payTemplate").addEventListener("click",paymentSheet);
+$("payClear")&&$("payClear").addEventListener("click",()=>{ PAYBATCH=null; $("payResult").className="hide"; });
+$("payFile")&&$("payFile").addEventListener("change",e=>{
+  const f=e.target.files[0]; e.target.value="";
+  if(!f) return;
+  if(!/\.xlsx$/i.test(f.name)){ payToast("Upload the .xlsx payment sheet. CSV and older .xls are not read.",false); return; }
+  const rd=new FileReader();
+  rd.onload=async()=>{ try{ await parsePayments(readSheet(rd.result,PAY_SHEET),f.name); }
+    catch(err){ payToast("Could not read that file: "+err.message,false); } };
+  rd.onerror=()=>payToast("The file could not be opened. Save it again from Excel.",false);
+  rd.readAsArrayBuffer(f);
+});
+
+async function parsePayments(grid,fileName){
+  const hdr=grid[1];
+  if(!hdr||String(hdr[PCOL.voucher]||"").toLowerCase().indexOf("voucher")<0){
+    payToast("That file does not match the payment sheet. Column A must be Voucher No.",false); return; }
+  const live=await loadAll(0);
+  const byVoucher={};
+  live.forEach(r=>{ if(r.voucher) byVoucher[String(r.voucher).trim().toUpperCase()]=r; });
+  const rows=[], seen={};
+  Object.keys(grid).map(Number).filter(n=>n>=2).sort((a,b)=>a-b).forEach(rn=>{
+    const c=grid[rn];
+    const v=cellStr(c[PCOL.voucher]).toUpperCase(), utr=cellStr(c[PCOL.utr]);
+    if(!v&&!utr) return;
+    const rec={xl:rn,voucher:v,utr:utr,remark:cellStr(c[PCOL.remark]),err:[]};
+    const raw=c[PCOL.payDate];
+    rec.date = raw==null||raw==="" ? new Date().toISOString().slice(0,10)
+             : (typeof raw==="number" ? excelDate(raw) : dkey(raw));
+    if(!v) rec.err.push("Voucher No is blank");
+    if(!utr) rec.err.push("UTR / payment reference is blank");
+    if(!rec.date) rec.err.push("Payment date is not a valid date");
+    else if(rec.date>new Date().toISOString().slice(0,10)) rec.err.push("Payment date cannot be in the future");
+    const claim=v?byVoucher[v]:null;
+    if(v&&!claim) rec.err.push("No claim in the portal carries this voucher number");
+    if(claim){
+      rec.claim=claim; rec.payable=Number(claim.payable)||0;
+      rec.eng=claim.name; rec.branch=claim.branch; rec.no=claim.no;
+      if(claim.status===ST.PAID) rec.err.push("Already paid"+(claim.pay&&claim.pay.ref?" under "+claim.pay.ref:""));
+      else if(claim.status===ST.CLOSED) rec.err.push("This claim is closed");
+      else if(!(claim.status===ST.APP||claim.status===ST.HOLD))
+        rec.err.push("Not approved for payment yet — it is "+claim.status);
+      if(!(rec.payable>0)) rec.err.push("This claim has no payable amount");
+    }
+    if(seen[v]) rec.err.push("Voucher repeated on row "+seen[v]);
+    else if(v) seen[v]=rn;
+    rows.push(rec);
+  });
+  if(!rows.length){ payToast("No rows found. Enter voucher numbers from row 2 down.",false); return; }
+  PAYBATCH={file:fileName,rows:rows};
+  renderPayments();
+}
+
+function renderPayments(){
+  const rows=PAYBATCH.rows, ok=rows.filter(r=>!r.err.length);
+  $("payResult").className="";
+  $("payTotal").textContent=rows.length;
+  $("payOk").textContent=ok.length;
+  $("payBad").textContent=rows.length-ok.length;
+  $("payVal").textContent=money(ok.reduce((s,r)=>s+(r.payable||0),0));
+  $("payRows").innerHTML='<table class="itab"><tr><th>Row</th><th>Voucher No</th><th>Claim No</th>'+
+    '<th>Engineer</th><th>Branch</th><th>Payable</th><th>UTR</th><th>Payment date</th><th>Result</th></tr>'+
+    rows.map(r=>'<tr'+(r.err.length?' style="background:var(--red-lt)"':'')+'>'+
+      '<td>'+r.xl+'</td><td>'+esc(r.voucher||"—")+'</td><td>'+esc(r.no||"—")+'</td>'+
+      '<td>'+esc(r.eng||"—")+'</td><td>'+esc(r.branch||"—")+'</td>'+
+      '<td class="n">'+(r.payable?money(r.payable):"—")+'</td>'+
+      '<td>'+esc(r.utr||"—")+'</td><td>'+(r.date?dd(r.date):"—")+'</td>'+
+      '<td>'+(r.err.length
+        ? '<span style="color:var(--red);font-weight:700">'+esc(r.err.join(" · "))+'</span>'
+        : '<span style="color:var(--green);font-weight:800">READY</span>')+'</td></tr>').join("")+
+    '</table><div class="refnote">Only rows marked READY are settled. The UTR is written against that '+
+    'voucher and the claim moves to Paid.</div>';
+  $("payCommit").disabled = ok.length===0;
+  $("payCommit").textContent = "Mark "+ok.length+" claim"+(ok.length===1?"":"s")+" paid";
+}
+
+$("payCommit")&&$("payCommit").addEventListener("click",async()=>{
+  if(!PAYBATCH) return;
+  const ok=PAYBATCH.rows.filter(r=>!r.err.length);
+  if(!ok.length){ payToast("Nothing to settle. Every row has an error.",false); return; }
+  const total=ok.reduce((s,r)=>s+(r.payable||0),0);
+  if(!confirm("Mark "+ok.length+" claim(s) paid, "+money(total)+" in total?\n\n"+
+              "This writes the UTR against each voucher and cannot be undone.")) return;
+  let done=0; const failed=[];
+  for(const row of ok){
+    try{
+      const r=await loadOne(row.claim.id);
+      if(!r||!(r.status===ST.APP||r.status===ST.HOLD)){ failed.push(row.voucher); continue; }
+      r.pay={status:"Paid",ref:row.utr,date:row.date,
+             remark:row.remark||"Settled from payment file "+PAYBATCH.file,by:ME};
+      r.status=ST.PAID;
+      r.trail.push({code:ME,act:"Payment processed",
+        remark:"Ref "+row.utr+(row.remark?" · "+row.remark:"")+" · bulk payment file "+PAYBATCH.file,
+        ts:new Date().toISOString(),amt:r.payable});
+      await syncToCloud(r); done++;
+    }catch(e){ failed.push(row.voucher); }
+  }
+  PAYBATCH=null; $("payResult").className="hide";
+  await refresh();
+  payToast(done+" claim(s) marked paid"+(failed.length?". These did not sync and are unchanged: "+failed.join(", "):"."),
+           failed.length===0);
+});
+
 /* ================= REFRESH ================= */
 function list(el,rows,emptyTitle,emptyLine,pick,sc){
   $(el).innerHTML=rows.length?rows.map(r=>card(r,pick,sc)).join("")
@@ -3212,7 +3605,7 @@ async function refreshInner(){
 
   list("mineList",mine,"No claims yet","Raise one from the New Claim tab.",false,"mine");
   list("checkList",check,"Nothing to check","Claims from your team will land here.",true,"chk");
-  list("approveList",appr,"Nothing to approve","Claims recommended by reporting managers will land here.",false,"apr");
+  list("approveList",appr,"Nothing to approve","Claims recommended by reporting managers will land here.",true,"apr");
   list("hoList",hoAll,"No claims match","Change the filters above to widen the search.",false,"ho");
   countSel();
   primeRevisionTotals();
