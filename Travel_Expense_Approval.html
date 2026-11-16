@@ -363,14 +363,14 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
               <div class="f"><label>Voucher No <span class="auto">auto</span></label><input id="voucher" readonly></div>
               <div class="f"><label>Mobile No <span class="auto">optional</span></label><input id="mobile" maxlength="10" inputmode="numeric" placeholder="10 digits"></div>
             </div>
-            <datalist id="custList">
-              <option>Hitachi Payment Services Pvt Ltd</option>
-              <option>BTI Payments Pvt Ltd</option>
-              <option>India1 Payments Ltd</option>
-              <option>CMS Info Systems Ltd</option>
-              <option>EPS</option>
-              <option>Perto</option>
-              <option>Prostarm — Own Branch</option>
+            <datalist id="custList" translate="no" class="notranslate">
+              <option value="Hitachi Payment Services Pvt Ltd">Hitachi Payment Services Pvt Ltd</option>
+              <option value="BTI Payments Pvt Ltd">BTI Payments Pvt Ltd</option>
+              <option value="India1 Payments Ltd">India1 Payments Ltd</option>
+              <option value="CMS Info Systems Ltd">CMS Info Systems Ltd</option>
+              <option value="EPS">EPS</option>
+              <option value="Perto">Perto</option>
+              <option value="Prostarm — Own Branch">Prostarm — Own Branch</option>
             </datalist>
           </div>
         </div>
@@ -818,6 +818,34 @@ const SEGMENTS = ["ATM","NON-ATM","Dealer & Channel Sales","Branch"];
 /* Heads tied to a customer site. Only these must quote a service ticket;
    Food and Misc are incidental spend and may leave it blank. */
 const SITE_HEADS = ["Travel","Hotel"];
+
+/* ---- canonical values -------------------------------------------------------
+   Everything the engineer picks from a list is stored in English. If a browser
+   translation ever slips a translated label through, this pulls it back to the
+   English member of the list rather than letting a new category appear in the
+   analysis. An unrecognised value is kept as typed, not silently discarded. */
+function canon(list,v){
+  if(v==null) return v;
+  const raw=String(v).trim();
+  if(!raw) return raw;
+  const hit=list.find(x=>x===raw);
+  if(hit) return hit;
+  const low=raw.toLowerCase();
+  const ci=list.find(x=>x.toLowerCase()===low);
+  if(ci) return ci;
+  /* same word, different punctuation or spacing */
+  const flat=low.replace(/[^a-z0-9]/g,"");
+  const fz=list.find(x=>x.toLowerCase().replace(/[^a-z0-9]/g,"")===flat);
+  return fz||raw;
+}
+const canonSegment = v => canon(SEGMENTS,v);
+const canonCat     = v => canon(Object.keys(HEADS),v);
+const canonMode    = (cat,v) => canon(HEADS[canonCat(cat)]||[],v);
+/* True when a stored value is not one of ours — used to flag old rows for cleaning. */
+function offList(list,v){
+  const raw=String(v==null?"":v).trim();
+  return !!raw && list.indexOf(canon(list,raw))<0;
+}
 const needsTicket = it => SITE_HEADS.indexOf(it.cat)>-1;
 
 function needsBill(it){
@@ -965,12 +993,17 @@ function rowToClaim(r) {
     rev: c.rev || 1,
     rejectedBy: c.rejectedBy || null,
     rejectedStage: c.rejectedStage || null,
-    purpose: c.purpose || "", segment: c.segment || "", custName: c.custName || "",
+    purpose: c.purpose || "", segment: canonSegment(c.segment || ""), custName: c.custName || "",
     ticket: c.ticket || "", uid: c.uid || "",
     items: (Array.isArray(c.items) ? c.items : []).map(it => Object.assign(
       { id:"L",date:"",ticket:"",uid:"",custName:"",segment:"",purpose:"",cat:"Misc",mode:"Others",
         jFrom:"",jFromPin:"",jTo:"",jToPin:"",km:"",rate:0,amt:0,desc:"",att:[] }, it || {},
-      { att: (Array.isArray(it && it.att) ? it.att : []).map(a => a && a.name ? Object.assign({}, a, { name: shortAttName(a.name, a.type) }) : a) })),
+      { att: (Array.isArray(it && it.att) ? it.att : []).map(a => a && a.name ? Object.assign({}, a, { name: shortAttName(a.name, a.type) }) : a) }))
+      /* A claim filed on a translated page can carry a translated expense type, mode or
+         segment. Pull each back to the English member of its list on the way in, so one
+         category never splits into several in the analysis. */
+      .map(it => { const cat = canonCat(it.cat);
+        return Object.assign(it, { cat: cat, mode: canonMode(cat, it.mode), segment: canonSegment(it.segment) }); }),
     trail: (Array.isArray(c.trail) ? c.trail : []).filter(t => t && typeof t === "object")
              .map(t => Object.assign({ code:"", act:"", remark:"", ts:"", amt:null }, t)),
     pay: c.pay || { status: "Pending", ref: "", date: "", remark: "", by: null }
@@ -1183,7 +1216,7 @@ async function renderTeamReport(){
   if(bsel){
     const keep=bsel.value;
     bsel.innerHTML='<option value="">All branches</option>'+
-      brAll.map(b=>'<option'+(keep===b?" selected":"")+'>'+esc(b)+'</option>').join("");
+      brAll.map(b=>'<option value="'+esc(b)+'"'+(keep===b?" selected":"")+'>'+esc(b)+'</option>').join("");
     if(keep&&brAll.indexOf(keep)<0) bsel.value="";
   }
   const brPick=(bsel&&bsel.value)||"";
@@ -1475,7 +1508,9 @@ function addItem(seed){
   ITEMS.push(it); renderItems();
 }
 function removeItem(id){ ITEMS=ITEMS.filter(i=>i.id!==id); if(!ITEMS.length) addItem(); else renderItems(); }
-function modeOptions(cat,sel){ return (HEADS[cat]||[]).map(m=>'<option'+(m===sel?" selected":"")+'>'+esc(m)+'</option>').join(""); }
+function modeOptions(cat,sel){
+  return (HEADS[cat]||[]).map(m=>'<option value="'+esc(m)+'"'+(m===sel?" selected":"")+'>'+esc(m)+'</option>').join("");
+}
 
 function renderItems(){
   applyBikeRates();
@@ -1498,13 +1533,13 @@ function renderItems(){
           "<input value=\""+esc(it.ticket||"")+"\" placeholder=\""+(needsTicket(it)?"PROSTARM26XXXXXXX":"not required")+"\" onchange=\"upd('"+it.id+"','ticket',this.value)\">",1)+
         fld("UID <span class=\"auto\">optional</span>","<input value=\""+esc(it.uid||"")+"\" placeholder=\"Site UID / ATM ID\" onchange=\"upd('"+it.id+"','uid',this.value)\">",1)+
         fld("Customer Name <span class=\"req\">*</span>","<input list=\"custList\" value=\""+esc(it.custName||"")+"\" placeholder=\"e.g. Hitachi Payment Services Pvt Ltd\" onchange=\"upd('"+it.id+"','custName',this.value)\">",1)+
-        fld("Customer Segment <span class=\"req\">*</span>","<select onchange=\"upd('"+it.id+"','segment',this.value)\">"+
-          SEGMENTS.map(x=>'<option'+(x===it.segment?" selected":"")+'>'+esc(x)+'</option>').join("")+"</select>",1)+
+        fld("Customer Segment <span class=\"req\">*</span>","<select"+NOTR+" onchange=\"upd('"+it.id+"','segment',this.value)\">"+
+          SEGMENTS.map(x=>'<option value="'+esc(x)+'"'+(x===it.segment?" selected":"")+'>'+esc(x)+'</option>').join("")+"</select>",1)+
       '</div>'+
       '<div class="frow4" style="margin-top:8px">'+
         fld("Purpose Of Travel <span class=\"req\">*</span>","<input value=\""+esc(it.purpose||"")+"\" placeholder=\"e.g. UPS breakdown attended at site\" onchange=\"upd('"+it.id+"','purpose',this.value)\">",1)+
-        fld("Expense Type","<select onchange=\"updCat('"+it.id+"',this.value)\">"+Object.keys(HEADS).map(h=>'<option'+(h===it.cat?" selected":"")+'>'+h+'</option>').join("")+"</select>",1)+
-        fld("Travel / Expense Mode","<select onchange=\"upd('"+it.id+"','mode',this.value)\">"+modeOptions(it.cat,it.mode)+"</select>",1)+
+        fld("Expense Type","<select"+NOTR+" onchange=\"updCat('"+it.id+"',this.value)\">"+Object.keys(HEADS).map(h=>'<option value="'+esc(h)+'"'+(h===it.cat?" selected":"")+'>'+esc(h)+'</option>').join("")+"</select>",1)+
+        fld("Travel / Expense Mode","<select"+NOTR+" onchange=\"upd('"+it.id+"','mode',this.value)\">"+modeOptions(it.cat,it.mode)+"</select>",1)+
         fld("Claimed Amount (₹)","<input class=\"amt\" type=\"number\" min=\"0\" step=\"1\" value=\""+(it.amt||"")+"\" "+(isBike?"readonly":"")+" onchange=\"upd('"+it.id+"','amt',this.value)\">",1)+
       '</div>'+
       (isTravel?'<div class="frow5" style="margin-top:8px">'+
@@ -1568,6 +1603,10 @@ function approverNote(it){
   }
   return "";
 }
+/* Marks a control so Chrome, Edge and Google Translate leave its text alone. The rest of
+   the page may still be translated; these are the values that get stored, so they stay
+   English whatever language the engineer is reading in. */
+const NOTR=' translate="no" class="notranslate"';
 function fld(l,inner,span){ return '<div class="f'+(span===2?" wide":"")+'"><label>'+l+'</label>'+inner+'</div>'; }
 let RQ=null;
 function queueRender(){ if(RQ) clearTimeout(RQ); RQ=setTimeout(()=>{RQ=null;renderItems();},0); }
@@ -3777,9 +3816,9 @@ async function renderAnalysis(){
   const zones=[...new Set(all.map(r=>r.zone).filter(Boolean))].sort();
   const brs=[...new Set(all.map(r=>r.branch).filter(Boolean))].sort();
   if(zoneSel&&!zoneSel.dataset.done){ zoneSel.innerHTML='<option value="">All zones</option>'+
-    zones.map(z=>'<option>'+esc(z)+'</option>').join(""); zoneSel.dataset.done="1"; }
+    zones.map(z=>'<option value="'+esc(z)+'">'+esc(z)+'</option>').join(""); zoneSel.dataset.done="1"; }
   if(brSel&&!brSel.dataset.done){ brSel.innerHTML='<option value="">All branches</option>'+
-    brs.map(b=>'<option>'+esc(b)+'</option>').join(""); brSel.dataset.done="1"; }
+    brs.map(b=>'<option value="'+esc(b)+'">'+esc(b)+'</option>').join(""); brSel.dataset.done="1"; }
   const zPick=(zoneSel&&zoneSel.value)||"", bPick=(brSel&&brSel.value)||"";
 
   const rows=all.filter(r=>{
@@ -3946,6 +3985,36 @@ async function renderAnalysis(){
     anTable([["Status"],["Value",1],["Share"],["Claims",1]],
       ST_.map(x=>'<tr>'+anBarRow(x.k,x.v,ST_[0].v,'<td class="n">'+x.n+'</td>')+'</tr>'))+'</div></div>';
 
+  /* Values that are not on any of our lists — almost always a claim filed while the
+     browser was translating the page. They cannot be mapped back automatically, so the
+     claims carrying them are named here for correction. */
+  const odd={};
+  rows.forEach(r=>(Array.isArray(r.items)?r.items:[]).forEach(x=>{
+    [["Expense type",Object.keys(HEADS),x.cat],
+     ["Mode",HEADS[canonCat(x.cat)]||[],x.mode],
+     ["Segment",SEGMENTS,x.segment]].forEach(([lbl,list,val])=>{
+      if(offList(list,val)){
+        const k=lbl+"\u0001"+String(val).trim();
+        (odd[k]=odd[k]||{n:0,claims:{}}).n++;
+        odd[k].claims[r.no||r.id]=1;
+      }
+    });
+  }));
+  const oddKeys=Object.keys(odd);
+  if(oddKeys.length){
+    h+='<div class="anPanel"><h5 style="background:linear-gradient(180deg,#d98a17,#b06a00)">'+
+      'Values that are not on the standard list<span>'+oddKeys.length+' to correct</span></h5><div class="in">'+
+      '<div class="refnote" style="margin:0 0 8px">These were saved while the page was being translated '+
+      'in the browser, so the stored value is not English. They cannot be mapped back automatically and '+
+      'they appear as separate categories above. Open each claim and reselect the field.</div>'+
+      anTable([["Field"],["Value stored"],["Lines",1],["Claims"]],
+        oddKeys.sort().map(k=>{
+          const f=k.split("\u0001")[0], v=k.split("\u0001")[1], cl=Object.keys(odd[k].claims);
+          return '<tr><td>'+esc(f)+'</td><td><b style="color:var(--amber)">'+esc(v)+'</b></td>'+
+            '<td class="n">'+odd[k].n+'</td><td>'+esc(cl.slice(0,8).join(", "))+
+            (cl.length>8?" and "+(cl.length-8)+" more":"")+'</td></tr>';
+        }))+'</div></div>';
+  }
   h+='<div class="refnote">Basis: '+esc(($("anBasis")&&$("anBasis").selectedOptions[0].textContent)||"")+
      '. Drafts and rejected claims are excluded. Call type, visit type, mode and segment are recorded per line, '+
      'so a claim covering several lines is split across them in proportion.</div>';
