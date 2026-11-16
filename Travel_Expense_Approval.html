@@ -238,7 +238,7 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
 .anTbl td{padding:5px 8px;border-bottom:1px solid #eef4f8}
 .anTbl td.n,.anTbl th.n{text-align:right}
 .anTbl tr:last-child td{border-bottom:0}
-.anTbl tr.tot td{font-weight:800;background:var(--tile)}
+.anTbl tr.anTot td{font-weight:800;background:var(--tile);border-top:2px solid var(--line)}
 .anBarWrap{background:#eef4f8;border-radius:3px;height:7px;overflow:hidden;min-width:60px}
 .anBar{height:100%;border-radius:3px;background:linear-gradient(90deg,#4c93d6,#2f72b8)}
 .anLeg{display:flex;flex-wrap:wrap;gap:10px;font-size:10.5px;font-weight:700;color:var(--muted);margin-top:8px}
@@ -1351,7 +1351,8 @@ function enterApp(c){
   $("tabTeamReport").style.display = isReporting(c) ? "" : "none";
   $("tabBulk").style.display       = canBulkUpload(c) ? "" : "none";
   $("tabHo").style.display         = isHO(c) ? "" : "none";
-  $("tabAnalysis").style.display   = isHO(c) ? "" : "none";
+  /* Analysis is open to everyone; what it covers is scoped below, not hidden. */
+  $("tabAnalysis").style.display   = "";
   $("bWho").textContent=e.n+" ("+c+")";
   $("bBranch").textContent=e.b;
   $("bRegion").textContent=e.z;
@@ -2615,9 +2616,9 @@ function voucher(id){
   '<tr><td>Purpose</td><td colspan="5">'+esc(r.purpose)+'</td></tr></table>'+
   '<div class="sec">EXPENSE SUMMARY</div>'+
   '<table><tr><th>Expense Type</th><th>Description</th><th style="text-align:right">Claimed Amount</th><th style="text-align:right">Approved Amount</th></tr>'+lines+
-  '<tr class="tot"><td colspan="2">Total Claimed Amount</td><td class="n">'+money(r.claimed)+'</td><td class="n">—</td></tr>'+
-  '<tr class="tot"><td colspan="2">Reporting Manager Recommended Amount</td><td class="n">—</td><td class="n">'+(r.recommended==null?"—":money(r.recommended))+'</td></tr>'+
-  '<tr class="tot"><td colspan="2">Regional Manager Approved Amount</td><td class="n">—</td><td class="n">'+(r.approved==null?"—":money(r.approved))+'</td></tr>'+
+  '<tr class="anTot"><td colspan="2">Total Claimed Amount</td><td class="n">'+money(r.claimed)+'</td><td class="n">—</td></tr>'+
+  '<tr class="anTot"><td colspan="2">Reporting Manager Recommended Amount</td><td class="n">—</td><td class="n">'+(r.recommended==null?"—":money(r.recommended))+'</td></tr>'+
+  '<tr class="anTot"><td colspan="2">Regional Manager Approved Amount</td><td class="n">—</td><td class="n">'+(r.approved==null?"—":money(r.approved))+'</td></tr>'+
   '<tr class="grand"><td colspan="2">FINAL PAYABLE AMOUNT</td><td class="n">—</td><td class="n">'+(r.payable==null?"—":money(r.payable))+'</td></tr></table>'+
   '<div class="sec">EXPENSE LINES</div>'+
   '<table><tr><th>#</th><th>Ticket / UID</th><th>Customer</th><th>Type</th><th>Mode</th><th>From → To</th><th style="text-align:right">Ref KM</th><th style="text-align:right">KM</th><th style="text-align:right">Rate</th><th>Description</th><th style="text-align:right">Amount</th></tr>'+
@@ -2652,7 +2653,12 @@ function buildHoFilters(){
   opts("hRm",[...new Set(Object.values(EMP).map(e=>e.m).filter(c=>c&&EMP[c]))]
         .sort((a,b)=>String(EMP[a].n||"").localeCompare(String(EMP[b].n||"")))
         .map(c=>[c,EMP[c].n]),"All reporting managers");
-  opts("hStatus",Object.values(ST).map(s=>[s,s]),"All claim statuses");
+  opts("hStatus",
+    [["__pay","Approved — with HO Admin (ready to pay)"],
+     ["__open","Anything still to pay (includes on hold)"],
+     ["__done","Settled (paid or closed)"]]
+      .concat(Object.values(ST).map(s=>[s,s])),
+    "All claim statuses");
   opts("hPay",["Pending","Paid","On Hold"].map(s=>[s,s]),"All payment statuses");
   ["hEmp","hZone","hBranch","hRm","hStatus","hPay","hFrom","hTo"].forEach(i=>$(i).addEventListener("change",refresh));
   $("hReset").addEventListener("click",()=>{ ["hEmp","hZone","hBranch","hRm","hStatus","hPay","hFrom","hTo"].forEach(i=>$(i).value=""); refresh(); });
@@ -2733,7 +2739,11 @@ function hoFilter(list){
     if(v("hZone")&&r.zone!==v("hZone")) return false;
     if(v("hBranch")&&r.branch!==v("hBranch")) return false;
     if(v("hRm")&&r.rmCode!==v("hRm")) return false;
-    if(v("hStatus")&&r.status!==v("hStatus")) return false;
+    const hs=v("hStatus");
+    if(hs==="__pay"){ if(r.status!==ST.APP) return false; }
+    else if(hs==="__open"){ if(r.status!==ST.APP&&r.status!==ST.HOLD) return false; }
+    else if(hs==="__done"){ if(r.status!==ST.PAID&&r.status!==ST.CLOSED) return false; }
+    else if(hs&&r.status!==hs) return false;
     if(v("hPay")&&((r.pay&&r.pay.status)||"")!==v("hPay")) return false;
     const ap=((Array.isArray(r.trail)?r.trail:[]).filter(t=>String(t&&t.act||"")==="Approved").pop()||{}).ts;
     if(v("hFrom")&&(!ap||dkey(ap)<dkey(v("hFrom")))) return false;
@@ -3745,10 +3755,23 @@ function anTable(head,rows,totalRow){
     '</tr></thead><tbody>'+rows.join("")+(totalRow||"")+'</tbody></table>';
 }
 
+/* What this person may analyse: their own claims, plus their team if they have one,
+   plus everything if they sit at HO Admin or Finance. The same boundary the queues
+   and the exports already use, so nobody sees a figure they could not see elsewhere. */
+function anScope(rows){
+  if(isHO(ME)) return {rows:rows,label:"All branches"};
+  const t=teamBelow(ME);
+  const mine={}; mine[cleanCode(ME)]=1;
+  t.direct.concat(t.indirect).forEach(c=>mine[cleanCode(c)]=1);
+  const n=t.direct.length+t.indirect.length;
+  return {rows:rows.filter(r=>mine[cleanCode(r.by)]),
+          label:n?("You and your team · "+n+" reportee"+(n===1?"":"s")):"Your own claims"};
+}
 async function renderAnalysis(){
-  if(!isHO(ME)) return;
   $("anBody").innerHTML='<div class="empty"><b>Building the analysis…</b>Reading the claim book.</div>';
-  const all=await loadAll(20000);
+  const allRaw=await loadAll(20000);
+  const sc=anScope(allRaw);
+  const all=sc.rows;
   const [from,to]=anRange();
   const zoneSel=$("anZone"), brSel=$("anBranch");
   const zones=[...new Set(all.map(r=>r.zone).filter(Boolean))].sort();
@@ -3768,28 +3791,38 @@ async function renderAnalysis(){
     if(to&&(!d||d>to)) return false;
     return true;
   });
+  /* the dates that matter are the claim dates actually present, not the filter bounds */
+  const dks=rows.map(r=>dkey(r.claimDate||r.perFrom)).filter(Boolean).sort();
+  const first=dks[0]||"", last=dks[dks.length-1]||"";
   if($("anScopeNote")) $("anScopeNote").textContent=
-    (bPick||zPick||"All branches")+" · "+(from?dd(from):"from the start")+" to "+(to?dd(to):"today");
+    sc.label+(bPick?" · "+bPick:(zPick?" · "+zPick:""))+
+    (first?" · claims from "+dd(first)+" to "+dd(last):"");
 
   if(!rows.length){
-    $("anBody").innerHTML='<div class="empty"><b>Nothing in this period</b>Widen the dates, or clear the zone and branch filters.</div>';
+    $("anBody").innerHTML='<div class="empty"><b>Nothing in this period</b>'+
+      (isHO(ME) ? "Widen the dates, or clear the zone and branch filters."
+       : "You have no claims in this period, and nor does anyone reporting to you.")+'</div>';
     AN_DATA=null; return;
   }
 
   /* ---- roll the claim book up once, every way the report needs ---- */
   const byBranch={}, byEng={}, byCall={}, byVisit={}, byMode={}, bySeg={}, byMonth={}, byStatus={};
   const bump=(o,k,v,extra)=>{ if(!k) k="Not recorded";
-    const e=o[k]||(o[k]={v:0,n:0,km:0,lines:0,eng:{},br:{}});
-    e.v+=v; e.n+=1; if(extra){ e.km+=extra.km||0; e.lines+=extra.lines||0;
-      if(extra.eng) e.eng[extra.eng]=1; if(extra.br) e.br[extra.br]=1; } };
+    const e=o[k]||(o[k]={v:0,n:0,km:0,lines:0,eng:{},br:{},d0:"",d1:""});
+    e.v+=v; e.n+=1;
+    if(extra){ e.km+=extra.km||0; e.lines+=extra.lines||0;
+      if(extra.eng) e.eng[extra.eng]=1; if(extra.br) e.br[extra.br]=1;
+      /* the span of claim dates behind this row, so every table can state its own period */
+      if(extra.d){ if(!e.d0||extra.d<e.d0) e.d0=extra.d; if(!e.d1||extra.d>e.d1) e.d1=extra.d; } } };
   let totVal=0, totKm=0, totLines=0;
   rows.forEach(r=>{
     const v=anValue(r);
     const items=Array.isArray(r.items)?r.items:[];
     const km=items.reduce((s,x)=>s+(x.cat==="Travel"?(Number(x.km)||0):0),0);
     totVal+=v; totKm+=km; totLines+=items.length||(Number(r.lineCount)||0);
-    bump(byBranch,r.branch,v,{km:km,lines:items.length,eng:r.by});
-    bump(byEng,(r.name||r.by)+"\u0001"+r.by,v,{km:km,lines:items.length,br:r.branch});
+    const cd=dkey(r.claimDate||r.perFrom)||"";
+    bump(byBranch,r.branch,v,{km:km,lines:items.length,eng:r.by,d:cd});
+    bump(byEng,(r.name||r.by)+"\u0001"+r.by,v,{km:km,lines:items.length,br:r.branch,d:cd});
     bump(byStatus,r.status,v);
     const m=(dkey(r.claimDate||r.perFrom)||"").slice(0,7);
     bump(byMonth,m,v);
@@ -3797,13 +3830,13 @@ async function renderAnalysis(){
     if(items.length){
       const share=v/items.length;
       items.forEach(x=>{
-        bump(byCall,(x.purpose||"").trim()||"Not recorded",share,{km:x.cat==="Travel"?(Number(x.km)||0):0,lines:1,eng:r.by,br:r.branch});
+        bump(byCall,(x.purpose||"").trim()||"Not recorded",share,{km:x.cat==="Travel"?(Number(x.km)||0):0,lines:1,eng:r.by,br:r.branch,d:cd});
         bump(byVisit,x.cat||"Not recorded",share,{lines:1});
         if(x.cat==="Travel") bump(byMode,x.mode||"Not recorded",share,{km:Number(x.km)||0,lines:1});
         bump(bySeg,(x.segment||"").trim()||"Not recorded",share,{lines:1});
       });
     } else {
-      bump(byCall,(r.purpose||"").trim()||"Not recorded",v,{lines:0,eng:r.by,br:r.branch});
+      bump(byCall,(r.purpose||"").trim()||"Not recorded",v,{lines:0,eng:r.by,br:r.branch,d:cd});
       bump(byVisit,"Not recorded",v,{lines:0});
     }
   });
@@ -3814,7 +3847,8 @@ async function renderAnalysis(){
   const engCount=Object.keys(byEng).length;
   const paid=rows.filter(r=>r.status===ST.PAID||r.status===ST.CLOSED).reduce((s,r)=>s+(Number(r.payable)||0),0);
   const pend=rows.filter(r=>r.status!==ST.PAID&&r.status!==ST.CLOSED).reduce((s,r)=>s+anValue(r),0);
-  AN_DATA={rows:rows,B:B,E:E,C:C,V:V,M:M,S:S,ST:ST_,MON:MON,tot:totVal,km:totKm,from:from,to:to};
+  AN_DATA={rows:rows,B:B,E:E,C:C,V:V,M:M,S:S,ST:ST_,MON:MON,tot:totVal,km:totKm,
+           from:from,to:to,first:first,last:last,label:sc.label};
 
   const maxB=B.length?B[0].v:0, maxE=E.length?E[0].v:0, maxC=C.length?C[0].v:0;
   let h='<div class="anGrid anK">'+
@@ -3830,6 +3864,11 @@ async function renderAnalysis(){
       '<div class="s">per claim submitted</div></div>'+
     '<div class="anCard"><h4>Distance</h4><div class="v">'+totKm.toLocaleString("en-IN")+' KM</div>'+
       '<div class="s">'+(totKm>0?money(Math.round(totVal/totKm)):"—")+' per KM overall</div></div>'+
+    '<div class="anCard" style="border-color:#cfe0ee;background:#f7fbfd">'+
+      '<h4>Claim period covered</h4>'+
+      '<div class="v" style="font-size:14.5px">'+(first?dd(first)+' → '+dd(last):"—")+'</div>'+
+      '<div class="s">'+(first?(Math.round((new Date(last)-new Date(first))/864e5)+1)+' day span · '+
+        MON.length+' month'+(MON.length===1?"":"s"):"no dated claims")+'</div></div>'+
   '</div>';
 
   h+='<div class="anPanel"><h5>Month by month<span>'+MON.length+' period(s)</span></h5>'+
@@ -3844,29 +3883,36 @@ async function renderAnalysis(){
   });
   h+='</div>';
 
-  h+='<div class="anPanel"><h5>Branch wise<span>'+B.length+' branch(es)</span></h5><div class="in">'+
-    anTable([["Branch"],["Expense",1],["Share"],["Claims",1],["Engineers",1],["KM",1],["Avg / claim",1]],
+  h+='<div class="anPanel"><h5>Branch wise<span>'+B.length+' branch(es)'+
+      (first?' · claims '+dd(first)+' to '+dd(last):"")+'</span></h5><div class="in">'+
+    anTable([["Branch"],["Expense",1],["Share"],["From date"],["To date"],["Claims",1],["Engineers",1],["KM",1],["Avg / claim",1]],
       B.map(x=>'<tr>'+anBarRow(x.k,x.v,maxB,
+        '<td>'+(x.d0?dd(x.d0):"—")+'</td><td>'+(x.d1?dd(x.d1):"—")+'</td>'+
         '<td class="n">'+x.n+'</td><td class="n">'+Object.keys(x.eng).length+'</td>'+
         '<td class="n">'+x.km.toLocaleString("en-IN")+'</td>'+
         '<td class="n">'+money(Math.round(x.v/x.n))+'</td>')+'</tr>'),
-      '<tr class="tot"><td>Total</td><td class="n">'+money(totVal)+'</td><td></td><td class="n">'+rows.length+
-      '</td><td class="n">'+engCount+'</td><td class="n">'+totKm.toLocaleString("en-IN")+
+      '<tr class="anTot"><td>Total</td><td class="n">'+money(totVal)+'</td><td></td>'+
+      '<td>'+(first?dd(first):"—")+'</td><td>'+(last?dd(last):"—")+'</td>'+
+      '<td class="n">'+rows.length+'</td><td class="n">'+engCount+'</td>'+
+      '<td class="n">'+totKm.toLocaleString("en-IN")+
       '</td><td class="n">'+money(Math.round(totVal/rows.length))+'</td></tr>')+'</div></div>';
 
   h+='<div class="anPanel"><h5>Engineer wise<span>top '+Math.min(25,E.length)+' of '+E.length+'</span></h5><div class="in">'+
-    anTable([["Engineer"],["Expense",1],["Share"],["Branch"],["Claims",1],["KM",1],["Avg / claim",1]],
+    anTable([["Engineer"],["Expense",1],["Share"],["Branch"],["From date"],["To date"],["Claims",1],["KM",1],["Avg / claim",1]],
       E.slice(0,25).map(x=>{
         const nm_=x.k.split("\u0001")[0], code=x.k.split("\u0001")[1]||"";
         return '<tr>'+anBarRow(nm_+" · "+code,x.v,maxE,
-          '<td>'+esc(Object.keys(x.br).join(", "))+'</td><td class="n">'+x.n+'</td>'+
+          '<td>'+esc(Object.keys(x.br).join(", "))+'</td>'+
+          '<td>'+(x.d0?dd(x.d0):"—")+'</td><td>'+(x.d1?dd(x.d1):"—")+'</td>'+
+          '<td class="n">'+x.n+'</td>'+
           '<td class="n">'+x.km.toLocaleString("en-IN")+'</td>'+
           '<td class="n">'+money(Math.round(x.v/x.n))+'</td>')+'</tr>';
       }))+'</div></div>';
 
   h+='<div class="anPanel"><h5>Call type · purpose of travel<span>'+C.length+' type(s)</span></h5><div class="in">'+
-    anTable([["Call type"],["Expense",1],["Share"],["Lines",1],["Engineers",1],["Branches",1],["KM",1]],
+    anTable([["Call type"],["Expense",1],["Share"],["From date"],["To date"],["Lines",1],["Engineers",1],["Branches",1],["KM",1]],
       C.slice(0,30).map(x=>'<tr>'+anBarRow(x.k,x.v,maxC,
+        '<td>'+(x.d0?dd(x.d0):"—")+'</td><td>'+(x.d1?dd(x.d1):"—")+'</td>'+
         '<td class="n">'+x.lines+'</td><td class="n">'+Object.keys(x.eng).length+'</td>'+
         '<td class="n">'+Object.keys(x.br).length+'</td>'+
         '<td class="n">'+x.km.toLocaleString("en-IN")+'</td>')+'</tr>'))+'</div></div>';
@@ -3891,7 +3937,7 @@ async function renderAnalysis(){
       return '<tr><td>'+esc(x.k)+'</td>'+cols.map(c=>'<td class="n">'+(row[c]?money(Math.round(row[c])):"—")+'</td>').join("")+
         '<td class="n"><b>'+money(x.v)+'</b></td></tr>';
     }).join("")+
-    '<tr class="tot"><td>Total</td>'+cols.map(c=>{
+    '<tr class="anTot"><td>Total</td>'+cols.map(c=>{
       const t=B.reduce((s,x)=>s+((mat[x.k]||{})[c]||0),0);
       return '<td class="n">'+(t?money(Math.round(t)):"—")+'</td>';}).join("")+
     '<td class="n">'+money(totVal)+'</td></tr></tbody></table></div></div>';
@@ -3909,14 +3955,31 @@ async function renderAnalysis(){
 function anExport(){
   if(!AN_DATA){ alert("Build the analysis first."); return; }
   const D=AN_DATA, sheets=[];
-  const period=(D.from?dd(D.from):"start")+" to "+(D.to?dd(D.to):"today");
-  sheets.push(detailSheet("Branch wise",["Branch","Expense","Claims","Engineers","KM","Avg per claim"],
-    D.B.map(x=>[x.k,x.v,x.n,Object.keys(x.eng).length,x.km,Math.round(x.v/x.n)]),[24,16,10,12,12,14]));
-  sheets.push(detailSheet("Engineer wise",["Engineer","Code","Branch","Expense","Claims","KM","Avg per claim"],
+  sheets.push(detailSheet("Report header",["Item","Value"],[
+    ["Report","Prostarm travel expense analysis"],
+    ["Scope",D.label],
+    ["Claim period covered",D.first?dd(D.first)+" to "+dd(D.last):"no dated claims"],
+    ["Filter from",D.from?dd(D.from):"(none)"],
+    ["Filter to",D.to?dd(D.to):"(none)"],
+    ["Claims",D.rows.length],
+    ["Total expense",D.tot],
+    ["Total KM",D.km],
+    ["Generated",dd(new Date().toISOString().slice(0,10))]
+  ],[28,40]));
+  const period=(D.first?dd(D.first)+" to "+dd(D.last):"no dated claims");
+  sheets.push(detailSheet("Branch wise",
+    ["Branch","Expense","From date","To date","Claims","Engineers","KM","Avg per claim"],
+    D.B.map(x=>[x.k,x.v,x.d0?dd(x.d0):"",x.d1?dd(x.d1):"",x.n,Object.keys(x.eng).length,x.km,
+                Math.round(x.v/x.n)]),[24,16,14,14,10,12,12,14]));
+  sheets.push(detailSheet("Engineer wise",
+    ["Engineer","Code","Branch","Expense","From date","To date","Claims","KM","Avg per claim"],
     D.E.map(x=>{const n=x.k.split("\u0001");
-      return [n[0],n[1]||"",Object.keys(x.br).join(", "),x.v,x.n,x.km,Math.round(x.v/x.n)];}),[26,12,20,16,10,12,14]));
-  sheets.push(detailSheet("Call type",["Call type","Expense","Lines","Engineers","Branches","KM"],
-    D.C.map(x=>[x.k,x.v,x.lines,Object.keys(x.eng).length,Object.keys(x.br).length,x.km]),[34,16,10,12,12,12]));
+      return [n[0],n[1]||"",Object.keys(x.br).join(", "),x.v,x.d0?dd(x.d0):"",x.d1?dd(x.d1):"",
+              x.n,x.km,Math.round(x.v/x.n)];}),[26,12,20,16,14,14,10,12,14]));
+  sheets.push(detailSheet("Call type",
+    ["Call type","Expense","From date","To date","Lines","Engineers","Branches","KM"],
+    D.C.map(x=>[x.k,x.v,x.d0?dd(x.d0):"",x.d1?dd(x.d1):"",x.lines,Object.keys(x.eng).length,
+                Object.keys(x.br).length,x.km]),[34,16,14,14,10,12,12,12]));
   sheets.push(detailSheet("Visit type",["Visit type","Expense","Lines"],
     D.V.map(x=>[x.k,x.v,x.lines]),[22,16,10]));
   sheets.push(detailSheet("Journey mode",["Mode","Expense","Lines","KM"],
