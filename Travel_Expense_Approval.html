@@ -220,6 +220,11 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
 .hbody{margin:0 0 10px 52px}
 .hzero{opacity:.62}
 /* Analysis: charts are inline SVG because the page loads no external libraries. */
+.billchip{display:inline-block;background:#eef6fc;border:1px solid #cfe0ee;border-radius:4px;
+  padding:2px 7px;margin:1px 3px 1px 0;font-size:10.5px;font-weight:700;color:var(--blue);
+  cursor:pointer;white-space:nowrap}
+.billchip:hover{background:#dceaf6}
+.tr-claim:hover{background:#f2f8fd}
 .anGrid{display:grid;gap:10px;margin-bottom:12px}
 .anK{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .anCard{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px}
@@ -1142,6 +1147,74 @@ function trExpandAll(open){
     .forEach(k=>{ k.style.display=open?"":"none"; });
   document.querySelectorAll("#trTableWrap .hbar .tog")
     .forEach(t=>{ if(t.textContent) t.textContent=open?"\u2212":"+"; });
+  /* claim level stays closed on Expand all: opening every claim would fetch each one */
+  if(!open){
+    document.querySelectorAll("#trTableWrap tr.tr-cdetail").forEach(r=>{ r.style.display="none"; });
+    document.querySelectorAll("#trTableWrap .tr-ccv").forEach(c=>{ c.style.transform=""; });
+  }
+}
+/* Third level: each claim opens to its own expense lines and the bills attached to
+   them. The lines may not be in memory yet, and the bill images never are, so the
+   claim is fetched on demand and the row redrawn in place. */
+function trLineRow(x,cid,li){
+  const att=Array.isArray(x.att)?x.att:[];
+  const bills=att.length
+    ? att.map((a,ai)=>'<a class="billchip" onclick="showClaimAtt(\''+cid+'\','+li+','+ai+')">'+
+        '&#128206; '+esc(a.name||("Bill "+(ai+1)))+'</a>').join(" ")
+    : '<span style="color:var(--muted)">—</span>';
+  const journey = x.cat==="Travel"
+    ? esc(x.jFrom||"")+(x.jFromPin?" ("+esc(x.jFromPin)+")":"")+" &rarr; "+
+      esc(x.jTo||"")+(x.jToPin?" ("+esc(x.jToPin)+")":"")
+    : "—";
+  return '<tr><td>'+(li+1)+'</td><td>'+esc(x.ticket||"—")+'</td>'+
+    '<td>'+esc(x.custName||"—")+(x.segment?'<br><span style="color:var(--muted)">'+esc(x.segment)+'</span>':"")+'</td>'+
+    '<td>'+esc(x.purpose||"—")+'</td><td>'+esc(x.cat||"—")+'</td><td>'+esc(x.mode||"—")+'</td>'+
+    '<td>'+journey+'</td>'+
+    '<td class="n">'+(x.cat==="Travel"?(Number(x.km)||0):"—")+'</td>'+
+    '<td class="n">'+(Number(x.rate)?money(x.rate):"—")+'</td>'+
+    '<td class="n">'+money(x.amt)+'</td>'+
+    '<td>'+bills+'</td></tr>';
+};
+function trClaimLines(r){
+  const items=Array.isArray(r.items)?r.items:[];
+  if(!items.length) return '<div class="empty" style="margin:0"><b>Lines not loaded</b>Open this claim again in a moment.</div>';
+  return '<table class="itab" style="margin:0"><tr><th>#</th><th>Ticket / Case No</th>'+
+    '<th>Customer / Segment</th><th>Purpose</th><th>Type</th><th>Mode</th><th>From &rarr; To</th>'+
+    '<th class="n">KM</th><th class="n">Rate</th><th class="n">Amount</th><th>Bills</th></tr>'+
+    items.map((x,i)=>trLineRow(x,r.id,i)).join("")+
+    '<tr><td colspan="9" style="text-align:right;font-weight:800">Total claimed</td>'+
+    '<td class="n" style="font-weight:800">'+money(r.claimed)+'</td><td></td></tr></table>';
+}
+/* Opens one claim inside the Team Report. The list gives totals only, so the lines and
+   the bill images are fetched the first time and the row is redrawn where it sits. */
+async function trClaim(id,cid){
+  const row=$(cid); if(!row) return;
+  const open=row.style.display==="none";
+  row.style.display=open?"":"none";
+  const head=row.previousElementSibling;
+  const cv=head&&head.querySelector(".tr-ccv");
+  if(cv) cv.style.transform=open?"rotate(90deg)":"";
+  if(!open) return;
+  const r=MEM.find(x=>x.id===id);
+  const needs=!r||!Array.isArray(r.items)||!r.items.length||billsMissing(r);
+  if(!needs) return;
+  const cell=row.firstElementChild;
+  cell.innerHTML='<div class="empty" style="margin:0"><b>Loading the expense lines…</b>Fetching this claim.</div>';
+  try{
+    const full=await loadOne(id);
+    if(full){
+      const i=MEM.findIndex(x=>x.id===id);
+      if(i>-1) MEM[i]=full;
+      cell.innerHTML=trClaimLines(full);
+      /* the list row showed a dash for Lines because the list carries no items */
+      const n=(full.items||[]).length;
+      if(head&&head.children[3]&&n) head.children[3].textContent=n;
+    } else {
+      cell.innerHTML='<div class="empty" style="margin:0"><b>Could not load this claim</b>Press Refresh and try again.</div>';
+    }
+  }catch(err){
+    cell.innerHTML='<div class="empty" style="margin:0"><b>Could not load this claim</b>'+esc(err.message)+'</div>';
+  }
 }
 function trToggle(code){
   const row=document.querySelector('tr.tr-detail[data-for="'+code+'"]');
@@ -1224,17 +1297,23 @@ async function renderTeamReport(){
   const grp=($("trGroup")&&$("trGroup").value)||"branch";
 
   const claimTable=r=> r.rows.length
+
     ? '<table class="itab" style="margin:0"><tr><th>Claim No</th><th>Claim date</th><th>Purpose</th>'+
       '<th>Lines</th><th class="n">Claimed</th><th class="n">Approved</th><th>Status</th><th>Payment</th></tr>'+
       r.rows.map(y=>{
         const st=claimStage(y), pay=(y.pay&&y.pay.status)||"Pending";
-        return '<tr><td>'+esc(y.no||"—")+'</td><td>'+dd(y.claimDate||y.perFrom)+'</td>'+
+        const cid="cl-"+cssSafe(y.id);
+        return '<tr class="tr-claim" style="cursor:pointer" onclick="trClaim(\''+y.id+'\',\''+cid+'\')">'+
+          '<td><span class="tr-ccv" style="display:inline-block;color:var(--blue);font-size:10px">&#9654;</span> '+
+          esc(y.no||"—")+'</td><td>'+dd(y.claimDate||y.perFrom)+'</td>'+
           '<td>'+esc(y.purpose||"—")+'</td>'+
           '<td class="n">'+((y.__slim?(Number(y.lineCount)||0):(y.items||[]).length)||"—")+'</td>'+
           '<td class="n">'+money(y.claimed)+'</td>'+
           '<td class="n">'+(stageAmt(y.approved)?money(y.approved):"—")+'</td>'+
           '<td><span style="font-weight:700;color:'+st.c+'">'+esc(st.t)+'</span></td>'+
-          '<td>'+esc(pay)+((y.pay&&y.pay.date)?" · "+dd(y.pay.date):"")+'</td></tr>';
+          '<td>'+esc(pay)+((y.pay&&y.pay.date)?" · "+dd(y.pay.date):"")+'</td></tr>'+
+          '<tr class="tr-cdetail" id="'+cid+'" style="display:none">'+
+            '<td colspan="8" style="background:#f7fbfd;padding:8px">'+trClaimLines(y)+'</td></tr>';
       }).join("")+'</table>'
     : '<div class="empty" style="margin:0"><b>No claims in this period</b>Widen the dates to see more.</div>';
 
@@ -4059,6 +4138,52 @@ function anExport(){
     D.MON.map(x=>[x.k,x.v,x.n]),[14,16,10]));
   sheets.push(detailSheet("By status",["Status","Value","Claims"],
     D.ST.map(x=>[x.k,x.v,x.n]),[34,16,10]));
+  /* One row per expense line, the same columns as Download CRM Format plus the fields
+     the analysis groups on, so the workbook can be pivoted without going back to the
+     portal. Claims whose lines are not in memory are listed rather than dropped
+     silently — the list call returns totals, the lines arrive when a claim is opened. */
+  const crmHead=["Branch","Zone","Emp ID","Emp Name","Claim No","Voucher No","Claim Date",
+    "Line #","Ticket / Case No","UID","Customer Name","Customer Segment","Journey Date",
+    "Call Type / Purpose","Expenses Type","Travel Mode / Expense Mode",
+    "Journey From","Journey From Pincode","Journey To","Journey To Pincode",
+    "Km Travel","Day KM (all modes)","Bike Day KM (band)","Reference KM (Pincode)","Rate/KM",
+    "Line Amount","Bills on line","Claim Total Claimed","Approved Amount","Payable Amount",
+    "Claim Status","Payment Status","Payment Reference","Payment Date"];
+  const crmRows=[]; const noLines=[];
+  D.rows.forEach(r=>{
+    const items=Array.isArray(r.items)?r.items:[];
+    const pay=r.pay||{};
+    if(!items.length){ noLines.push(r.no||r.id); return; }
+    items.forEach((it,i)=>{
+      const dayAll=items.reduce((s,x)=>s+(x.cat==="Travel"&&x.date===it.date?(Number(x.km)||0):0),0);
+      const dayBike=items.reduce((s,x)=>s+(x.cat==="Travel"&&isBandMode(x.mode)&&x.date===it.date?(Number(x.km)||0):0),0);
+      const ref=(it.cat==="Travel"&&refKm(it.jFromPin,it.jToPin)!=null)?refKm(it.jFromPin,it.jToPin):"";
+      crmRows.push([r.branch||"",r.zone||"",r.by||"",r.name||"",r.no||"",r.voucher||"",
+        dd(r.claimDate||r.perFrom), i+1,
+        it.ticket||r.ticket||"", it.uid||r.uid||"", it.custName||r.custName||"",
+        it.segment||r.segment||"", it.date?dd(it.date):"", (it.purpose||r.purpose||""),
+        it.cat||"", it.mode||"",
+        it.jFrom||"", it.jFromPin||"", it.jTo||"", it.jToPin||"",
+        it.cat==="Travel"?(Number(it.km)||0):"", dayAll||"", dayBike||"", ref,
+        Number(it.rate)||"", Number(it.amt)||0,
+        (Array.isArray(it.att)?it.att.length:0),
+        Number(r.claimed)||0, r.approved==null?"":Number(r.approved),
+        r.payable==null?"":Number(r.payable),
+        r.status||"", pay.status||"", pay.ref||"", pay.date?dd(pay.date):""]);
+    });
+  });
+  /* record the line count on the header sheet now that it is known */
+  sheets[0].rows.splice(7,0,[{v:"Expense lines",s:4},{v:crmRows.length,s:4}]);
+  if(noLines.length) sheets[0].rows.splice(8,0,
+    [{v:"Claims with no line detail",s:4},{v:noLines.length,s:4}]);
+  sheets.push(detailSheet("CRM detail",crmHead,crmRows,
+    [18,12,12,24,22,22,14, 8,22,14,26,20,14,30,14,20, 20,16,20,16, 12,16,16,16,12,14,12,16,16,16, 30,16,20,14]));
+  if(noLines.length){
+    sheets.push(detailSheet("Lines not loaded",
+      ["Claim No","Why"],
+      noLines.map(n=>[n,"Line detail was not in memory when the report was built. Open the claim once, or press Refresh, then download again."]),
+      [24,90]));
+  }
   sheets.push(detailSheet("Claim list",
     ["Claim No","Voucher No","Date","Engineer","Code","Branch","Zone","Purpose","Lines","KM",
      "Claimed","Approved","Payable","Status","Payment","UTR"],
