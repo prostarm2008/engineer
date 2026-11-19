@@ -1843,34 +1843,42 @@ function compress(file,cb){
 }
 function openAtt(id,ai){ const it=ITEMS.find(x=>x.id===id); if(it) showData(it.att[ai]); }
 function dropAtt(id,ai){ const it=ITEMS.find(x=>x.id===id); if(it){ it.att.splice(ai,1); renderItems(); } }
-function showData(a){
-  /* Purani claims mein a.data hota tha, naye system mein a.url hoga */
-  if (!a.data && !a.url) {
-    alert("This attachment has no image stored.");
-    return;
-  }
-  
-  let source = "";
-  if (a.url) {
-    // Agar relative URL hai, toh site ka address jodein
-    let fullPath = a.url;
-    if (!fullPath.startsWith("http")) {
-      // Agar flow ne sirf /TE_Receipts/... return kiya hai
-      fullPath = "https://prostarminfosys.sharepoint.com/sites/engineer-conveyance" + a.url;
+const ATT_CACHE = {};   /* file name -> blob URL, so one bill is fetched once per visit */
+function b64ToBlobUrl(b64, type){
+  const bin = atob(b64), bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return URL.createObjectURL(new Blob([bytes], { type: type || "application/octet-stream" }));
+}
+/* A bill stored in the SharePoint library cannot be shown with <img src=url> from this page:
+   the browser has no SharePoint login for that request, so the image comes back broken.
+   The flow's "file" action reads it with its own connection and returns the content instead. */
+async function showData(a){
+  if (!a || (!a.data && !a.url)) { alert("This attachment has no image stored."); return; }
+  const w = window.open("", "_blank");               /* open now, inside the click, or pop-up blockers stop it */
+  if (!w) { alert("Allow pop-ups to view attachments."); return; }
+  const page = (inner) => { w.document.open(); w.document.write('<title>'+esc(a.name||"Bill")+'</title>'+
+    '<body style="margin:0;background:#123047;color:#fff;font:14px sans-serif;display:grid;place-items:center;min-height:100vh">'+inner+'</body>'); w.document.close(); };
+  page('Loading bill…');
+  try {
+    let src;
+    if (a.data) {
+      src = a.data;                                   /* old claims: image stored inside the claim */
+    } else {
+      const name = decodeURIComponent(String(a.url).split("?")[0].split("/").pop() || "");
+      if (!name) throw new Error("The bill has no file name.");
+      if (!ATT_CACHE[name]) {
+        const b64 = await api("file", { fileName: name });
+        if (!b64 || typeof b64 !== "string") throw new Error("The server returned no file content.");
+        ATT_CACHE[name] = b64ToBlobUrl(b64, a.type);
+      }
+      src = ATT_CACHE[name];
     }
-    // Space aur special characters ko fix karein
-    source = encodeURI(fullPath);
-  } else {
-    // Purani files (Base64) ke liye
-    source = a.data;
+    const isImg = String(a.type || "").indexOf("image") === 0;
+    page(isImg ? '<img src="'+src+'" style="max-width:100%;max-height:100vh">'
+               : '<iframe src="'+src+'" style="border:0;width:100vw;height:100vh"></iframe>');
+  } catch (e) {
+    page('<div style="max-width:420px;text-align:center">Could not load this bill.<br><small>'+esc(e.message)+'</small></div>');
   }
-
-  const w = window.open("", "_blank");
-  if(!w){ alert("Allow pop-ups to view attachments."); return; }
-  w.document.write('<title>'+esc(a.name)+'</title><body style="margin:0;background:#123047;display:grid;place-items:center;min-height:100vh">'+
-    (a.type.indexOf("image")===0?'<img src="'+source+'" style="max-width:100%;max-height:100vh">'
-      :'<iframe src="'+source+'" style="border:0;width:100vw;height:100vh"></iframe>')+'</body>');
-  w.document.close();
 }
 async function showClaimAtt(cid,li,ai){
   let r=MEM.find(x=>x.id===cid); if(!r) return;
