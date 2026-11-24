@@ -3133,11 +3133,35 @@ function exportPayment(list){
   xlsxDownload("Prostarm_Travel_Claims_Payment_"+(EXPORT_TAG?EXPORT_TAG+"_":"")+todayISO()+".xlsx",
     [summarySheet(list), detailSheet("Payment Detail",head,rows)]);
 }
+/* What this single line will actually be paid.
+   An approver records a decision per line, so where one exists that figure is the
+   line's payable. Where the claim was sanctioned as a whole — HO Admin approving a
+   total, or a bulk approval — there is no per-line verdict, so the claim's payable is
+   split across its lines in proportion to what each line claimed. A claim that has not
+   been sanctioned yet is left blank rather than shown as zero, because zero on a
+   payment sheet reads as a decision to pay nothing. */
+function linePayable(r,it){
+  const d=lineDec(it);
+  if(d && d.amt!=null && d.amt!=="") return Number(d.amt)||0;
+  if(d && String(d.dec||"").toLowerCase().indexOf("reject")===0) return 0;
+  const total=Number(r.payable!=null?r.payable:r.approved);
+  if(!(total>0)) return "";
+  const items=Array.isArray(r.items)?r.items:[];
+  const claimed=items.reduce((s2,x)=>s2+(Number(x.amt)||0),0);
+  if(!(claimed>0)) return "";
+  /* last line carries the rounding difference so the lines add back to the claim */
+  const idx=items.indexOf(it);
+  if(idx===items.length-1){
+    const others=items.slice(0,-1).reduce((s2,x)=>s2+Math.round(total*(Number(x.amt)||0)/claimed*100)/100,0);
+    return Math.round((total-others)*100)/100;
+  }
+  return Math.round(total*(Number(it.amt)||0)/claimed*100)/100;
+}
 function exportCrm(list){
   const skipped=[];
   const head=["Branch","Emp ID","Emp Name","Ticket / Case No","UID","Customer Name","Customer Segment","Journey Date",
     "Journey From","Journey From Pincode","Journey To","Journey To Pincode","Expenses Type","Travel Mode / Expense Mode",
-    "Km Travel","Day KM (all modes)","Bike Day KM (band)","Reference KM (Pincode)","Rate/KM","Total Claim","Approval Status","Claim No","Approved Amount","Payment Status","Payment Reference"];
+    "Km Travel","Day KM (all modes)","Bike Day KM (band)","Reference KM (Pincode)","Rate/KM","Total Claim","Final Payable","Approval Status","Claim No","Approved Amount","Payment Status","Payment Reference"];
   const rows=[];
   list.forEach(r=>{
    const items=Array.isArray(r.items)?r.items:[];
@@ -3149,7 +3173,7 @@ function exportCrm(list){
     /* the figure the bike rate is decided on: Bike kilometres for that date only */
     r.items.reduce((s,x)=>s+(x.cat==="Travel"&&isBandMode(x.mode)&&x.date===it.date?(Number(x.km)||0):0),0)||"",
     (it.cat==="Travel"&&refKm(it.jFromPin,it.jToPin)!=null)?refKm(it.jFromPin,it.jToPin):"",
-    it.rate||"",it.amt,r.status,r.no,
+    it.rate||"",it.amt,linePayable(r,it),r.status,r.no,
     r.approved==null?"":r.approved,pay.status||"",pay.ref||""]));
    }catch(e){ skipped.push(r.no||r.id); }
   });
