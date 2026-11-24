@@ -1167,6 +1167,7 @@ function trLineRow(x,cid,li){
       esc(x.jTo||"")+(x.jToPin?" ("+esc(x.jToPin)+")":"")
     : "—";
   return '<tr><td>'+(li+1)+'</td><td>'+esc(x.ticket||"—")+'</td>'+
+    '<td>'+esc(x.uid||"—")+'</td>'+
     '<td>'+esc(x.custName||"—")+(x.segment?'<br><span style="color:var(--muted)">'+esc(x.segment)+'</span>':"")+'</td>'+
     '<td>'+esc(x.purpose||"—")+'</td><td>'+esc(x.cat||"—")+'</td><td>'+esc(x.mode||"—")+'</td>'+
     '<td>'+journey+'</td>'+
@@ -1178,11 +1179,11 @@ function trLineRow(x,cid,li){
 function trClaimLines(r){
   const items=Array.isArray(r.items)?r.items:[];
   if(!items.length) return '<div class="empty" style="margin:0"><b>Lines not loaded</b>Open this claim again in a moment.</div>';
-  return '<table class="itab" style="margin:0"><tr><th>#</th><th>Ticket / Case No</th>'+
+  return '<table class="itab" style="margin:0"><tr><th>#</th><th>Ticket / Case No</th><th>UID</th>'+
     '<th>Customer / Segment</th><th>Purpose</th><th>Type</th><th>Mode</th><th>From &rarr; To</th>'+
     '<th class="n">KM</th><th class="n">Rate</th><th class="n">Amount</th><th>Bills</th></tr>'+
     items.map((x,i)=>trLineRow(x,r.id,i)).join("")+
-    '<tr><td colspan="9" style="text-align:right;font-weight:800">Total claimed</td>'+
+    '<tr><td colspan="10" style="text-align:right;font-weight:800">Total claimed</td>'+
     '<td class="n" style="font-weight:800">'+money(r.claimed)+'</td><td></td></tr></table>';
 }
 /* Opens one claim inside the Team Report. The list gives totals only, so the lines and
