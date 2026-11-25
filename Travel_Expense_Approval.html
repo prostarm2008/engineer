@@ -226,6 +226,41 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
 .billchip:hover{background:#dceaf6}
 .tr-claim:hover{background:#f2f8fd}
 .anGrid{display:grid;gap:10px;margin-bottom:12px}
+.mgPosBar{display:flex;align-items:stretch;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.mgPosBar em{align-self:center;font-style:normal;font-weight:800;font-size:16px;color:var(--muted)}
+.mgPos{flex:1;min-width:150px;background:#fff;border:1px solid var(--line);border-radius:8px;
+  padding:9px 12px;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.mgPos:hover{border-color:#9fc0dc}
+.mgPos.on{border-color:#2f72b8;box-shadow:0 0 0 2px rgba(47,114,184,.15);background:#f6fafe}
+.mgPos span{font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+.mgPos b{font-size:17px;font-weight:800}
+.mgPos i{font-style:normal;font-size:10.5px;color:var(--muted);font-weight:600}
+.mgK{grid-template-columns:repeat(6,minmax(0,1fr))}
+.mgK .anCard{display:flex;flex-direction:column;min-height:92px}
+.mgK .anCard .s{margin-top:auto;padding-top:3px}
+@media (max-width:1100px){.mgK{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.mgK{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.mgSort th{cursor:pointer;user-select:none;white-space:nowrap}
+.mgSort th:hover{color:var(--navy)}
+.mgSort td:first-child{white-space:nowrap}
+/* Branch and engineer lists run long and wide. Each scrolls inside its own box with the
+   heading row frozen at the top, the name column frozen at the left and the Total row
+   frozen at the foot, so a figure is never read without knowing whose it is. */
+.mgScroll{max-height:62vh;overflow:auto;padding:0!important;border-top:1px solid var(--line)}
+.mgScroll table.anTbl{border-collapse:separate;border-spacing:0}
+.mgScroll thead th{position:sticky;top:0;z-index:3;background:#eef4f9;
+  box-shadow:inset 0 -1px 0 var(--line)}
+.mgScroll tbody td{background:#fff}
+.mgScroll tbody tr:nth-child(even) td{background:#fbfdfe}
+.mgScroll th:first-child,.mgScroll td:first-child{position:sticky;left:0;z-index:2;
+  box-shadow:inset -1px 0 0 var(--line)}
+.mgScroll thead th:first-child{z-index:5}
+.mgScroll tr.anTot td{position:sticky;bottom:0;z-index:3;background:#eef4f9!important;
+  box-shadow:inset 0 1px 0 var(--line)}
+.mgScroll tr.anTot td:first-child{z-index:4}
+.mgScroll th,.mgScroll td{padding-left:10px;padding-right:10px}
+.mgSort th .sa{display:inline-block;margin-left:4px;font-size:9px;opacity:.35}
+.mgSort th.on .sa{opacity:1;color:var(--blue)}
 .anK{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .anCard{background:#fff;border:1px solid var(--line);border-radius:8px;padding:12px 14px}
 .anCard h4{margin:0 0 2px;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:800}
@@ -331,6 +366,7 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
       <button type="button" class="navtab" data-v="bulk" id="tabBulk">Bulk Upload</button>
       <button type="button" class="navtab" data-v="ho" id="tabHo">HO Admin<span class="cnt" id="cHo">0</span></button>
       <button type="button" class="navtab" data-v="analysis" id="tabAnalysis">Analysis</button>
+      <button type="button" class="navtab" data-v="mgmt" id="tabMgmt">Management</button>
     </div>
     <div class="navtools">
       <button type="button" class="btn" onclick="refresh()">Refresh</button>
@@ -505,6 +541,36 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
       </div></div>
   </div>
 
+
+  <div class="view" id="v-mgmt">
+    <div class="card"><h3>Management Report<em id="mgNote">HO Admin only</em></h3>
+      <div class="body">
+        <div class="filters">
+          <div class="f"><label>From date</label><input type="date" id="mgFrom"></div>
+          <div class="f"><label>To date</label><input type="date" id="mgTo"></div>
+          <div class="f"><label>Period</label>
+            <select id="mgPeriod">
+              <option value="month">This calendar month</option>
+              <option value="30">Last 30 days</option>
+              <option value="90" selected>Last 90 days</option>
+              <option value="fy">This financial year</option>
+              <option value="all">All time</option>
+              <option value="custom">Custom dates</option>
+            </select></div>
+          <div class="f"><label>Month</label><select id="mgMonth"><option value="">All months</option></select></div>
+          <div class="f"><label>Zone</label><select id="mgZone"><option value="">All zones</option></select></div>
+          <div class="f"><label>Branch</label><select id="mgBranch"><option value="">All branches</option></select></div>
+          <div class="f"><label>Basis</label>
+            <select id="mgBasis"></select></div>
+          <div style="grid-column:1/-1;display:flex;gap:6px;justify-content:flex-end">
+            <button type="button" class="btn btn-go" id="mgExport">Download management report</button>
+            <button type="button" class="btn" id="mgRefresh">Refresh</button>
+          </div>
+        </div>
+        <div id="mgBody"><div class="empty"><b>No data yet</b>Open this tab to build the report.</div></div>
+      </div></div>
+  </div>
+
   <!-- TEAM REPORT -->
   <div class="view" id="v-teamreport">
     <div class="card"><h3>Team Report — Travel Claims by User<em id="trScopeNote">Your direct reports</em></h3>
@@ -617,6 +683,7 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
             <div style="display:flex;gap:6px;flex-wrap:wrap">
               <button type="button" class="btn btn-go" id="xlPay">Download Payment File</button>
               <button type="button" class="btn" id="xlCrm">Download CRM Format</button>
+              <button type="button" class="btn btn-rec" id="xlTat">Download TAT Report</button>
               <button type="button" class="btn" id="hReset">Reset filters</button>
             </div>
           </div>
@@ -1391,6 +1458,7 @@ document.querySelectorAll(".navtab").forEach(t=>t.addEventListener("click",()=>{
   t.classList.add("on"); $("v-"+t.dataset.v).classList.add("on");
   if(t.dataset.v==="teamreport") renderTeamReport();
   else if(t.dataset.v==="analysis") renderAnalysis();
+  else if(t.dataset.v==="mgmt") renderMgmt();
   else if(t.dataset.v!=="new") refresh();
 }));
 $("logoutBtn").addEventListener("click",async()=>{
@@ -1466,6 +1534,7 @@ function enterApp(c){
   $("tabHo").style.display         = isHO(c) ? "" : "none";
   /* Analysis is open to everyone; what it covers is scoped below, not hidden. */
   $("tabAnalysis").style.display   = "";
+  $("tabMgmt").style.display       = isHO(c) ? "" : "none";
   $("bWho").textContent=e.n+" ("+c+")";
   $("bBranch").textContent=e.b;
   $("bRegion").textContent=e.z;
@@ -2787,7 +2856,10 @@ function buildHoFilters(){
       .concat(Object.values(ST).map(s=>[s,s])),
     "All claim statuses");
   opts("hPay",["Pending","Paid","On Hold"].map(s=>[s,s]),"All payment statuses");
-  ["hEmp","hZone","hBranch","hRm","hStatus","hPay","hFrom","hTo"].forEach(i=>$(i).addEventListener("change",refresh));
+  /* A new filter is a new question, so the fold state starts afresh: a short filtered
+     list opens on sight. The state is only kept across actions, where it matters. */
+  const hoRefilter=()=>{ Object.keys(HO_OPEN).forEach(k=>delete HO_OPEN[k]); refresh(); };
+  ["hEmp","hZone","hBranch","hRm","hStatus","hPay","hFrom","hTo"].forEach(i=>$(i).addEventListener("change",hoRefilter));
   $("hReset").addEventListener("click",()=>{ ["hEmp","hZone","hBranch","hRm","hStatus","hPay","hFrom","hTo"].forEach(i=>$(i).value=""); refresh(); });
 }
 /* Wired once at load so the buttons work whenever the HO tab is reachable. */
@@ -2826,6 +2898,7 @@ function bind(id,fn){
 function wireExportButtons(){
   bind("xlPay",     ()=>runExport(exportPayment,"Payment file",   true,  ()=>hoFilter(MEM||[]), "the HO Admin filters", "All"));
   bind("xlCrm",     ()=>runExport(exportCrm,    "CRM format file",false, ()=>hoFilter(MEM||[]), "the HO Admin filters", "All"));
+  bind("xlTat",     ()=>runExport(exportTat,    "TAT report",     false, ()=>hoFilter(MEM||[]), "the HO Admin filters", "All"));
   bind("mineXlPay", ()=>runExport(exportPayment,"Payment file",   true,  scopeMine, "your own claims", ME));
   bind("mineXlCrm", ()=>runExport(exportCrm,    "CRM format file",false, scopeMine, "your own claims", ME));
   bind("chkXlPay",  ()=>runExport(exportPayment,"Payment file",   true,  scopeCheck,   "the claims you check", "Check_"+ME));
@@ -2931,7 +3004,7 @@ const xesc = s => String(s==null?"":s)
 const colName = n => { let s=""; while(n>0){ const m=(n-1)%26; s=String.fromCharCode(65+m)+s; n=(n-m-1)/26; } return s; };
 
 /* rows: array of arrays. Each cell is a value, or {v:value, s:styleIndex}. */
-function sheetXml(rows, widths){
+function sheetXml(rows, widths, filter){
   let x='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
     '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">'+
     '<sheetViews><sheetView workbookViewId="0">'+
@@ -2954,6 +3027,14 @@ function sheetXml(rows, widths){
     });
     x+='</row>';
   });
+  /* An autofilter puts Excel's sort-and-filter arrow on every header cell. */
+  if(filter && rows.length>1){
+    const ncol=Math.max.apply(null,rows.map(r=>r.length));
+    /* a closing Total row stays out of the range, so sorting never moves it into the data */
+    const last = filter==="noTotal" ? rows.length-1 : rows.length;
+    x+='</sheetData><autoFilter ref="A1:'+colName(ncol)+last+'"/></worksheet>';
+    return x;
+  }
   return x+'</sheetData></worksheet>';
 }
 
@@ -2966,25 +3047,29 @@ const STYLES_XML='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'+
  '<font><b/><sz val="10"/><name val="Calibri"/></font>'+
  '<font><b/><color rgb="FF0A6B42"/><sz val="10"/><name val="Calibri"/></font>'+
 '</fonts>'+
-'<fills count="5">'+
+'<fills count="7">'+
  '<fill><patternFill patternType="none"/></fill>'+
  '<fill><patternFill patternType="gray125"/></fill>'+
  '<fill><patternFill patternType="solid"><fgColor rgb="FF1E5FA8"/><bgColor indexed="64"/></patternFill></fill>'+
  '<fill><patternFill patternType="solid"><fgColor rgb="FFFDF1DE"/><bgColor indexed="64"/></patternFill></fill>'+
  '<fill><patternFill patternType="solid"><fgColor rgb="FFE2F5EC"/><bgColor indexed="64"/></patternFill></fill>'+
+ '<fill><patternFill patternType="solid"><fgColor rgb="FFDCEAF6"/><bgColor indexed="64"/></patternFill></fill>'+
+ '<fill><patternFill patternType="solid"><fgColor rgb="FFF4F8FB"/><bgColor indexed="64"/></patternFill></fill>'+
 '</fills>'+
 '<borders count="2"><border/>'+
  '<border><left style="thin"><color rgb="FFC9DAE6"/></left><right style="thin"><color rgb="FFC9DAE6"/></right>'+
  '<top style="thin"><color rgb="FFC9DAE6"/></top><bottom style="thin"><color rgb="FFC9DAE6"/></bottom></border>'+
 '</borders>'+
 '<cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>'+
-'<cellXfs count="5">'+
+'<cellXfs count="7">'+
  '<xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/>'+
  '<xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1">'+
    '<alignment vertical="center" wrapText="1"/></xf>'+
  '<xf numFmtId="0" fontId="2" fillId="3" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
  '<xf numFmtId="0" fontId="3" fillId="4" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
  '<xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyBorder="1"/>'+
+ '<xf numFmtId="0" fontId="2" fillId="5" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
+ '<xf numFmtId="0" fontId="2" fillId="6" borderId="1" xfId="0" applyFont="1" applyFill="1" applyBorder="1"/>'+
 '</cellXfs>'+
 '<cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles>'+
 '</styleSheet>';
@@ -3020,7 +3105,7 @@ function xlsxDownload(fileName, sheets){
     '</Relationships>')});
   parts.push({name:"xl/styles.xml", bytes:utf8(STYLES_XML)});
   sheets.forEach((s,i)=>parts.push({name:"xl/worksheets/sheet"+(i+1)+".xml",
-    bytes:utf8(sheetXml(s.rows, s.widths))}));
+    bytes:utf8(sheetXml(s.rows, s.widths, s.filter))}));
 
   const blob=new Blob([zipStore(parts)],
     {type:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
@@ -3157,6 +3242,182 @@ function linePayable(r,it){
   }
   return Math.round(total*(Number(it.amt)||0)/claimed*100)/100;
 }
+
+/* ================= TURNAROUND REPORT (HO ADMIN) =================
+   How long each claim sat at each desk. The approval trail carries a timestamp against
+   every act, so the stage times are read from it rather than inferred from the status.
+
+   A claim can be rejected and resubmitted. The clock that matters to the business is
+   the one running since the LAST submission, so each stage is read from the final pass;
+   the number of earlier passes is reported alongside, because a claim on its third
+   revision has a longer true history than the stage times alone suggest. */
+const DAY=864e5;
+function tsOf(t){ const d=t&&t.ts?new Date(t.ts):null; return (d&&!isNaN(d))?d:null; }
+function tatStages(r){
+  const trail=Array.isArray(r.trail)?r.trail:[];
+  const isSub = t => /^(submitted|resubmitted)/i.test(t.act||"");
+  let lastSub=-1, revisions=0;
+  trail.forEach((t,i)=>{ if(isSub(t)){ lastSub=i; revisions++; } });
+  const pass = lastSub>=0 ? trail.slice(lastSub) : trail;
+  const find = re => { for(const t of pass){ if(re.test(t.act||"")) return t; } return null; };
+
+  const sub = (lastSub>=0 ? tsOf(trail[lastSub]) : null)
+            || (r.submittedAt?new Date(r.submittedAt):null) || (r.createdAt?new Date(r.createdAt):null);
+  const rec = tsOf(find(/^checked and recommended/i));
+  const app = tsOf(find(/^approved/i));
+  const rej = tsOf(find(/^rejected/i));
+  const paidT = tsOf(find(/^payment processed/i));
+  const paid = paidT || ((r.pay&&r.pay.date)?new Date(r.pay.date):null);
+  const closed = tsOf(find(/^closed/i));
+  const now = new Date();
+
+  /* Which desk did the approving: with no Regional Manager on the route, HO Admin
+     sanctions the claim, so the same act means a different thing. */
+  const viaHO = !r.rgCode;
+  const days=(a,b)=> (a&&b) ? Math.round((b-a)/DAY*100)/100 : "";
+  const openDays=(a)=> a ? Math.round((now-a)/DAY*100)/100 : "";
+
+  const settled = !!paid;
+  return {
+    created: sub, recommended: rec, approved: app, rejected: rej, paid: paid, closed: closed,
+    revisions: Math.max(0,revisions-1), viaHO: viaHO,
+    tatRm:  days(sub,rec),
+    tatRg:  rec ? days(rec,app) : days(sub,app),
+    tatHo:  app ? (settled ? days(app,paid) : openDays(app)) : "",
+    tatAll: settled ? days(sub,paid) : openDays(sub),
+    settled: settled,
+    stage: settled ? (closed?"Closed":"Paid")
+         : app ? "With HO Admin for payment"
+         : rec ? "With Regional Manager"
+         : rej ? "Rejected — with the engineer"
+         : "With Reporting Manager",
+    pendingAt: settled ? "" : (app?"HO Admin":rec?"Regional Manager":rej?"Engineer":"Reporting Manager"),
+    pendingDays: settled ? "" : (app?openDays(app):rec?openDays(rec):openDays(sub))
+  };
+}
+/* date and time of a trail stamp, for the report columns */
+const tatStamp = d => d ? dd(d.toISOString().slice(0,10))+" "+d.toISOString().slice(11,16) : "";
+
+function exportTat(list){
+  const rows=[], claims=[], skipped=[];
+  const head=["Branch","Zone","Emp ID","Emp Name","Claim No","Voucher No","Line #",
+    "Ticket / Case No","UID","Customer Name","Customer Segment","Call Type / Purpose",
+    "Expenses Type","Travel Mode / Expense Mode","Journey From","Journey To","Km Travel",
+    "Line Amount","Final Payable",
+    "Created / Submitted","Reporting Manager Approved","Regional Manager Approved",
+    "Payment Processed","Closed",
+    "TAT Submit to RM (days)","TAT RM to RG (days)","Days with HO Admin for payment",
+    "Total TAT (days)","Revisions","Current stage","Pending with","Days pending",
+    "Claim Status","Payment Status","Payment Reference"];
+  const chead=["Branch","Zone","Emp ID","Emp Name","Claim No","Voucher No","Claim Date","Lines",
+    "Total Claimed","Approved Amount","Final Payable",
+    "Created / Submitted","Reporting Manager Approved","Regional Manager Approved",
+    "Payment Processed","Closed",
+    "TAT Submit to RM (days)","TAT RM to RG (days)","Days with HO Admin for payment",
+    "Total TAT (days)","Revisions","Sanctioned by","Current stage","Pending with","Days pending",
+    "Claim Status","Payment Status","Payment Reference"];
+  list.forEach(r=>{
+    try{
+      const t=tatStages(r);
+      const items=Array.isArray(r.items)?r.items:[];
+      claims.push([r.branch||"",r.zone||"",r.by||"",r.name||"",r.no||"",r.voucher||"",
+        dd(r.claimDate||r.perFrom), items.length||Number(r.lineCount)||0,
+        Number(r.claimed)||0, r.approved==null?"":Number(r.approved),
+        r.payable==null?"":Number(r.payable),
+        tatStamp(t.created),tatStamp(t.recommended),tatStamp(t.approved),tatStamp(t.paid),tatStamp(t.closed),
+        t.tatRm,t.tatRg,t.tatHo,t.tatAll,t.revisions,
+        t.viaHO?"HO Admin (no Regional Manager on route)":"Regional Manager",
+        t.stage,t.pendingAt,t.pendingDays,
+        r.status||"",(r.pay&&r.pay.status)||"",(r.pay&&r.pay.ref)||""]);
+      if(!items.length){ skipped.push(r.no||r.id); return; }
+      items.forEach((it,i)=>{
+        rows.push([r.branch||"",r.zone||"",r.by||"",r.name||"",r.no||"",r.voucher||"",i+1,
+          lineRef(r,it,"ticket"), lineRef(r,it,"uid"), it.custName||r.custName||"",
+          it.segment||r.segment||"", it.purpose||r.purpose||"",
+          it.cat||"", it.mode||"", it.jFrom||"", it.jTo||"",
+          it.cat==="Travel"?(Number(it.km)||0):"", Number(it.amt)||0, linePayable(r,it),
+          tatStamp(t.created),tatStamp(t.recommended),tatStamp(t.approved),tatStamp(t.paid),tatStamp(t.closed),
+          t.tatRm,t.tatRg,t.tatHo,t.tatAll,t.revisions,t.stage,t.pendingAt,t.pendingDays,
+          r.status||"",(r.pay&&r.pay.status)||"",(r.pay&&r.pay.ref)||""]);
+      });
+    }catch(e){ skipped.push(r.no||r.id); }
+  });
+  if(!claims.length){ alert("No claims match the current filters, so there is nothing to report."); return; }
+
+  /* ---- the summary: where time is actually going ---- */
+  const num = a => a.filter(x=>typeof x==="number"&&isFinite(x));
+  const avg = a => { const n=num(a); return n.length?Math.round(n.reduce((s,x)=>s+x,0)/n.length*100)/100:""; };
+  const med = a => { const n=num(a).sort((x,y)=>x-y); if(!n.length) return "";
+    const m=Math.floor(n.length/2); return Math.round((n.length%2?n[m]:(n[m-1]+n[m])/2)*100)/100; };
+  const worst = a => { const n=num(a); return n.length?Math.max.apply(null,n):""; };
+  const col = i => claims.map(c=>c[i]);
+  const I={rm:16,rg:17,ho:18,all:19};
+  const sum=[["Claims in this report",claims.length],
+    ["Expense lines",rows.length],
+    ["Paid",claims.filter(c=>c[26]==="Paid").length],
+    ["Still open",claims.filter(c=>c[24]!=="").length],
+    ["",""],
+    ["STAGE","Average days / Median / Longest"]];
+  [["Submit to Reporting Manager",I.rm],["Reporting Manager to Regional Manager",I.rg],
+   ["With HO Admin for payment",I.ho],["Submit to payment, end to end",I.all]].forEach(([l,i])=>{
+    sum.push([l, avg(col(i))+"  /  "+med(col(i))+"  /  "+worst(col(i))]);
+  });
+  /* The two figures above mix claims that finished with claims still waiting, so a long
+     queue flatters or inflates them depending on which way it leans. Settled claims are
+     the only honest measure of how long the cycle actually takes. */
+  const done=claims.filter(c=>typeof c[I.all]==="number"&&c[26]==="Paid");
+  sum.push(["",""]);
+  sum.push(["SETTLED CLAIMS ONLY","Average days / Median / Longest"]);
+  if(done.length){
+    sum.push(["  With HO Admin for payment",
+      avg(done.map(c=>c[I.ho]))+"  /  "+med(done.map(c=>c[I.ho]))+"  /  "+worst(done.map(c=>c[I.ho]))]);
+    sum.push(["  Submit to payment, end to end",
+      avg(done.map(c=>c[I.all]))+"  /  "+med(done.map(c=>c[I.all]))+"  /  "+worst(done.map(c=>c[I.all]))]);
+    sum.push(["  Claims measured",done.length]);
+  } else {
+    sum.push(["  Nothing settled in this selection","Figures above count days still running"]);
+  }
+  sum.push(["",""]);
+  sum.push(["PENDING NOW","Claims / Average days waiting"]);
+  ["Reporting Manager","Regional Manager","HO Admin","Engineer"].forEach(w=>{
+    const sel=claims.filter(c=>c[23]===w);
+    if(sel.length) sum.push([w, sel.length+"  /  "+avg(sel.map(c=>c[24]))]);
+  });
+
+  /* branch and approver breakdowns, which is where a bottleneck shows up */
+  const byKey=(idx)=>{
+    const g={};
+    claims.forEach(c=>{ const k=c[idx]||"Not recorded"; (g[k]=g[k]||[]).push(c); });
+    return Object.keys(g).sort().map(k=>[k,g[k].length,
+      avg(g[k].map(c=>c[I.rm])),avg(g[k].map(c=>c[I.rg])),
+      avg(g[k].map(c=>c[I.ho])),avg(g[k].map(c=>c[I.all])),
+      g[k].filter(c=>c[24]!=="").length]);
+  };
+  const bh=["Branch","Claims","Avg submit to RM","Avg RM to RG","Avg with HO Admin","Avg total","Still open"];
+  const sheets=[
+    detailSheet("TAT summary",["Measure","Value"],sum,[42,36]),
+    detailSheet("By branch",bh,byKey(0),[20,10,18,18,20,14,12]),
+    detailSheet("By engineer",["Engineer","Claims","Avg submit to RM","Avg RM to RG","Avg with HO Admin","Avg total","Still open"],
+      byKey(3),[26,10,18,18,20,14,12]),
+    detailSheet("Line item TAT",head,rows,
+      [18,12,12,22,22,22,8, 20,14,24,18,28, 14,20,18,18,12,14,14,
+       20,24,24,20,18, 20,20,24,16,10,26,20,14, 28,16,20]),
+    detailSheet("Claim TAT",chead,claims,
+      [18,12,12,22,22,22,14,8, 14,16,14, 20,24,24,20,18, 20,20,24,16,10,34,26,20,14, 28,16,20])
+  ];
+  if(skipped.length) sheets.push(detailSheet("Lines not loaded",["Claim No","Why"],
+    skipped.map(n=>[n,"Line detail was not in memory. Open the claim once, or press Refresh, then download again."]),[24,90]));
+  xlsxDownload("Prostarm_Travel_Claims_TAT_"+new Date().toISOString().slice(0,10)+".xlsx",sheets);
+}
+
+/* A line's own ticket or UID. The claim-level fields only mirror the first line, so a
+   line left blank must stay blank in a report rather than show another line's value.
+   Old claims that recorded these at claim level only are the one exception. */
+function lineRef(r,it,field){
+  const items=Array.isArray(r.items)?r.items:[];
+  const legacy=items.every(x=>!String(x.ticket||"").trim()&&!String(x.uid||"").trim());
+  return legacy ? (r[field]||"") : (it[field]||"");
+}
 function exportCrm(list){
   const skipped=[];
   const head=["Branch","Emp ID","Emp Name","Ticket / Case No","UID","Customer Name","Customer Segment","Journey Date",
@@ -3167,7 +3428,7 @@ function exportCrm(list){
    const items=Array.isArray(r.items)?r.items:[];
    const pay=r.pay||{};
    try{
-    items.forEach(it=>rows.push([r.branch,r.by,r.name,it.ticket||r.ticket,it.uid||r.uid,it.custName||r.custName,it.segment||r.segment,it.date,
+    items.forEach(it=>rows.push([r.branch,r.by,r.name,lineRef(r,it,"ticket"),lineRef(r,it,"uid"),it.custName||r.custName,it.segment||r.segment,it.date,
     it.jFrom,it.jFromPin,it.jTo,it.jToPin,it.cat,it.mode,it.km||"",
     r.items.reduce((s,x)=>s+(x.cat==="Travel"&&x.date===it.date?(Number(x.km)||0):0),0)||"",
     /* the figure the bike rate is decided on: Bike kilometres for that date only */
@@ -4193,7 +4454,7 @@ function anExport(){
       const ref=(it.cat==="Travel"&&refKm(it.jFromPin,it.jToPin)!=null)?refKm(it.jFromPin,it.jToPin):"";
       crmRows.push([r.branch||"",r.zone||"",r.by||"",r.name||"",r.no||"",r.voucher||"",
         dd(r.claimDate||r.perFrom), i+1,
-        it.ticket||r.ticket||"", it.uid||r.uid||"", it.custName||r.custName||"",
+        lineRef(r,it,"ticket"), lineRef(r,it,"uid"), it.custName||r.custName||"",
         it.segment||r.segment||"", it.date?dd(it.date):"", (it.purpose||r.purpose||""),
         it.cat||"", it.mode||"",
         it.jFrom||"", it.jFromPin||"", it.jTo||"", it.jToPin||"",
@@ -4240,7 +4501,512 @@ function anExport(){
 $("anRefresh")&&$("anRefresh").addEventListener("click",()=>{ MEM_AT=0; renderAnalysis(); });
 $("anExport")&&$("anExport").addEventListener("click",anExport);
 
+
+/* ================= MANAGEMENT REPORT (HO ADMIN ONLY) =================
+   Week, zone, branch and engineer, each measured the same way so the four views can be
+   read against one another.
+
+   A "call" is a distinct ticket, falling back to the UID where the ticket is blank or a
+   placeholder of zeros. Engineers enter "00000" when they have no case number; counting
+   those as one ticket would collapse dozens of visits into a single call, so a
+   placeholder with no UID counts as a call of its own and is reported separately.
+   Trips follow the CRM summary sheet: Bike and Own Vehicle are bike trips, Bus, Train,
+   Metro and Ferry are public transport, so the two reports always agree. */
+let MG_DATA=null;
+const isPlaceholder = v => { const t=String(v==null?"":v).trim(); return !t || /^0+$/.test(t) || /^(na|n\/a|nil|none|-+)$/i.test(t); };
+function mgRange(){
+  /* A chosen month overrides the period and the date boxes, and fills them in so the
+     page always shows the dates actually in use. */
+  const mon=($("mgMonth")&&$("mgMonth").value)||"";
+  if(mon){
+    const y=+mon.slice(0,4), m=+mon.slice(5,7);
+    const f=mon+"-01", to=mon+"-"+String(new Date(y,m,0).getDate()).padStart(2,"0");
+    if($("mgFrom")) $("mgFrom").value=f;
+    if($("mgTo"))   $("mgTo").value=to;
+    return [f,to];
+  }
+  const mode=($("mgPeriod")&&$("mgPeriod").value)||"90";
+  const t=new Date(), iso=d=>d.toISOString().slice(0,10);
+  if(mode==="custom") return [($("mgFrom")||{}).value||"", ($("mgTo")||{}).value||""];
+  let f="", to=iso(t);
+  if(mode==="month") f=iso(new Date(t.getFullYear(),t.getMonth(),1));
+  else if(mode==="30") f=iso(new Date(t.getTime()-29*864e5));
+  else if(mode==="90") f=iso(new Date(t.getTime()-89*864e5));
+  else if(mode==="fy") f=iso(new Date(t.getMonth()>=3?t.getFullYear():t.getFullYear()-1,3,1));
+  else { f=""; to=""; }
+  if($("mgFrom")) $("mgFrom").value=f;
+  if($("mgTo"))   $("mgTo").value=to;
+  return [f,to];
+}
+/* Basis is the money position the report shows. Every claim falls in exactly one of the
+   last three, so they always add back to the first:
+     All data         every claim entered in the application
+     Ready to pay     approved, with HO Admin for payment
+     Paid             payment processed or closed
+     Yet to approve   everything else — All data less Paid less Ready to pay
+   Each claim is valued at its approved amount where one has been decided, otherwise at
+   what was claimed, so the four figures reconcile to the rupee. */
+const MG_BASES=[["all","All data — total entered in the application"],
+                ["__pay","Approved — with HO Admin (ready to pay)"],
+                ["yet","Amount yet to approve (all data − paid − ready to pay)"],
+                ["paid","Amount paid"]];
+function mgBuildBasis(){
+  const el=$("mgBasis"); if(!el||el.dataset.done) return;
+  el.innerHTML=MG_BASES.map(o=>'<option value="'+o[0]+'">'+esc(o[1])+'</option>').join("");
+  el.value="all"; el.dataset.done="1";
+}
+function mgBucket(r){
+  if(r.status===ST.APP) return "__pay";
+  if(r.status===ST.PAID||r.status===ST.CLOSED) return "paid";
+  return "yet";
+}
+function mgStatusPick(){ const b=($("mgBasis")&&$("mgBasis").value)||"all"; return b==="all"?"":b; }
+function mgStatusMatch(r,pick){ return mgBucket(r)===pick; }
+function mgValue(r){
+  const b="settled";
+  if(b==="claimed") return Number(r.claimed)||0;
+  if(b==="paid") return (r.status===ST.PAID||r.status===ST.CLOSED)?(Number(r.payable)||0):0;
+  return Number(r.approved!=null?r.approved:(r.recommended!=null?r.recommended:r.claimed))||0;
+}
+/* Weeks within the month, as the business counts them: Week 1 is the 1st to the 7th,
+   Week 2 the 8th to the 14th, and Week 5 whatever is left after the 28th. A week never
+   crosses a month end, so every week rolls up cleanly into its month. */
+const MON3=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function mgWeek(iso){
+  const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(String(iso||""));
+  if(!m) return {k:"",label:"No date",month:"",monthLabel:"No date"};
+  const y=+m[1], mo=+m[2], day=+m[3];
+  const n=Math.min(5,Math.ceil(day/7));
+  const first=(n-1)*7+1, last=n<5?n*7:new Date(y,mo,0).getDate();
+  const mon=MON3[mo-1]+"'"+String(y).slice(2);
+  const pad=x=>String(x).padStart(2,"0");
+  return {k:m[1]+"-"+m[2]+"|"+n, month:m[1]+"-"+m[2], monthLabel:mon,
+          label:"Week "+n+" ("+pad(first)+"–"+pad(last)+" "+mon+")"};
+}
+function mgBlank(){ return {v:0,claims:{},calls:{},ph:0,km:0,bikeLo:0,bikeHi:0,own:0,pub:0,other:0,days:{},eng:{},lines:0,d0:"",d1:""}; }
+/* band: "hi" when that engineer's Bike kilometres for the day pass the slab limit,
+   the same test that sets the ₹4 / ₹3 rate, so the two always agree. */
+function mgAdd(g,r,it,share,callKey,isPh,dayKey,d,band){
+  g.v+=share; g.claims[r.id]=1; g.calls[callKey]=1; if(isPh) g.ph++;
+  g.days[dayKey]=1; g.eng[r.by]=1; g.lines++;
+  if(it.cat==="Travel"){
+    g.km+=Number(it.km)||0;
+    if(it.mode==="Bike"){ if(band==="hi") g.bikeHi++; else g.bikeLo++; }
+    else if(it.mode==="Own Vehicle") g.own++;
+    else if(TRIP_PUBLIC.indexOf(it.mode)>-1) g.pub++;
+    else g.other++;
+  }
+  if(d){ if(!g.d0||d<g.d0) g.d0=d; if(!g.d1||d>g.d1) g.d1=d; }
+}
+function mgRow(label,g){
+  const calls=Object.keys(g.calls).length, days=Object.keys(g.days).length;
+  return {label:label, v:g.v, claims:Object.keys(g.claims).length, calls:calls, ph:g.ph,
+    km:g.km, bikeLo:g.bikeLo, bikeHi:g.bikeHi, bike:g.bikeLo+g.bikeHi, own:g.own,
+    pub:g.pub, other:g.other, days:days, eng:Object.keys(g.eng).length, lines:g.lines,
+    perTicket: calls?Math.round(g.v/calls):0, perDay: days?Math.round(g.v/days):0,
+    kmPerCall: calls?Math.round(g.km/calls*10)/10:0, kmPerDay: days?Math.round(g.km/days*10)/10:0,
+    d0:g.d0, d1:g.d1};
+}
+
+
+/* Click a column heading to sort that table; click again to reverse. Every heading
+   carries the up/down arrow so it is obvious the column can be sorted. The Total row
+   always stays at the foot. The choice is remembered per table, so it survives a
+   change of filter. */
+const MG_SORT={};
+function mgSortKey(td){
+  const t=(td.textContent||"").trim();
+  const n=t.replace(/[₹,\s]|KM/g,"");
+  if(n!==""&&!isNaN(n)) return {n:Number(n)};
+  return {s:t.toLowerCase()};
+}
+function mgApplySort(tbl){
+  const id=tbl.dataset.sid, st=MG_SORT[id]; if(!st) return;
+  const body=tbl.tBodies[0]; if(!body) return;
+  const rows=[...body.rows].filter(r=>!r.classList.contains("anTot"));
+  const tot=[...body.rows].filter(r=>r.classList.contains("anTot"));
+  rows.sort((a,b)=>{
+    const x=mgSortKey(a.cells[st.col]||{}), y=mgSortKey(b.cells[st.col]||{});
+    const c = (x.n!==undefined&&y.n!==undefined) ? x.n-y.n : String(x.s||x.n).localeCompare(String(y.s||y.n));
+    return st.dir==="asc"?c:-c;
+  });
+  rows.concat(tot).forEach(r=>body.appendChild(r));
+  [...tbl.tHead.rows[0].cells].forEach((th,i)=>{
+    th.classList.toggle("on",i===st.col);
+    const a=th.querySelector(".sa"); if(a) a.textContent=(i===st.col?(st.dir==="asc"?"▲":"▼"):"▲▼");
+  });
+}
+function mgMakeSortable(){
+  document.querySelectorAll("#mgBody .anPanel table.anTbl").forEach((tbl,ti)=>{
+    const title=(tbl.closest(".anPanel").querySelector("h5")||{}).firstChild;
+    tbl.dataset.sid="t"+ti+":"+((title&&title.textContent)||"");
+    tbl.classList.add("mgSort");
+    [...tbl.tHead.rows[0].cells].forEach((th,i)=>{
+      if(!th.querySelector(".sa")) th.insertAdjacentHTML("beforeend",'<span class="sa">▲▼</span>');
+      th.title="Sort by "+th.textContent.replace(/▲|▼/g,"").trim();
+      th.onclick=()=>{
+        const id=tbl.dataset.sid, cur=MG_SORT[id];
+        /* numbers start biggest first, text starts A to Z */
+        const numeric=th.classList.contains("n");
+        MG_SORT[id] = (cur&&cur.col===i) ? {col:i,dir:cur.dir==="asc"?"desc":"asc"}
+                                         : {col:i,dir:numeric?"desc":"asc"};
+        mgApplySort(tbl);
+      };
+    });
+    mgApplySort(tbl);
+  });
+}
+
+async function renderMgmt(){
+  if(!isHO(ME)) return;
+  mgBuildBasis();
+  $("mgBody").innerHTML='<div class="empty"><b>Building the report…</b>Reading the claim book.</div>';
+  const all=await loadAll(20000);
+  const [from,to]=mgRange();
+  const zs=$("mgZone"), bs=$("mgBranch");
+  if(zs&&!zs.dataset.done){
+    zs.innerHTML='<option value="">All zones</option>'+[...new Set(all.map(r=>r.zone).filter(Boolean))].sort()
+      .map(z=>'<option value="'+esc(z)+'">'+esc(z)+'</option>').join(""); zs.dataset.done="1"; }
+  if(bs&&!bs.dataset.done){
+    bs.innerHTML='<option value="">All branches</option>'+[...new Set(all.map(r=>r.branch).filter(Boolean))].sort()
+      .map(b=>'<option value="'+esc(b)+'">'+esc(b)+'</option>').join(""); bs.dataset.done="1"; }
+  const ms=$("mgMonth");
+  if(ms){
+    const keep=ms.value;
+    const months=[...new Set(all.map(r=>(dkey(r.claimDate||r.perFrom)||"").slice(0,7)).filter(Boolean))].sort().reverse();
+    ms.innerHTML='<option value="">All months</option>'+months.map(m=>{
+      const lbl=MON3[+m.slice(5,7)-1]+"'"+m.slice(2,4);
+      return '<option value="'+m+'"'+(keep===m?" selected":"")+'>'+lbl+'</option>'; }).join("");
+  }
+  const zp=(zs&&zs.value)||"", bp=(bs&&bs.value)||"";
+  const stPick=mgStatusPick();
+  /* the same month, zone and branch, before Basis narrows it — for the reconciliation line */
+  const scoped=all.filter(r=>{
+    if(zp&&r.zone!==zp) return false;
+    if(bp&&r.branch!==bp) return false;
+    const d=dkey(r.claimDate||r.perFrom);
+    if(from&&(!d||d<from)) return false;
+    if(to&&(!d||d>to)) return false;
+    return true;
+  });
+  const pos={all:0,__pay:0,paid:0,yet:0}, posN={all:0,__pay:0,paid:0,yet:0};
+  scoped.forEach(r=>{ const v=mgValue(r), k=mgBucket(r); pos.all+=v; pos[k]+=v; posN.all++; posN[k]++; });
+  const pb=($("mgBasis")&&$("mgBasis").value)||"all";
+  const seg=(k,lbl,col)=>'<div class="mgPos'+(pb===k?" on":"")+'" title="Show only this position" '+
+    'onclick="document.getElementById(\'mgBasis\').value=\''+k+'\';renderMgmt()">'+
+    '<span>'+lbl+'</span><b style="color:'+col+'">'+money(Math.round(pos[k]))+'</b><i>'+posN[k]+' claim'+(posN[k]===1?"":"s")+'</i></div>';
+  const POSBAR='<div class="mgPosBar">'+
+      seg("all","All data entered","var(--navy)")+'<em>=</em>'+
+      seg("paid","Amount paid","#0a8a53")+'<em>+</em>'+
+      seg("__pay","Ready to pay","#2f72b8")+'<em>+</em>'+
+      seg("yet","Yet to approve","#b06a00")+
+    '</div>';
+  const rows=all.filter(r=>{
+    if(stPick && !mgStatusMatch(r,stPick)) return false;
+    if(zp&&r.zone!==zp) return false;
+    if(bp&&r.branch!==bp) return false;
+    const d=dkey(r.claimDate||r.perFrom);
+    if(from&&(!d||d<from)) return false;
+    if(to&&(!d||d>to)) return false;
+    return true;
+  });
+  if(!rows.length){
+    $("mgBody").innerHTML=POSBAR+'<div class="empty"><b>Nothing in this period</b>'+
+      (mgStatusPick()?"No claims in the chosen status. Pick another status under Basis, or widen the dates."
+                     :"Widen the dates, or clear the zone and branch filters.")+'</div>';
+    MG_DATA=null; return;
+  }
+
+  const W={}, Z={}, B={}, E={}, T=mgBlank(); const wkLabel={};
+  /* the step-down: month > week > zone > branch > engineer, every node its own subtotal */
+  const TREE={}, NODE={};
+  const node=(path)=>NODE[path]||(NODE[path]=mgBlank());
+  let noLines=0;
+  const BIKEDAY={};
+  rows.forEach(r=>{
+    const d0_=dkey(r.claimDate||r.perFrom)||"";
+    (Array.isArray(r.items)?r.items:[]).forEach(it=>{
+      if(it.cat==="Travel"&&it.mode==="Bike"){
+        const k=r.by+"|"+(it.date?dkey(it.date):d0_);
+        BIKEDAY[k]=(BIKEDAY[k]||0)+(Number(it.km)||0);
+      }
+    });
+  });
+  rows.forEach(r=>{
+    const v=mgValue(r), items=Array.isArray(r.items)?r.items:[];
+    const d=dkey(r.claimDate||r.perFrom)||"";
+    const wk=mgWeek(d); wkLabel[wk.k]=wk.label;
+    if(!items.length){ noLines++; return; }
+    const share=v/items.length;
+    /* Ticket and UID are captured per line. The claim-level fields only mirror the first
+       line, so borrowing them for another line hands it someone else's UID and merges two
+       separate visits into one call. Fall back to them only for old claims that recorded
+       nothing per line. */
+    const legacy=items.every(x=>!String(x.ticket||"").trim()&&!String(x.uid||"").trim());
+    items.forEach((it,i)=>{
+      const tk=legacy?r.ticket:it.ticket, uid=legacy?r.uid:it.uid;
+      const tkPh=isPlaceholder(tk), uidPh=isPlaceholder(uid);
+      /* a genuine ticket is the call; failing that the UID; failing both, the line itself */
+      const callKey = !tkPh ? "T:"+String(tk).trim().toUpperCase()
+                    : !uidPh ? "U:"+String(uid).trim().toUpperCase()
+                    : "L:"+r.id+":"+i;
+      const isPh = tkPh && uidPh;
+      const dayKey=r.by+"|"+(it.date?dkey(it.date):d);
+      const band=(BIKEDAY[dayKey]||0)>BIKE_SLAB.limit?"hi":"lo";
+      [ [W,wk.k], [Z,r.zone||"Not recorded"], [B,r.branch||"Not recorded"],
+        [E,(r.name||r.by)+"\u0001"+r.by+"\u0001"+(r.branch||"")] ].forEach(([o,k])=>{
+        mgAdd(o[k]=o[k]||mgBlank(), r, it, share, callKey, isPh, dayKey, d, band);
+      });
+      mgAdd(T, r, it, share, callKey, isPh, dayKey, d, band);
+      const z=r.zone||"Not recorded", b=r.branch||"Not recorded";
+      const e=(r.name||r.by)+"\u0001"+r.by;
+      [wk.month, wk.month+"|"+wk.k, wk.month+"|"+wk.k+"|"+z,
+       wk.month+"|"+wk.k+"|"+z+"|"+b, wk.month+"|"+wk.k+"|"+z+"|"+b+"|"+e].forEach(path=>{
+        mgAdd(node(path), r, it, share, callKey, isPh, dayKey, d, band);
+      });
+      ((((TREE[wk.month]=TREE[wk.month]||{lbl:wk.monthLabel,w:{}})
+        .w[wk.k]=TREE[wk.month].w[wk.k]||{lbl:wk.label,z:{}})
+        .z[z]=TREE[wk.month].w[wk.k].z[z]||{b:{}})
+        .b[b]=TREE[wk.month].w[wk.k].z[z].b[b]||{e:{}}).e[e]=1;
+    });
+  });
+  const tot=mgRow("Total",T);
+  const weeks=Object.keys(W).sort().map(k=>mgRow(wkLabel[k]||k,W[k]));
+  const zones=Object.keys(Z).map(k=>mgRow(k,Z[k])).sort((a,b)=>b.v-a.v);
+  const brs=Object.keys(B).map(k=>mgRow(k,B[k])).sort((a,b)=>b.v-a.v);
+  const engs=Object.keys(E).map(k=>{ const p=k.split("\u0001");
+    return Object.assign(mgRow(p[0],E[k]),{code:p[1],branch:p[2]}); }).sort((a,b)=>b.v-a.v);
+  MG_DATA={weeks:weeks,zones:zones,brs:brs,engs:engs,tot:tot,from:from,to:to,noLines:noLines,n:rows.length,
+           tree:TREE, node:k=>mgRow(k,NODE[k])};
+
+  if($("mgNote")) $("mgNote").textContent="HO Admin only · "+(bp||zp||"All branches")+
+    " · "+(($("mgBasis")&&$("mgBasis").selectedOptions[0]&&$("mgBasis").selectedOptions[0].textContent)||"")+
+    (tot.d0?" · claims from "+dd(tot.d0)+" to "+dd(tot.d1):"");
+
+  const card=(t,v,sub)=>'<div class="anCard"><h4>'+t+'</h4><div class="v">'+v+'</div><div class="s">'+sub+'</div></div>';
+  /* Twelve cards in two even rows of six. The top row is money and coverage — what was
+     spent, across how many branches and engineers, on how many calls; the bottom row is
+     travel — distance, how it was travelled, and how far each call and day took. */
+  const zoneCount=new Set(brs.map(b=>{ const r=rows.find(x=>(x.branch||"Not recorded")===b.label);
+    return r?(r.zone||"Not recorded"):""; })).size;
+  let h=POSBAR+
+    '<div class="anGrid mgK">'+
+    card("Total expense",money(Math.round(tot.v)),tot.claims.toLocaleString("en-IN")+" claims · "+tot.lines.toLocaleString("en-IN")+" lines")+
+    card("Branches",brs.length,"across "+zoneCount+" zone"+(zoneCount===1?"":"s"))+
+    card("Engineers",tot.eng,tot.d0?dd(tot.d0)+" → "+dd(tot.d1):"")+
+    card("No of calls",tot.calls.toLocaleString("en-IN"),tot.ph?tot.ph+" line(s) with no ticket or UID":"distinct ticket / UID")+
+    card("Avg claim per ticket",money(tot.perTicket),"expense ÷ calls")+
+    card("Avg claim per day",money(tot.perDay),tot.days.toLocaleString("en-IN")+" engineer-days")+
+    card("KM travel",Math.round(tot.km).toLocaleString("en-IN")+" KM",tot.km?money(Math.round(tot.v/tot.km))+" per KM":"—")+
+    card("Bike trips",tot.bike.toLocaleString("en-IN"),
+         tot.bikeLo.toLocaleString("en-IN")+" within "+BIKE_SLAB.limit+" KM/day · "+tot.bikeHi.toLocaleString("en-IN")+" above")+
+    card("Own Vehicle trips",tot.own.toLocaleString("en-IN"),"flat ₹"+(typeof OWN_VEHICLE_RATE!=="undefined"?OWN_VEHICLE_RATE:8)+"/KM")+
+    card("Public transport trips",tot.pub.toLocaleString("en-IN"),"Bus, Train, Metro, Ferry")+
+    card("Avg KM per call",tot.kmPerCall.toLocaleString("en-IN")+" KM","KM ÷ calls")+
+    card("Avg KM per day",tot.kmPerDay.toLocaleString("en-IN")+" KM","KM ÷ engineer-days")+
+  '</div>';
+
+  const lim=BIKE_SLAB.limit;
+  const cols=[["Expense",1],["Claims",1],["Calls",1],["KM travel",1],
+              ["Bike ≤"+lim+" KM/day",1],["Bike >"+lim+" KM/day",1],["Bike total",1],["Own Vehicle",1],
+              ["Public trips",1],["Avg / ticket",1],["Avg / day",1],
+              ["Avg KM / call",1],["Avg KM / day",1]];
+  const n1=x=>Number(x).toLocaleString("en-IN");
+  const cells=x=>'<td class="n">'+money(Math.round(x.v))+'</td><td class="n">'+x.claims+'</td>'+
+    '<td class="n">'+x.calls+'</td><td class="n">'+n1(Math.round(x.km))+'</td>'+
+    '<td class="n">'+x.bikeLo+'</td><td class="n">'+x.bikeHi+'</td><td class="n"><b>'+x.bike+'</b></td>'+
+    '<td class="n">'+x.own+'</td><td class="n">'+x.pub+'</td>'+
+    '<td class="n">'+money(x.perTicket)+'</td><td class="n">'+money(x.perDay)+'</td>'+
+    '<td class="n">'+n1(x.kmPerCall)+'</td><td class="n">'+n1(x.kmPerDay)+'</td>';
+  const totRow=pre=>'<tr class="anTot"><td>Total</td>'+(pre||"")+cells(tot)+'</tr>';
+  const panel=(title,sub,lead,rowsH,totH,cls)=>
+    '<div class="anPanel"><h5>'+title+'<span>'+sub+'</span></h5><div class="in'+(cls?" "+cls:"")+'">'+
+    '<table class="anTbl"><thead><tr>'+lead.map(x=>'<th>'+x+'</th>').join("")+
+    cols.map(c=>'<th class="n">'+c[0]+'</th>').join("")+'</tr></thead><tbody>'+rowsH+totH+'</tbody></table></div></div>';
+
+  h+='<div class="anPanel"><h5>Week wise expense<span>'+weeks.length+' week(s)</span></h5><div class="in">'+
+     anColumns(weeks.map(w=>({v0:0,k:w.label.replace(/^Week (\d) \(.*?([A-Z][a-z]{2}'\d{2})\)$/,"W$1 $2"),v:w.v,n:w.claims})))+'</div></div>';
+  h+=panel("1 · Week wise",weeks.length+" week(s), 1st–7th, 8th–14th and so on",["Week"],
+    weeks.map(x=>'<tr><td>'+esc(x.label)+'</td>'+cells(x)+'</tr>').join(""),totRow());
+  h+=panel("2 · Zone wise",zones.length+" zone(s)",["Zone","Branches"],
+    zones.map(x=>'<tr><td>'+esc(x.label)+'</td><td class="n">'+
+      new Set(brs.filter(b=>rows.some(r=>r.branch===b.label&&(r.zone||"Not recorded")===x.label)).map(b=>b.label)).size+
+      '</td>'+cells(x)+'</tr>').join(""),totRow('<td></td>'));
+  h+=panel("3 · Branch wise",brs.length+" branch(es)",["Branch","Engineers"],
+    brs.map(x=>'<tr><td>'+esc(x.label)+'</td><td class="n">'+x.eng+'</td>'+cells(x)+'</tr>').join(""),
+    totRow('<td class="n">'+tot.eng+'</td>'),"mgScroll");
+  h+=panel("4 · Engineer wise",engs.length+" engineer(s)",["Engineer","Branch"],
+    engs.map(x=>'<tr><td>'+esc(x.label)+' <span style="color:var(--muted)">· '+esc(x.code)+'</span></td>'+
+      '<td>'+esc(x.branch)+'</td>'+cells(x)+'</tr>').join(""),totRow('<td></td>'),"mgScroll");
+
+  h+='<div class="refnote"><b>How the figures are counted.</b> Calls are distinct ticket numbers; where the ticket '+
+     'is blank or a run of zeros the UID is used instead, and where both are missing each line counts as one call. '+
+     (tot.ph?tot.ph+' line(s) in this selection had neither, so the call count is an upper bound. ':'')+
+     'Bike trips are split by the engineer\'s own Bike kilometres for that day — up to '+BIKE_SLAB.limit+' KM or above, the same test that sets the ₹4 / ₹3 rate. Own Vehicle is counted on its own. Public transport is Bus, Train, Metro and Ferry. '+
+     'Click any column heading to sort; click again to reverse. '+
+     'Average per ticket is expense divided by calls; average per day is expense divided by engineer-days worked. '+
+     (noLines?noLines+' claim(s) carried no line detail and are left out of the counts. ':'')+'</div>';
+  $("mgBody").innerHTML=h;
+  mgMakeSortable();
+}
+
+function mgExport(){
+  if(!MG_DATA){ alert("Build the report first."); return; }
+  const D=MG_DATA;
+  const lim=BIKE_SLAB.limit;
+  const head=["Expense","Claims","No of Calls","KM Travel",
+    "Bike Trips within "+lim+" KM/day","Bike Trips above "+lim+" KM/day","Total Bike Trips",
+    "Own Vehicle Trips","No of Public Trans Trips",
+    "Avg Claim per Ticket","Avg Claim per Day","Avg KM per Call","Avg KM per Day","From date","To date"];
+  const vals=x=>[Math.round(x.v),x.claims,x.calls,Math.round(x.km),x.bikeLo,x.bikeHi,x.bike,x.own,x.pub,
+    x.perTicket,x.perDay,x.kmPerCall,x.kmPerDay,x.d0?dd(x.d0):"",x.d1?dd(x.d1):""];
+  const W=[16,10,12,12,20,20,14,16,18,18,16,14,14,14,14];
+  /* The Summary is a step-down report: each month, then its weeks, then the zones within
+     each week, the branches within each zone and the engineers within each branch. Every
+     level carries its own subtotal, and each level writes its name in its own column, so
+     the eye steps down and to the right exactly as the business reads it. Counts such as
+     calls and engineer-days are worked out afresh at every level rather than summed,
+     because a ticket worked in two branches is still one call for the zone. */
+  const C=(v,st)=>({v:v,s:st});
+  const LEAD=["Month","Week","Zone","Branch","Engineer","Emp ID"];
+  const NCOL=LEAD.length+head.length;
+  const blank=n=>Array.from({length:n},()=>C("",0));
+  const bar=(t,st)=>[C(t,st)].concat(Array.from({length:NCOL-1},()=>C("",st)));
+  const row=(lead,x,st)=>lead.map(v=>C(v,st)).concat(vals(x).map(v=>C(v,st)));
+  const S=[];
+  S.push(bar("PROSTARM TRAVEL EXPENSE — MANAGEMENT REPORT (STEP-DOWN)",1));
+  [["Claim period covered",D.tot.d0?dd(D.tot.d0)+" to "+dd(D.tot.d1):""],
+   ["Basis",($("mgBasis")&&$("mgBasis").selectedOptions[0].textContent)||""],
+   ["Scope",($("mgBranch")&&$("mgBranch").value)||($("mgZone")&&$("mgZone").value)||"All branches"],
+   ["Generated",dd(new Date().toISOString().slice(0,10))]].forEach(([k,v])=>{
+     S.push([C(k,2),C(v,4)].concat(blank(NCOL-2)));
+  });
+  S.push(blank(NCOL));
+  S.push(LEAD.map(x=>C(x,1)).concat(head.map(x=>C(x,1))));
+  const T=D.tree, byV=(o,pre)=>Object.keys(o).sort((a,b)=>D.node(pre+b).v-D.node(pre+a).v);
+  Object.keys(T).sort().forEach(m=>{
+    const M=T[m];
+    S.push(row([M.lbl+" — month total","","","","",""],D.node(m),1));
+    Object.keys(M.w).sort().forEach(wk=>{
+      const Wk=M.w[wk], pw=m+"|"+wk;
+      S.push(row(["",Wk.lbl,"","","",""],D.node(pw),2));
+      byV(Wk.z,pw+"|").forEach(z=>{
+        const pz=pw+"|"+z;
+        S.push(row(["","",z,"","",""],D.node(pz),5));
+        byV(Wk.z[z].b,pz+"|").forEach(b=>{
+          const pb=pz+"|"+b;
+          S.push(row(["","","",b,"",""],D.node(pb),6));
+          byV(Wk.z[z].b[b].e,pb+"|").forEach(e=>{
+            const p2=e.split("\u0001");
+            S.push(row(["","","","",p2[0],p2[1]||""],D.node(pb+"|"+e),4));
+          });
+        });
+      });
+    });
+  });
+  S.push(row(["GRAND TOTAL","","","","",""],D.tot,3));
+  S.push(blank(NCOL));
+  S.push([C("How to read this sheet",2)].concat(blank(NCOL-1)));
+  ["Each month is followed by its weeks: Week 1 is the 1st to the 7th, Week 2 the 8th to the 14th, Week 3 the 15th to the 21st, Week 4 the 22nd to the 28th, and Week 5 the days after.",
+   "Within each week come its zones, then the branches within each zone, then the engineers within each branch, highest spend first. Every coloured row is the subtotal of the rows beneath it.",
+   "Calls are distinct ticket numbers; where the ticket is blank or zeros the UID is used, and where both are missing each line counts once. Calls and engineer-days are counted at each level, so a lower level can repeat a ticket the level above counts once.",
+   "Bike trips are split by the engineer's own Bike kilometres for that day: up to "+lim+" KM, or above "+lim+" KM — the same test that sets the ₹4 or ₹3 rate. Own Vehicle is counted separately because it is paid at its own flat rate.",
+   "Average KM per call is KM travelled divided by calls; average KM per day is KM travelled divided by engineer-days worked.",
+   "The Week, Zone, Branch and Engineer sheets carry a sort-and-filter arrow on every column."
+  ].forEach(t=>S.push([C(t,0)].concat(blank(NCOL-1))));
+  const sheets=[
+    {name:"Summary", rows:S, widths:[24,24,14,18,26,10].concat(W)},
+    Object.assign(detailSheet("Week wise",["Week"].concat(head),D.weeks.map(x=>[x.label].concat(vals(x))).concat([["Total"].concat(vals(D.tot))]),[36].concat(W)),{filter:"noTotal"}),
+    Object.assign(detailSheet("Zone wise",["Zone"].concat(head),D.zones.map(x=>[x.label].concat(vals(x))).concat([["Total"].concat(vals(D.tot))]),[18].concat(W)),{filter:"noTotal"}),
+    Object.assign(detailSheet("Branch wise",["Branch","Engineers"].concat(head),D.brs.map(x=>[x.label,x.eng].concat(vals(x))).concat([["Total",D.tot.eng].concat(vals(D.tot))]),[20,10].concat(W)),{filter:"noTotal"}),
+    Object.assign(detailSheet("Engineer wise",["Engineer","Code","Branch"].concat(head),D.engs.map(x=>[x.label,x.code,x.branch].concat(vals(x))).concat([["Total","",""].concat(vals(D.tot))]),[26,12,18].concat(W)),{filter:"noTotal"})
+  ];
+  xlsxDownload("Prostarm_Management_Report_"+new Date().toISOString().slice(0,10)+".xlsx",sheets);
+}
+["mgZone","mgBranch","mgBasis","mgMonth"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("change",()=>renderMgmt()); });
+$("mgPeriod")&&$("mgPeriod").addEventListener("change",()=>{ if($("mgMonth")) $("mgMonth").value=""; renderMgmt(); });
+["mgFrom","mgTo"].forEach(id=>{ const el=$(id); if(el) el.addEventListener("change",()=>{
+  if($("mgMonth")) $("mgMonth").value=""; $("mgPeriod").value="custom"; renderMgmt(); }); });
+$("mgRefresh")&&$("mgRefresh").addEventListener("click",()=>{ MEM_AT=0; renderMgmt(); });
+$("mgExport")&&$("mgExport").addEventListener("click",mgExport);
+
 /* ================= REFRESH ================= */
+/* HO Admin list, folded Branch > Engineer > Claim like the Team Report. The claim cards
+   inside are the ordinary ones, so approving and paying work exactly as before.
+   Which groups are open is remembered across a refresh: every approval or payment
+   redraws the list, and having it snap shut after each action would make a payment
+   run of two hundred claims miserable. */
+const HO_OPEN={};
+let HO_GROUPED=true;
+function hoClaimValue(r){
+  return stageAmt(r.payable)||stageAmt(r.approved)||stageAmt(r.recommended)||Number(r.claimed)||0;
+}
+function hoNeedsMe(r){ return r.status===ST.HOA||r.status===ST.APP||r.status===ST.HOLD||
+  (r.status===ST.REC&&!r.rgCode); }
+function hoToggle(id,bar){
+  const box=$(id); if(!box) return;
+  const open=box.style.display==="none";
+  box.style.display=open?"":"none";
+  HO_OPEN[id]=open;
+  const t=bar&&bar.querySelector(".tog"); if(t) t.textContent=open?"\u2212":"+";
+}
+function hoExpandAll(open){
+  document.querySelectorAll("#hoList .hkids,#hoList .hbody").forEach(k=>{
+    k.style.display=open?"":"none"; HO_OPEN[k.id]=open; });
+  document.querySelectorAll("#hoList .hbar .tog").forEach(t=>{ t.textContent=open?"\u2212":"+"; });
+}
+function hoGroupedList(rows,emptyTitle,emptyLine){
+  const el=$("hoList");
+  const bar='<div class="trBar" style="padding:0 0 8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+
+    '<span style="font-size:11px;color:var(--muted);font-weight:700">'+
+      (rows.length?[...new Set(rows.map(r=>r.branch||"Branch not set"))].length+" branch(es) · "+rows.length+" claim(s)":"")+'</span>'+
+    '<div style="margin-left:auto;display:flex;gap:6px">'+
+      '<button type="button" class="btn" onclick="HO_GROUPED=!HO_GROUPED;refresh()">'+
+        (HO_GROUPED?"Show as flat list":"Group by branch")+'</button>'+
+      (HO_GROUPED?'<button type="button" class="btn" onclick="hoExpandAll(true)">Expand all</button>'+
+                  '<button type="button" class="btn" onclick="hoExpandAll(false)">Collapse all</button>':"")+
+    '</div></div>';
+  if(!rows.length){ el.innerHTML=bar+'<div class="empty"><b>'+emptyTitle+'</b>'+emptyLine+'</div>'; return; }
+  if(!HO_GROUPED){ el.innerHTML=bar+rows.map(r=>card(r,false,"ho")).join(""); return; }
+
+  /* a short list opens on sight; a long one starts folded so it can be scanned */
+  const openDefault = rows.length<=15;
+  const isOpen = id => HO_OPEN.hasOwnProperty(id) ? HO_OPEN[id] : openDefault;
+  const B={};
+  rows.forEach(r=>{
+    const b=r.branch||"Branch not set", e=(r.name||r.by||"Unknown")+"\u0001"+(r.by||"");
+    ((B[b]=B[b]||{})[e]=B[b][e]||[]).push(r);
+  });
+  const sumV=a=>a.reduce((x,r)=>x+hoClaimValue(r),0);
+  const act=a=>a.filter(hoNeedsMe).length;
+  const pill=n=>n?' <span style="background:#fff3d6;color:#9a5c00;border-radius:10px;padding:1px 7px;'+
+    'font-size:10px;font-weight:800;margin-left:6px">'+n+' to act on</span>':"";
+  let h="";
+  Object.keys(B).sort((a,b)=>{
+    const va=Object.values(B[a]).flat(), vb=Object.values(B[b]).flat();
+    return sumV(vb)-sumV(va)||a.localeCompare(b);
+  }).forEach(b=>{
+    const engs=B[b], all=Object.values(engs).flat(), bid="hob-"+cssSafe(b), bo=isOpen(bid);
+    h+='<div class="hbar hbar-br" onclick="hoToggle(\''+bid+'\',this)">'+
+        '<span class="tog">'+(bo?"\u2212":"+")+'</span>'+
+        '<div><div class="hTtl">'+esc(b.replace(/^[A-Z]{2}_/,""))+pill(act(all))+'</div>'+
+          '<div class="hSub">'+esc(b)+' · '+Object.keys(engs).length+' engineer(s) · '+all.length+' claim(s)</div></div>'+
+        '<div class="hAmt">'+money(sumV(all))+'</div></div>'+
+      '<div class="hkids" id="'+bid+'" style="display:'+(bo?"":"none")+'">';
+    Object.keys(engs).sort((x,y)=>sumV(engs[y])-sumV(engs[x])||x.localeCompare(y)).forEach(e=>{
+      const list_=engs[e], p=e.split("\u0001"), eid="hoe-"+cssSafe(b+"-"+p[1]), eo=isOpen(eid);
+      h+='<div class="hbar hbar-emp" onclick="hoToggle(\''+eid+'\',this)">'+
+          '<span class="tog">'+(eo?"\u2212":"+")+'</span>'+
+          '<div><div class="hTtl">'+esc(p[0])+pill(act(list_))+'</div>'+
+            '<div class="hSub">'+esc(p[1])+' · '+list_.length+' claim(s)</div></div>'+
+          '<div class="hAmt">'+money(sumV(list_))+'</div></div>'+
+        '<div class="hbody" id="'+eid+'" style="display:'+(eo?"":"none")+'">'+
+          list_.map(r=>card(r,false,"ho")).join("")+'</div>';
+    });
+    h+='</div>';
+  });
+  el.innerHTML=bar+h;
+}
 function list(el,rows,emptyTitle,emptyLine,pick,sc){
   $(el).innerHTML=rows.length?rows.map(r=>card(r,pick,sc)).join("")
     :'<div class="empty"><b>'+emptyTitle+'</b>'+emptyLine+'</div>';
@@ -4279,7 +5045,7 @@ async function refreshInner(){
   list("mineList",mine,"No claims yet","Raise one from the New Claim tab.",false,"mine");
   list("checkList",check,"Nothing to check","Claims from your team will land here.",true,"chk");
   list("approveList",appr,"Nothing to approve","Claims recommended by reporting managers will land here.",true,"apr");
-  list("hoList",hoAll,"No claims match","Change the filters above to widen the search.",false,"ho");
+  hoGroupedList(hoAll,"No claims match","Change the filters above to widen the search.");
   countSel();
   primeRevisionTotals();
 
