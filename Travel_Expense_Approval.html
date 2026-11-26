@@ -220,6 +220,17 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
 .hbody{margin:0 0 10px 52px}
 .hzero{opacity:.62}
 /* Analysis: charts are inline SVG because the page loads no external libraries. */
+.trFindList{position:absolute;top:100%;left:0;right:0;z-index:30;background:#fff;border:1px solid var(--line);
+  border-radius:6px;box-shadow:0 6px 18px rgba(11,63,122,.14);max-height:280px;overflow:auto;margin-top:2px}
+.trFindList div{padding:6px 9px;cursor:pointer;font-size:11px;border-bottom:1px solid #eef4f8}
+.trFindList div:hover,.trFindList div.on{background:#eef6fc}
+.trFindList b{color:var(--navy)} .trFindList i{font-style:normal;color:var(--muted)}
+tr.trHit td{background:#fff4c2!important;transition:background .6s}
+.trPills{margin-top:4px;display:flex;flex-wrap:wrap;gap:4px}
+.trPill{display:inline-block;border:1px solid;border-radius:10px;padding:0 7px;font-size:9.5px;
+  font-weight:700;background:#fff;white-space:nowrap}
+.trPill b{font-weight:800}
+.hbar-br .trPill{background:rgba(255,255,255,.92)}
 .billchip{display:inline-block;background:#eef6fc;border:1px solid #cfe0ee;border-radius:4px;
   padding:2px 7px;margin:1px 3px 1px 0;font-size:10.5px;font-weight:700;color:var(--blue);
   cursor:pointer;white-space:nowrap}
@@ -584,7 +595,7 @@ tr.anKid td:first-child{padding-left:30px!important;color:var(--navy)}
       <div class="body">
         <div class="cond">Travel claim totals for the people who report to you, over the dates you choose.
           Totals use the approved amount where a claim has been approved, otherwise the claimed amount.
-          Drafts and rejected claims are left out. Open any employee to see their individual claims and
+          Every claim is listed whatever its status; the rupee totals leave out drafts and rejected claims. Open any employee to see their individual claims and
           where each one has reached.</div>
         <div class="trBar">
           <div class="f" style="flex:0 0 150px"><label>From date</label><input type="date" id="trFrom"></div>
@@ -613,6 +624,11 @@ tr.anKid td:first-child{padding-left:30px!important;color:var(--navy)}
               <option value="all">All time</option>
               <option value="custom">Custom dates</option>
             </select>
+          </div>
+          <div class="f" style="flex:0 0 240px;position:relative"><label>Find voucher</label>
+            <input id="trFind" type="search" placeholder="Voucher or claim no" autocomplete="off"
+                   translate="no" class="notranslate">
+            <div id="trFindList" class="trFindList" style="display:none"></div>
           </div>
           <div style="margin-left:auto;display:flex;gap:6px">
             <button type="button" class="btn btn-go" id="teamXlPay">Download Payment File</button>
@@ -897,6 +913,32 @@ const SEGMENTS = ["ATM","NON-ATM","Dealer & Channel Sales","Branch"];
 /* Heads tied to a customer site. Only these must quote a service ticket;
    Food and Misc are incidental spend and may leave it blank. */
 const SITE_HEADS = ["Travel","Hotel"];
+
+/* Purpose of travel is now chosen from a fixed list, so reports group on ten clean
+   categories instead of hundreds of spellings of the same thing. */
+const PURPOSES = ["Service Call","Chargeable Call","Installation Call","Re / De-installation Call",
+                  "CAMC / AMC Call","PM Call","Office Visit","Spare Collect / Delivery Visit",
+                  "Site Survey Visit","Misc."];
+/* Claims filed before the list carry free text. For reporting only, that text is placed
+   in the nearest category by keyword; the stored text itself is never changed. Order
+   matters: the more specific test runs first, so "re-installation" is not read as an
+   installation, and anything unrecognised falls to Misc. rather than being guessed. */
+function purposeCategory(text){
+  const raw=String(text==null?"":text).trim();
+  if(!raw) return "Misc.";
+  const exact=PURPOSES.find(p=>p.toLowerCase()===raw.toLowerCase()); if(exact) return exact;
+  const t=raw.toLowerCase();
+  if(/\b(re|de|un)[\s-]*install|reinstall|deinstall|uninstall|shifting|dismantl/.test(t)) return "Re / De-installation Call";
+  if(/chargeable|paid call|billable/.test(t)) return "Chargeable Call";
+  if(/\bc?amc\b|annual maintenance/.test(t)) return "CAMC / AMC Call";
+  if(/\bpm\b|\bp\.m\b|preventive|preventative/.test(t)) return "PM Call";
+  if(/survey|inspection|site visit for survey/.test(t)) return "Site Survey Visit";
+  if(/spare|collect|delivery|deliver|pick ?up|material/.test(t)) return "Spare Collect / Delivery Visit";
+  if(/install|commission/.test(t)) return "Installation Call";
+  if(/office|meeting|training|document|payment|bill/.test(t)) return "Office Visit";
+  if(/service|break ?down|\bb\.?d\b|ups|battery|issue|fault|repair|complain|call|attend|replace/.test(t)) return "Service Call";
+  return "Misc.";
+}
 
 /* ---- canonical values -------------------------------------------------------
    Everything the engineer picks from a list is stored in English. If a browser
@@ -1313,6 +1355,73 @@ function claimStage(r){
   return {t:r.status||"—",c:"var(--muted)"};
 }
 
+const TR_STAGES=[["Draft","#8aa0b2"],["Submitted","#6f52c4"],["Rejected","#e05c5c"],
+  ["Approved by Reporting Manager","#2f72b8"],["With HO Admin for approval","#0f9bb0"],
+  ["Approved by Regional Manager","#12a768"],["Payment on hold","#d98a17"],["Paid","#0a6b42"],["Closed","#5d7c93"]];
+function trStage(r){
+  if(r.status===ST.DRAFT) return "Draft";
+  if(r.status===ST.SUB) return "Submitted";
+  if(isRejected(r.status)) return "Rejected";
+  if(r.status===ST.REC) return "Approved by Reporting Manager";
+  if(r.status===ST.HOA) return "With HO Admin for approval";
+  if(r.status===ST.APP) return "Approved by Regional Manager";
+  if(r.status===ST.HOLD) return "Payment on hold";
+  if(r.status===ST.PAID) return "Paid";
+  if(r.status===ST.CLOSED) return "Closed";
+  return r.status||"Unknown";
+}
+/* small coloured counts: "Submitted 2 · Rejected 1 · Paid 4" */
+function trStagePills(st){
+  return TR_STAGES.filter(([k])=>st[k]).map(([k,c])=>
+    '<span class="trPill" style="border-color:'+c+';color:'+c+'"><b>'+st[k]+'</b> '+esc(k)+'</span>').join("");
+}
+/* Find a claim by voucher or claim number anywhere in this person's team — direct or
+   indirect, any date — then open its branch, its engineer and the claim itself, and
+   bring it into view. The filters are widened only as far as needed to show it. */
+function trFindMatches(q){
+  q=String(q||"").trim().toUpperCase().replace(/\s+/g,"");
+  if(q.length<3) return [];
+  const t=teamBelow(ME), mine={};
+  t.direct.concat(t.indirect).forEach(c=>mine[cleanCode(c)]=1);
+  return (MEM||[]).filter(r=>mine[cleanCode(r.by)] &&
+      (String(r.voucher||"").toUpperCase().indexOf(q)>-1 || String(r.no||"").toUpperCase().indexOf(q)>-1))
+    .sort((a,b)=>String(dkey(b.claimDate||b.perFrom)).localeCompare(String(dkey(a.claimDate||a.perFrom))))
+    .slice(0,10);
+}
+function trFindShow(){
+  const box=$("trFindList"), q=$("trFind").value;
+  const m=trFindMatches(q);
+  if(!q||String(q).trim().length<3){ box.style.display="none"; return; }
+  box.innerHTML = m.length
+    ? m.map((r,i)=>'<div data-id="'+esc(r.id)+'"'+(i===0?' class="on"':'')+'><b>'+esc(r.voucher||r.no)+'</b> '+
+        '<i>· '+esc(r.name||r.by)+' · '+esc(r.branch||"")+' · '+dd(r.claimDate||r.perFrom)+' · '+money(r.claimed)+'</i></div>').join("")
+    : '<div style="cursor:default"><i>No voucher in your team matches “'+esc(q)+'”.</i></div>';
+  box.style.display="";
+  box.querySelectorAll("div[data-id]").forEach(d=>d.onmousedown=e=>{ e.preventDefault(); trReveal(d.dataset.id); });
+}
+async function trReveal(id){
+  const r=(MEM||[]).find(x=>x.id===id); if(!r) return;
+  $("trFindList").style.display="none";
+  $("trFind").value=r.voucher||r.no||"";
+  const t=teamBelow(ME), by=cleanCode(r.by);
+  const indirect=t.indirect.some(c=>cleanCode(c)===by);
+  if(indirect && $("trScope").value==="direct") $("trScope").value="all";
+  if(!indirect && $("trScope").value==="indirect") $("trScope").value="all";
+  const d=dkey(r.claimDate||r.perFrom); const [f,to]=trRange();
+  if(!trInRange(d,f,to)) $("trPeriod").value="all";
+  if($("trBranch")) $("trBranch").value="";
+  await renderTeamReport();
+  const open=(id_)=>{ const el=$(id_); if(el&&el.style.display==="none"){
+    el.style.display=""; const bar=el.previousElementSibling; const tg=bar&&bar.querySelector(".tog"); if(tg) tg.textContent="\u2212"; } };
+  open("br-"+cssSafe(r.branch||"Branch not set"));
+  open("emp-"+cssSafe(r.by));
+  const cid="cl-"+cssSafe(r.id), det=$(cid);
+  if(!det) return;
+  const row=det.previousElementSibling;
+  if(det.style.display==="none") await trClaim(r.id,cid);
+  document.querySelectorAll("tr.trHit").forEach(x=>x.classList.remove("trHit"));
+  if(row){ row.classList.add("trHit"); row.scrollIntoView({block:"center",behavior:"smooth"}); }
+}
 async function renderTeamReport(){
   const scope=($("trScope")&&$("trScope").value)||"direct";
   const team=teamBelow(ME);
@@ -1336,21 +1445,28 @@ async function renderTeamReport(){
   const travelAll=await loadAll(20000);
   const travelByEmp={}, claimCount={}, lastClaim={}, claimsByEmp={};
   reportees.forEach(c=>{ travelByEmp[c]=0; claimCount[c]=0; lastClaim[c]=""; claimsByEmp[c]=[]; });
+  /* Every claim now appears, whatever its status, and each employee shows how many sit
+     at each stage. The rupee figures still leave out drafts and rejected claims: a
+     rejected claim is not an expense, and counting it would overstate the team's spend. */
+  const stageCount={};
+  reportees.forEach(c=>{ stageCount[c]={}; });
   travelAll.forEach(r=>{
     const by=cleanCode(r.by);
     if(!travelByEmp.hasOwnProperty(by)) return;
-    if(r.status===ST.DRAFT || isRejected(r.status)) return;
     const d=dkey(r.claimDate||r.perFrom);
     if(!trInRange(d,from,to)) return;
-    travelByEmp[by]+=Number(r.approved!=null?r.approved:r.claimed)||0;
+    const st=trStage(r);
+    stageCount[by][st]=(stageCount[by][st]||0)+1;
     claimCount[by]+=1;
     claimsByEmp[by].push(r);
     if(!lastClaim[by]||d>lastClaim[by]) lastClaim[by]=d;
+    if(r.status===ST.DRAFT || isRejected(r.status)) return;
+    travelByEmp[by]+=Number(r.approved!=null?r.approved:r.claimed)||0;
   });
 
   TR_ROWS=reportees.map(c=>({
     code:c, name:EMP[c].n, branch:EMP[c].b, indirect:!!isIndirect[c],
-    travel:travelByEmp[c]||0, claims:claimCount[c]||0, last:lastClaim[c]||"",
+    travel:travelByEmp[c]||0, claims:claimCount[c]||0, last:lastClaim[c]||"", stages:stageCount[c]||{},
     rows:claimsByEmp[c].sort((a,b)=>String(dkey(b.claimDate||b.perFrom)).localeCompare(String(dkey(a.claimDate||a.perFrom))))
   })).sort((a,b)=>b.travel-a.travel);
 
@@ -1381,7 +1497,7 @@ async function renderTeamReport(){
         return '<tr class="tr-claim" style="cursor:pointer" onclick="trClaim(\''+y.id+'\',\''+cid+'\')">'+
           '<td><span class="tr-ccv" style="display:inline-block;color:var(--blue);font-size:10px">&#9654;</span> '+
           esc(y.no||"—")+'</td><td>'+dd(y.claimDate||y.perFrom)+'</td>'+
-          '<td>'+esc(y.purpose||"—")+'</td>'+
+          '<td>'+esc(purposeCategory(y.purpose))+(y.purpose&&purposeCategory(y.purpose)!==y.purpose?'<br><span style="color:var(--muted);font-size:10px">'+esc(y.purpose)+'</span>':'')+'</td>'+
           '<td class="n">'+((y.__slim?(Number(y.lineCount)||0):(y.items||[]).length)||"—")+'</td>'+
           '<td class="n">'+money(y.claimed)+'</td>'+
           '<td class="n">'+(stageAmt(y.approved)?money(y.approved):"—")+'</td>'+
@@ -1400,7 +1516,8 @@ async function renderTeamReport(){
         '<div><div class="hTtl">'+esc(r.name)+'</div>'+
           '<div class="hSub">'+esc(r.code)+' · '+esc(r.branch)+' · '+(r.indirect?"Indirect":"Direct")+
           ' · '+r.claims+' claim'+(r.claims===1?"":"s")+
-          (r.last?' · last '+dd(r.last):"")+' · '+share+'% of the team</div></div>'+
+          (r.last?' · last '+dd(r.last):"")+' · '+share+'% of the team</div>'+
+          (r.claims?'<div class="trPills">'+trStagePills(r.stages)+'</div>':"")+'</div>'+
         '<div class="hAmt">'+money(r.travel)+'</div></div>'+
       '<div class="hbody" id="'+id+'" style="display:none">'+claimTable(r)+'</div>';
   };
@@ -1415,11 +1532,13 @@ async function renderTeamReport(){
       const g=byBr[b], id="br-"+cssSafe(b);
       const bt=g.reduce((s,r)=>s+r.travel,0), bc=g.reduce((s,r)=>s+r.claims,0);
       const withClaims=g.filter(r=>r.claims>0).length;
+      const bst={}; g.forEach(r=>Object.keys(r.stages||{}).forEach(k=>{ bst[k]=(bst[k]||0)+r.stages[k]; }));
       h+='<div class="hbar hbar-br'+(bc?"":" hzero")+'" onclick="hToggle(\''+id+'\',this)">'+
           '<span class="tog">+</span>'+
           '<div><div class="hTtl">'+esc(b.replace(/^[A-Z]{2}_/,""))+'</div>'+
             '<div class="hSub">'+esc(b)+' · '+g.length+' employee'+(g.length===1?"":"s")+
-            ' · '+withClaims+' with claims · '+bc+' claim'+(bc===1?"":"s")+'</div></div>'+
+            ' · '+withClaims+' with claims · '+bc+' claim'+(bc===1?"":"s")+'</div>'+
+            (bc?'<div class="trPills">'+trStagePills(bst)+'</div>':"")+'</div>'+
           '<div class="hAmt">'+money(bt)+'</div></div>'+
         '<div class="hkids" id="'+id+'" style="display:none">'+g.map(empBar).join("")+'</div>';
     });
@@ -1430,6 +1549,8 @@ async function renderTeamReport(){
     $("trCount").textContent=shown.length+" employee"+(shown.length===1?"":"s")+" · "+
       shown.reduce((s,r)=>s+r.claims,0)+" claims";
   }
+  const tst={}; shown.forEach(r=>Object.keys(r.stages||{}).forEach(k=>{ tst[k]=(tst[k]||0)+r.stages[k]; }));
+  h='<div class="trPills" style="margin:0 0 10px">'+trStagePills(tst)+'</div>'+h;
 
   const tShown=shown.reduce((s,r)=>s+r.travel,0), cShown=shown.reduce((s,r)=>s+r.claims,0);
   h+='<div class="hbar" style="background:var(--tile);color:var(--navy);border:1px solid var(--line);cursor:default">'+
@@ -1457,6 +1578,15 @@ $("trPeriod").addEventListener("change",()=>{
 }));
 $("trRefresh").addEventListener("click",()=>{ MEM_AT=0; renderTeamReport(); });
 $("trScope")&&$("trScope").addEventListener("change",()=>renderTeamReport());
+if($("trFind")){
+  let tf=null;
+  $("trFind").addEventListener("input",()=>{ clearTimeout(tf); tf=setTimeout(trFindShow,180); });
+  $("trFind").addEventListener("keydown",e=>{
+    if(e.key==="Enter"){ e.preventDefault(); const m=trFindMatches($("trFind").value); if(m.length) trReveal(m[0].id); }
+    if(e.key==="Escape"){ $("trFindList").style.display="none"; }
+  });
+  $("trFind").addEventListener("blur",()=>setTimeout(()=>{ $("trFindList").style.display="none"; },150));
+}
 $("trBranch")&&$("trBranch").addEventListener("change",()=>renderTeamReport());
 $("trGroup")&&$("trGroup").addEventListener("change",()=>renderTeamReport());
 document.querySelectorAll(".navtab").forEach(t=>t.addEventListener("click",()=>{
@@ -1709,7 +1839,10 @@ function renderItems(){
           SEGMENTS.map(x=>'<option value="'+esc(x)+'"'+(x===it.segment?" selected":"")+'>'+esc(x)+'</option>').join("")+"</select>",1)+
       '</div>'+
       '<div class="frow4" style="margin-top:8px">'+
-        fld("Purpose Of Travel <span class=\"req\">*</span>","<input value=\""+esc(it.purpose||"")+"\" placeholder=\"e.g. UPS breakdown attended at site\" onchange=\"upd('"+it.id+"','purpose',this.value)\">",1)+
+        fld("Purpose Of Travel <span class=\"req\">*</span>","<select"+NOTR+" onchange=\"upd('"+it.id+"','purpose',this.value)\">"+
+          "<option value=\"\""+(PURPOSES.indexOf(it.purpose)<0?" selected":"")+">Select purpose…</option>"+
+          PURPOSES.map(x=>"<option value=\""+esc(x)+"\""+(x===it.purpose?" selected":"")+">"+esc(x)+"</option>").join("")+
+          "</select>",1)+
         fld("Expense Type","<select"+NOTR+" onchange=\"updCat('"+it.id+"',this.value)\">"+Object.keys(HEADS).map(h=>'<option value="'+esc(h)+'"'+(h===it.cat?" selected":"")+'>'+esc(h)+'</option>').join("")+"</select>",1)+
         fld("Travel / Expense Mode","<select"+NOTR+" onchange=\"upd('"+it.id+"','mode',this.value)\">"+modeOptions(it.cat,it.mode)+"</select>",1)+
         fld("Claimed Amount (₹)","<input class=\"amt\" type=\"number\" min=\"0\" step=\"1\" value=\""+(it.amt||"")+"\" "+(isBike?"readonly":"")+" onchange=\"upd('"+it.id+"','amt',this.value)\">",1)+
@@ -1998,7 +2131,7 @@ function validate(){
     if(needsTicket(it)&&!(it.ticket||"").trim()) bad.push("the ticket / case number on "+n);
     if(!(it.custName||"").trim()) bad.push("the customer name on "+n);
     if(!(it.segment||"").trim()) bad.push("the customer segment on "+n);
-    if(!(it.purpose||"").trim()) bad.push("the purpose of travel on "+n);
+    if(PURPOSES.indexOf(it.purpose)<0) bad.push("the purpose of travel on "+n+" (choose from the list)");
     if(it.cat==="Travel"&&!(Number(it.km)>0)) bad.push("the KM travelled on "+n);
     if(!isBikeLine(it)&&!(Number(it.amt)>0)) bad.push("a claimed amount on "+n);
     if(it.cat==="Travel"){
@@ -3752,7 +3885,13 @@ async function parseBatch(grid,fileName){
       r.err.push("Ticket ID / Case ID is required on "+r.expType+" lines");
     if(!r.custName) r.err.push("Customer Name is blank");
     if(!r.segment) r.err.push("Customer Segment is blank");
+    /* the Excel column must hold one of the listed purposes; spelling and case are forgiven */
     if(!r.purpose) r.err.push("Purpose Of Travel is blank");
+    else {
+      const hit=PURPOSES.find(x=>x.toLowerCase().replace(/[^a-z0-9]/g,"")===String(r.purpose).toLowerCase().replace(/[^a-z0-9]/g,""));
+      if(hit) r.purpose=hit;
+      else r.err.push("Purpose Of Travel must be one of: "+PURPOSES.join(", "));
+    }
     if(!r.expType) r.err.push("Expense Type is blank");
     else if(!TYPE_MAP[r.expType]) r.err.push('Expense Type "'+r.expType+'" is not Travel, Hotel, Food or Misc');
     const travel = r.expType==="Travel";
@@ -4304,13 +4443,13 @@ async function renderAnalysis(){
     if(items.length){
       const share=v/items.length;
       items.forEach(x=>{
-        bump(byCall,(x.purpose||"").trim()||"Not recorded",share,{km:x.cat==="Travel"?(Number(x.km)||0):0,lines:1,eng:r.by,br:r.branch,d:cd});
+        bump(byCall,purposeCategory(x.purpose),share,{km:x.cat==="Travel"?(Number(x.km)||0):0,lines:1,eng:r.by,br:r.branch,d:cd});
         bump(byVisit,x.cat||"Not recorded",share,{lines:1});
         if(x.cat==="Travel") bump(byMode,x.mode||"Not recorded",share,{km:Number(x.km)||0,lines:1});
         bump(bySeg,(x.segment||"").trim()||"Not recorded",share,{lines:1});
       });
     } else {
-      bump(byCall,(r.purpose||"").trim()||"Not recorded",v,{lines:0,eng:r.by,br:r.branch,d:cd});
+      bump(byCall,purposeCategory(r.purpose),v,{lines:0,eng:r.by,br:r.branch,d:cd});
       bump(byVisit,"Not recorded",v,{lines:0});
     }
   });
@@ -4421,7 +4560,7 @@ async function renderAnalysis(){
       '<td class="n">'+rows.length+'</td><td class="n">'+Math.round(totKm).toLocaleString("en-IN")+'</td>'+
       '<td class="n">'+money(Math.round(totVal/rows.length))+'</td></tr>').replace('<table class="anTbl">','<table class="anTbl" id="anTblEng">')+'</div></div>';
 
-  h+='<div class="anPanel"><h5>Call type · purpose of travel<span>'+C.length+' type(s)</span></h5><div class="in mgScroll">'+
+  h+='<div class="anPanel"><h5>Call type · purpose of travel<span>'+C.length+' of '+PURPOSES.length+' categories</span></h5><div class="in mgScroll">'+
     anTable([["Call type"],["Expense",1],["Share"],["From date"],["To date"],["Lines",1],["Engineers",1],["Branches",1],["KM",1]],
       C.slice(0,30).map(x=>'<tr>'+anBarRow(x.k,x.v,maxC,
         '<td>'+(x.d0?dd(x.d0):"—")+'</td><td>'+(x.d1?dd(x.d1):"—")+'</td>'+
@@ -4565,7 +4704,7 @@ function anExport(){
       crmRows.push([r.branch||"",r.zone||"",r.by||"",r.name||"",r.no||"",r.voucher||"",
         dd(r.claimDate||r.perFrom), i+1,
         lineRef(r,it,"ticket"), lineRef(r,it,"uid"), it.custName||r.custName||"",
-        it.segment||r.segment||"", it.date?dd(it.date):"", (it.purpose||r.purpose||""),
+        it.segment||r.segment||"", it.date?dd(it.date):"", purposeCategory(it.purpose||r.purpose),
         it.cat||"", it.mode||"",
         it.jFrom||"", it.jFromPin||"", it.jTo||"", it.jToPin||"",
         it.cat==="Travel"?(Number(it.km)||0):"", dayAll||"", dayBike||"", ref,
