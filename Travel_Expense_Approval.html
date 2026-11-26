@@ -243,6 +243,13 @@ input.ref{background:var(--tile);color:var(--navy);font-weight:800;font-variant-
 .mgSort th{cursor:pointer;user-select:none;white-space:nowrap}
 .mgSort th:hover{color:var(--navy)}
 .mgSort td:first-child{white-space:nowrap}
+tr.anPar td:first-child{cursor:pointer}
+tr.anPar .anCv{display:inline-block;width:14px;color:var(--blue);font-size:11px}
+tr.anKid td{background:#f5f9fc!important;font-size:11px}
+tr.anKid td:first-child{padding-left:30px!important;color:var(--navy)}
+.anXbtn{background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.4);color:#fff;
+  border-radius:4px;font:inherit;font-size:10px;font-weight:700;padding:2px 8px;margin-left:6px;cursor:pointer}
+.anXbtn:hover{background:rgba(255,255,255,.32)}
 /* Branch and engineer lists run long and wide. Each scrolls inside its own box with the
    heading row frozen at the top, the name column frozen at the left and the Total row
    frozen at the foot, so a figure is never read without knowing whose it is. */
@@ -1465,7 +1472,11 @@ $("logoutBtn").addEventListener("click",async()=>{
   try{ await ecSessionRemove('activeUser'); }catch(e){}
   window.location.href='index.html';
 });
-$("claimDate").addEventListener("change",()=>{ syncItemDates(); queueRender(); checkDateClash(); });
+$("claimDate").addEventListener("change",()=>{
+  syncItemDates(); queueRender(); checkDateClash();
+  if(!EDITING){ const n=claimNumbers(ME,EMP[ME].b,dkey($("claimDate").value));
+    CLAIMNO=n.no; VOUCHNO=n.voucher; $("claimNoTop").textContent=CLAIMNO; $("voucher").value=VOUCHNO; }
+});
 $("addItem").addEventListener("click",()=>addItem());
 $("clearBtn").addEventListener("click",()=>{ if(confirm("Clear the form? Anything not saved is lost.")) clearForm(); });
 
@@ -1542,11 +1553,23 @@ function enterApp(c){
   stampHeader(); clearItems(); addItem(); route(); buildHoFilters(); wireExportButtons(); refresh();
 }
 
+/* A claim number used to end in a random four-digit number. With a hundred or more
+   claims a month in a branch, two engineers drawing the same number is close to certain,
+   and it happened: one voucher number on two engineers' claims, so a UTR could be posted
+   against the wrong person. The rule that already exists — one claim per engineer per
+   date — gives a key that is unique by construction, so the number is now built from it:
+       TC/{branch}/{yymm of the claim date}/{employee code}-{day}
+   e.g. TC/PN/2611/PM1392-25. It cannot collide, and it tells you whose claim it is and
+   for which day. Older numbers keep their four-digit form, so the two never overlap. */
+function claimNumbers(emp,branch,isoDate){
+  const bc=String(branch||"BR").split("_")[0];
+  const d=/^\d{4}-\d{2}-\d{2}$/.test(isoDate||"")?isoDate:todayISO();
+  const tag=d.slice(2,4)+d.slice(5,7)+"/"+cleanCode(emp).toUpperCase().replace(/[^A-Z0-9]/g,"")+"-"+d.slice(8,10);
+  return {no:"TC/"+bc+"/"+tag, voucher:"TV/"+bc+"/"+tag};
+}
 function stampHeader(){
-  const now=new Date(), bc=(EMP[ME].b||"BR").split("_")[0], yy=String(now.getFullYear()).slice(2);
-  const seq=String(Math.floor(Math.random()*9000)+1000);
-  CLAIMNO="TC/"+bc+"/"+yy+pad(now.getMonth()+1)+"/"+seq;
-  VOUCHNO="TV/"+bc+"/"+yy+pad(now.getMonth()+1)+"/"+seq;
+  const n=claimNumbers(ME,EMP[ME].b,dkey($("claimDate").value)||todayISO());
+  CLAIMNO=n.no; VOUCHNO=n.voucher;
   $("claimNoTop").textContent=CLAIMNO;
   $("voucher").value=VOUCHNO;
   const iso=todayISO();
@@ -1998,6 +2021,16 @@ function listSummary(items,field){
 function collect(status){
   applyBikeRates();
   const e=EMP[ME], claimed=ITEMS.reduce((s,i)=>s+(Number(i.amt)||0),0);
+  const cd=dkey($("claimDate").value);
+  const fresh=claimNumbers(ME,e.b,cd);
+  /* A new claim takes the number for its date. An edited claim keeps its number, unless
+     it is already in the new form and its date has been changed — then it takes the new
+     date's number, so it can never end up sharing a number with a claim filed for that
+     date. Old four-digit numbers are left alone; they cannot clash with the new form. */
+  const newForm = /\/[A-Z0-9]+-\d{2}$/.test(CLAIMNO||"");
+  const tail=x=>String(x).split("/").slice(2).join("/");      /* "2611/PM1392-25" */
+  const dateMoved = newForm && tail(CLAIMNO)!==tail(fresh.no);
+  if(!EDITING || !CLAIMNO || dateMoved){ CLAIMNO=fresh.no; VOUCHNO=fresh.voucher; }
   return {
     id:"TX"+Date.now()+Math.floor(Math.random()*999), no:CLAIMNO, voucher:VOUCHNO,
     by:ME, name:e.n, desig:e.d, branch:e.b, zone:e.z, mobile:$("mobile").value.trim(),
@@ -3888,13 +3921,11 @@ $("bCommit").addEventListener("click",async()=>{
       desc:r.claimType+" · "+r.category+" · "+r.project+" (Excel row "+r.xl+")"+
            (r.warn.length?" · DUPLICATE FLAGGED: "+r.warn.join("; "):""), att:[]}));
     const claimed=items.reduce((s,i)=>s+i.amt,0);
-    const bc=e.b.split("_")[0], d=new Date();
-    const seq=String(Date.now()).slice(-4)+String(made+1);
-    
+    const nums=claimNumbers(g[0].eng,e.b,g[0].date);
     const r={
       id:"TX"+Date.now()+made+Math.floor(Math.random()*999),
-      no:"TC/"+bc+"/"+String(d.getFullYear()).slice(2)+pad(d.getMonth()+1)+"/"+seq,
-      voucher:"TV/"+bc+"/"+String(d.getFullYear()).slice(2)+pad(d.getMonth()+1)+"/"+seq,
+      no:nums.no,
+      voucher:nums.voucher,
       by:g[0].eng, name:e.n, desig:e.d, branch:e.b, zone:e.z, mobile:"",
       rmCode:e.rm||null, rgCode:e.rg||null, level:e.g, bhCode:BRANCH_HEAD[e.b]||null,
       claimDate:cdate, perFrom:cdate, perTo:cdate,
@@ -3990,14 +4021,23 @@ async function parsePayments(grid,fileName){
   if(!hdr||String(hdr[PCOL.voucher]||"").toLowerCase().indexOf("voucher")<0){
     payToast("That file does not match the payment sheet. Column A must be Voucher No.",false); return; }
   const live=await loadAll(0);
+  /* A voucher number can belong to more than one claim — the old random numbering let two
+     engineers draw the same one. So every voucher maps to all its claims, and the Emp ID
+     column decides between them. A plain map here kept only the last claim seen, which
+     meant one engineer's UTR could be posted against the other's claim. */
   const byVoucher={};
-  live.forEach(r=>{ if(r.voucher) byVoucher[String(r.voucher).trim().toUpperCase()]=r; });
+  live.forEach(r=>{ if(r.voucher){ const k=String(r.voucher).trim().toUpperCase();
+    (byVoucher[k]=byVoucher[k]||[]).push(r); } });
+  /* the Emp ID column exists on sheets downloaded since it was added; older sheets lack it */
+  let empCol=0;
+  Object.keys(hdr).forEach(c=>{ if(/^emp\s*id$/i.test(cellStr(hdr[c]))) empCol=Number(c); });
   const rows=[], seen={};
   Object.keys(grid).map(Number).filter(n=>n>=2).sort((a,b)=>a-b).forEach(rn=>{
     const c=grid[rn];
     const v=cellStr(c[PCOL.voucher]).toUpperCase(), utr=cellStr(c[PCOL.utr]);
     if(!v&&!utr) return;
-    const rec={xl:rn,voucher:v,utr:utr,remark:cellStr(c[PCOL.remark]),err:[]};
+    const emp=empCol?cleanCode(cellStr(c[empCol])):"";
+    const rec={xl:rn,voucher:v,emp:emp,utr:utr,remark:cellStr(c[PCOL.remark]),err:[]};
     const raw=c[PCOL.payDate];
     rec.date = raw==null||raw==="" ? new Date().toISOString().slice(0,10)
              : (typeof raw==="number" ? excelDate(raw) : dkey(raw));
@@ -4005,8 +4045,23 @@ async function parsePayments(grid,fileName){
     if(!utr) rec.err.push("UTR / payment reference is blank");
     if(!rec.date) rec.err.push("Payment date is not a valid date");
     else if(rec.date>new Date().toISOString().slice(0,10)) rec.err.push("Payment date cannot be in the future");
-    const claim=v?byVoucher[v]:null;
-    if(v&&!claim) rec.err.push("No claim in the portal carries this voucher number");
+    const cands=v?(byVoucher[v]||[]):[];
+    let claim=null;
+    if(v&&!cands.length) rec.err.push("No claim in the portal carries this voucher number");
+    else if(cands.length===1){
+      claim=cands[0];
+      if(emp && cleanCode(claim.by)!==emp)
+        rec.err.push("This voucher belongs to "+claim.by+" ("+(claim.name||"")+"), not "+emp);
+    }
+    else if(cands.length>1){
+      if(!emp) rec.err.push("Voucher shared by "+cands.length+" claims ("+cands.map(x=>x.by).join(", ")+
+                            ") — add the Emp ID to say which one is being paid");
+      else {
+        claim=cands.find(x=>cleanCode(x.by)===emp)||null;
+        if(!claim) rec.err.push("None of the claims on this voucher belongs to "+emp+
+                                " (it is on "+cands.map(x=>x.by).join(", ")+")");
+      }
+    }
     if(claim){
       rec.claim=claim; rec.payable=Number(claim.payable)||0;
       rec.eng=claim.name; rec.branch=claim.branch; rec.no=claim.no;
@@ -4016,8 +4071,10 @@ async function parsePayments(grid,fileName){
         rec.err.push("Not approved for payment yet — it is "+claim.status);
       if(!(rec.payable>0)) rec.err.push("This claim has no payable amount");
     }
-    if(seen[v]) rec.err.push("Voucher repeated on row "+seen[v]);
-    else if(v) seen[v]=rn;
+    /* a repeat is the same voucher for the same claim, not merely the same voucher text */
+    const key=v+"|"+(claim?claim.id:emp);
+    if(seen[key]) rec.err.push("Same voucher and employee repeated on row "+seen[key]);
+    else if(v) seen[key]=rn;
     rows.push(rec);
   });
   if(!rows.length){ payToast("No rows found. Enter voucher numbers from row 2 down.",false); return; }
@@ -4032,10 +4089,10 @@ function renderPayments(){
   $("payOk").textContent=ok.length;
   $("payBad").textContent=rows.length-ok.length;
   $("payVal").textContent=money(ok.reduce((s,r)=>s+(r.payable||0),0));
-  $("payRows").innerHTML='<table class="itab"><tr><th>Row</th><th>Voucher No</th><th>Claim No</th>'+
+  $("payRows").innerHTML='<table class="itab"><tr><th>Row</th><th>Voucher No</th><th>Emp ID</th><th>Claim No</th>'+
     '<th>Engineer</th><th>Branch</th><th>Payable</th><th>UTR</th><th>Payment date</th><th>Result</th></tr>'+
     rows.map(r=>'<tr'+(r.err.length?' style="background:var(--red-lt)"':'')+'>'+
-      '<td>'+r.xl+'</td><td>'+esc(r.voucher||"—")+'</td><td>'+esc(r.no||"—")+'</td>'+
+      '<td>'+r.xl+'</td><td>'+esc(r.voucher||"—")+'</td><td>'+esc((r.claim&&r.claim.by)||r.emp||"—")+'</td><td>'+esc(r.no||"—")+'</td>'+
       '<td>'+esc(r.eng||"—")+'</td><td>'+esc(r.branch||"—")+'</td>'+
       '<td class="n">'+(r.payable?money(r.payable):"—")+'</td>'+
       '<td>'+esc(r.utr||"—")+'</td><td>'+(r.date?dd(r.date):"—")+'</td>'+
@@ -4227,6 +4284,7 @@ async function renderAnalysis(){
       /* the span of claim dates behind this row, so every table can state its own period */
       if(extra.d){ if(!e.d0||extra.d<e.d0) e.d0=extra.d; if(!e.d1||extra.d>e.d1) e.d1=extra.d; } } };
   let totVal=0, totKm=0, totLines=0;
+  const BE={}, ED={};
   rows.forEach(r=>{
     const v=anValue(r);
     const items=Array.isArray(r.items)?r.items:[];
@@ -4235,6 +4293,10 @@ async function renderAnalysis(){
     const cd=dkey(r.claimDate||r.perFrom)||"";
     bump(byBranch,r.branch,v,{km:km,lines:items.length,eng:r.by,d:cd});
     bump(byEng,(r.name||r.by)+"\u0001"+r.by,v,{km:km,lines:items.length,br:r.branch,d:cd});
+    /* the level beneath each row: a branch's engineers, an engineer's days */
+    const ek=(r.name||r.by)+"\u0001"+r.by, bk=r.branch||"Not recorded";
+    bump(BE[bk]=BE[bk]||{},ek,v,{km:km,lines:items.length,eng:r.by,d:cd});
+    bump(ED[ek]=ED[ek]||{},cd||"No date",v,{km:km,lines:items.length,br:r.branch,d:cd});
     bump(byStatus,r.status,v);
     const m=(dkey(r.claimDate||r.perFrom)||"").slice(0,7);
     bump(byMonth,m,v);
@@ -4295,33 +4357,71 @@ async function renderAnalysis(){
   });
   h+='</div>';
 
+  const xBtns=tid=>'<button type="button" class="anXbtn" onclick="anKidsAll(\''+tid+'\',true)">Expand all</button>'+
+                   '<button type="button" class="anXbtn" onclick="anKidsAll(\''+tid+'\',false)">Collapse all</button>';
+  /* a row that can open: caret in the name cell, and a share cell that sorts by value */
+  const parRow=(pid,label,v,max,rest)=>{
+    const pct=max>0?Math.round(v/max*100):0;
+    return '<tr class="anPar" data-pid="'+pid+'" onclick="anKidToggle(\''+pid+'\',event)">'+
+      '<td><span class="anCv">▸</span>'+esc(label)+'</td><td class="n">'+money(Math.round(v))+'</td>'+
+      '<td data-v="'+v+'" style="width:120px"><div class="anBarWrap"><div class="anBar" style="width:'+pct+'%"></div></div></td>'+rest+'</tr>';
+  };
+  const kidRow=(pid,label,v,max,rest)=>{
+    const pct=max>0?Math.round(v/max*100):0;
+    return '<tr class="anKid" data-parent="'+pid+'" style="display:none">'+
+      '<td>'+esc(label)+'</td><td class="n">'+money(Math.round(v))+'</td>'+
+      '<td data-v="'+v+'" style="width:120px"><div class="anBarWrap"><div class="anBar" style="width:'+pct+'%;opacity:.55"></div></div></td>'+rest+'</tr>';
+  };
+  const dates=x=>'<td>'+(x.d0?dd(x.d0):"—")+'</td><td>'+(x.d1?dd(x.d1):"—")+'</td>';
   h+='<div class="anPanel"><h5>Branch wise<span>'+B.length+' branch(es)'+
-      (first?' · claims '+dd(first)+' to '+dd(last):"")+'</span></h5><div class="in">'+
+      (first?' · claims '+dd(first)+' to '+dd(last):"")+xBtns("anTblBranch")+'</span></h5><div class="in mgScroll">'+
     anTable([["Branch"],["Expense",1],["Share"],["From date"],["To date"],["Claims",1],["Engineers",1],["KM",1],["Avg / claim",1]],
-      B.map(x=>'<tr>'+anBarRow(x.k,x.v,maxB,
-        '<td>'+(x.d0?dd(x.d0):"—")+'</td><td>'+(x.d1?dd(x.d1):"—")+'</td>'+
-        '<td class="n">'+x.n+'</td><td class="n">'+Object.keys(x.eng).length+'</td>'+
-        '<td class="n">'+x.km.toLocaleString("en-IN")+'</td>'+
-        '<td class="n">'+money(Math.round(x.v/x.n))+'</td>')+'</tr>'),
+      B.map((x,bi)=>{
+        const pid="anB"+bi, kids=BE[x.k]||{};
+        const kk=Object.keys(kids).sort((a,b)=>kids[b].v-kids[a].v);
+        const kmax=kk.length?kids[kk[0]].v:0;
+        return parRow(pid,x.k,x.v,maxB,dates(x)+
+            '<td class="n">'+x.n+'</td><td class="n">'+Object.keys(x.eng).length+'</td>'+
+            '<td class="n">'+Math.round(x.km).toLocaleString("en-IN")+'</td>'+
+            '<td class="n">'+money(Math.round(x.v/x.n))+'</td>')+
+          kk.map(k=>{ const e=kids[k], p2=k.split("\u0001");
+            return kidRow(pid,p2[0]+" · "+(p2[1]||""),e.v,kmax,dates(e)+
+              '<td class="n">'+e.n+'</td><td class="n">1</td>'+
+              '<td class="n">'+Math.round(e.km).toLocaleString("en-IN")+'</td>'+
+              '<td class="n">'+money(Math.round(e.v/e.n))+'</td>'); }).join("");
+      }),
       '<tr class="anTot"><td>Total</td><td class="n">'+money(totVal)+'</td><td></td>'+
       '<td>'+(first?dd(first):"—")+'</td><td>'+(last?dd(last):"—")+'</td>'+
       '<td class="n">'+rows.length+'</td><td class="n">'+engCount+'</td>'+
-      '<td class="n">'+totKm.toLocaleString("en-IN")+
-      '</td><td class="n">'+money(Math.round(totVal/rows.length))+'</td></tr>')+'</div></div>';
+      '<td class="n">'+Math.round(totKm).toLocaleString("en-IN")+
+      '</td><td class="n">'+money(Math.round(totVal/rows.length))+'</td></tr>').replace('<table class="anTbl">','<table class="anTbl" id="anTblBranch">')+'</div></div>';
 
-  h+='<div class="anPanel"><h5>Engineer wise<span>top '+Math.min(25,E.length)+' of '+E.length+'</span></h5><div class="in">'+
+  /* Engineer wise: every engineer now, since the box scrolls; each opens to their days */
+  h+='<div class="anPanel"><h5>Engineer wise<span>'+E.length+' engineer(s)'+xBtns("anTblEng")+'</span></h5><div class="in mgScroll">'+
     anTable([["Engineer"],["Expense",1],["Share"],["Branch"],["From date"],["To date"],["Claims",1],["KM",1],["Avg / claim",1]],
-      E.slice(0,25).map(x=>{
-        const nm_=x.k.split("\u0001")[0], code=x.k.split("\u0001")[1]||"";
-        return '<tr>'+anBarRow(nm_+" · "+code,x.v,maxE,
-          '<td>'+esc(Object.keys(x.br).join(", "))+'</td>'+
-          '<td>'+(x.d0?dd(x.d0):"—")+'</td><td>'+(x.d1?dd(x.d1):"—")+'</td>'+
-          '<td class="n">'+x.n+'</td>'+
-          '<td class="n">'+x.km.toLocaleString("en-IN")+'</td>'+
-          '<td class="n">'+money(Math.round(x.v/x.n))+'</td>')+'</tr>';
-      }))+'</div></div>';
+      E.map((x,ei)=>{
+        const nm_=x.k.split("\u0001")[0], code=x.k.split("\u0001")[1]||"", pid="anE"+ei;
+        const days=ED[x.k]||{};
+        const dk=Object.keys(days).sort().reverse();
+        const dmax=Math.max.apply(null,dk.map(d=>days[d].v).concat([0]));
+        return parRow(pid,nm_+" · "+code,x.v,maxE,
+            '<td>'+esc(Object.keys(x.br).join(", "))+'</td>'+dates(x)+
+            '<td class="n">'+x.n+'</td>'+
+            '<td class="n">'+Math.round(x.km).toLocaleString("en-IN")+'</td>'+
+            '<td class="n">'+money(Math.round(x.v/x.n))+'</td>')+
+          dk.map(d=>{ const e=days[d];
+            return kidRow(pid,/^\d{4}-\d{2}-\d{2}$/.test(d)?dd(d):d,e.v,dmax,
+              '<td>'+esc(Object.keys(e.br).join(", "))+'</td>'+dates(e)+
+              '<td class="n">'+e.n+'</td>'+
+              '<td class="n">'+Math.round(e.km).toLocaleString("en-IN")+'</td>'+
+              '<td class="n">'+money(Math.round(e.v/e.n))+'</td>'); }).join("");
+      }),
+      '<tr class="anTot"><td>Total</td><td class="n">'+money(Math.round(totVal))+'</td><td></td><td></td>'+
+      '<td>'+(first?dd(first):"—")+'</td><td>'+(last?dd(last):"—")+'</td>'+
+      '<td class="n">'+rows.length+'</td><td class="n">'+Math.round(totKm).toLocaleString("en-IN")+'</td>'+
+      '<td class="n">'+money(Math.round(totVal/rows.length))+'</td></tr>').replace('<table class="anTbl">','<table class="anTbl" id="anTblEng">')+'</div></div>';
 
-  h+='<div class="anPanel"><h5>Call type · purpose of travel<span>'+C.length+' type(s)</span></h5><div class="in">'+
+  h+='<div class="anPanel"><h5>Call type · purpose of travel<span>'+C.length+' type(s)</span></h5><div class="in mgScroll">'+
     anTable([["Call type"],["Expense",1],["Share"],["From date"],["To date"],["Lines",1],["Engineers",1],["Branches",1],["KM",1]],
       C.slice(0,30).map(x=>'<tr>'+anBarRow(x.k,x.v,maxC,
         '<td>'+(x.d0?dd(x.d0):"—")+'</td><td>'+(x.d1?dd(x.d1):"—")+'</td>'+
@@ -4331,30 +4431,39 @@ async function renderAnalysis(){
 
   /* branch against visit type, the matrix a controller actually asks for */
   const vk=V.slice(0,6).map(x=>x.k);
-  const mat={};
+  const mat={}, matE={};
   rows.forEach(r=>{
     const v=anValue(r), items=Array.isArray(r.items)?r.items:[];
-    const b=r.branch||"Not recorded";
+    const b=r.branch||"Not recorded", ek=(r.name||r.by)+"\u0001"+r.by;
     mat[b]=mat[b]||{};
+    const me=((matE[b]=matE[b]||{})[ek]=matE[b][ek]||{});
     if(items.length){ const sh=v/items.length;
-      items.forEach(x=>{ const k=vk.indexOf(x.cat)>-1?x.cat:"Other"; mat[b][k]=(mat[b][k]||0)+sh; });
-    } else { mat[b]["Other"]=(mat[b]["Other"]||0)+v; }
+      items.forEach(x=>{ const k=vk.indexOf(x.cat)>-1?x.cat:"Other";
+        mat[b][k]=(mat[b][k]||0)+sh; me[k]=(me[k]||0)+sh; me.__t=(me.__t||0)+sh; });
+    } else { mat[b]["Other"]=(mat[b]["Other"]||0)+v; me.Other=(me.Other||0)+v; me.__t=(me.__t||0)+v; }
   });
   const cols=vk.concat(["Other"]);
-  h+='<div class="anPanel"><h5>Branch against visit type<span>'+cols.length+' column(s)</span></h5><div class="in">'+
-    '<table class="anTbl"><thead><tr><th>Branch</th>'+cols.map(c=>'<th class="n">'+esc(c)+'</th>').join("")+
+  h+='<div class="anPanel"><h5>Branch against visit type<span>'+cols.length+' column(s)'+xBtns("anTblMat")+'</span></h5><div class="in mgScroll">'+
+    '<table class="anTbl" id="anTblMat"><thead><tr><th>Branch</th>'+cols.map(c=>'<th class="n">'+esc(c)+'</th>').join("")+
     '<th class="n">Total</th></tr></thead><tbody>'+
-    B.map(x=>{
-      const row=mat[x.k]||{};
-      return '<tr><td>'+esc(x.k)+'</td>'+cols.map(c=>'<td class="n">'+(row[c]?money(Math.round(row[c])):"—")+'</td>').join("")+
-        '<td class="n"><b>'+money(x.v)+'</b></td></tr>';
+    B.map((x,bi)=>{
+      const row=mat[x.k]||{}, pid="anM"+bi, kids=matE[x.k]||{};
+      const cell=v=>'<td class="n">'+(v?money(Math.round(v)):"—")+'</td>';
+      return '<tr class="anPar" data-pid="'+pid+'" onclick="anKidToggle(\''+pid+'\',event)">'+
+          '<td><span class="anCv">▸</span>'+esc(x.k)+'</td>'+cols.map(c=>cell(row[c])).join("")+
+          '<td class="n"><b>'+money(Math.round(x.v))+'</b></td></tr>'+
+        Object.keys(kids).sort((a,b)=>(kids[b].__t||0)-(kids[a].__t||0)).map(k=>{
+          const e=kids[k], p2=k.split("\u0001");
+          return '<tr class="anKid" data-parent="'+pid+'" style="display:none"><td>'+esc(p2[0]+" · "+(p2[1]||""))+'</td>'+
+            cols.map(c=>cell(e[c])).join("")+'<td class="n"><b>'+money(Math.round(e.__t||0))+'</b></td></tr>';
+        }).join("");
     }).join("")+
     '<tr class="anTot"><td>Total</td>'+cols.map(c=>{
       const t=B.reduce((s,x)=>s+((mat[x.k]||{})[c]||0),0);
       return '<td class="n">'+(t?money(Math.round(t)):"—")+'</td>';}).join("")+
-    '<td class="n">'+money(totVal)+'</td></tr></tbody></table></div></div>';
+    '<td class="n">'+money(Math.round(totVal))+'</td></tr></tbody></table></div></div>';
 
-  h+='<div class="anPanel"><h5>Where the money sits<span>by claim status</span></h5><div class="in">'+
+  h+='<div class="anPanel"><h5>Where the money sits<span>by claim status</span></h5><div class="in mgScroll">'+
     anTable([["Status"],["Value",1],["Share"],["Claims",1]],
       ST_.map(x=>'<tr>'+anBarRow(x.k,x.v,ST_[0].v,'<td class="n">'+x.n+'</td>')+'</tr>'))+'</div></div>';
 
@@ -4376,7 +4485,7 @@ async function renderAnalysis(){
   const oddKeys=Object.keys(odd);
   if(oddKeys.length){
     h+='<div class="anPanel"><h5 style="background:linear-gradient(180deg,#d98a17,#b06a00)">'+
-      'Values that are not on the standard list<span>'+oddKeys.length+' to correct</span></h5><div class="in">'+
+      'Values that are not on the standard list<span>'+oddKeys.length+' to correct</span></h5><div class="in mgScroll">'+
       '<div class="refnote" style="margin:0 0 8px">These were saved while the page was being translated '+
       'in the browser, so the stored value is not English. They cannot be mapped back automatically and '+
       'they appear as separate categories above. Open each claim and reselect the field.</div>'+
@@ -4392,6 +4501,7 @@ async function renderAnalysis(){
      '. Drafts and rejected claims are excluded. Call type, visit type, mode and segment are recorded per line, '+
      'so a claim covering several lines is split across them in proportion.</div>';
   $("anBody").innerHTML=h;
+  mgMakeSortable("#anBody");
 }
 
 function anExport(){
@@ -4615,7 +4725,8 @@ function mgRow(label,g){
    change of filter. */
 const MG_SORT={};
 function mgSortKey(td){
-  const t=(td.textContent||"").trim();
+  if(td&&td.dataset&&td.dataset.v!==undefined&&td.dataset.v!=="") return {n:Number(td.dataset.v)};
+  const t=(td.textContent||"").trim().replace(/^[▸▾+−\s]+/,"");
   const n=t.replace(/[₹,\s]|KM/g,"");
   if(n!==""&&!isNaN(n)) return {n:Number(n)};
   return {s:t.toLowerCase()};
@@ -4623,23 +4734,28 @@ function mgSortKey(td){
 function mgApplySort(tbl){
   const id=tbl.dataset.sid, st=MG_SORT[id]; if(!st) return;
   const body=tbl.tBodies[0]; if(!body) return;
-  const rows=[...body.rows].filter(r=>!r.classList.contains("anTot"));
-  const tot=[...body.rows].filter(r=>r.classList.contains("anTot"));
-  rows.sort((a,b)=>{
+  /* child rows travel with their parent, and are sorted among themselves the same way */
+  const all=[...body.rows];
+  const tot=all.filter(r=>r.classList.contains("anTot"));
+  const kids={}; all.filter(r=>r.classList.contains("anKid")).forEach(r=>{ (kids[r.dataset.parent]=kids[r.dataset.parent]||[]).push(r); });
+  const rows=all.filter(r=>!r.classList.contains("anTot")&&!r.classList.contains("anKid"));
+  const cmp=(a,b)=>{
     const x=mgSortKey(a.cells[st.col]||{}), y=mgSortKey(b.cells[st.col]||{});
     const c = (x.n!==undefined&&y.n!==undefined) ? x.n-y.n : String(x.s||x.n).localeCompare(String(y.s||y.n));
     return st.dir==="asc"?c:-c;
-  });
-  rows.concat(tot).forEach(r=>body.appendChild(r));
+  };
+  rows.sort(cmp);
+  rows.forEach(r=>{ body.appendChild(r); (kids[r.dataset.pid]||[]).sort(cmp).forEach(k=>body.appendChild(k)); });
+  tot.forEach(r=>body.appendChild(r));
   [...tbl.tHead.rows[0].cells].forEach((th,i)=>{
     th.classList.toggle("on",i===st.col);
     const a=th.querySelector(".sa"); if(a) a.textContent=(i===st.col?(st.dir==="asc"?"▲":"▼"):"▲▼");
   });
 }
-function mgMakeSortable(){
-  document.querySelectorAll("#mgBody .anPanel table.anTbl").forEach((tbl,ti)=>{
+function mgMakeSortable(root){
+  document.querySelectorAll((root||"#mgBody")+" .anPanel table.anTbl").forEach((tbl,ti)=>{
     const title=(tbl.closest(".anPanel").querySelector("h5")||{}).firstChild;
-    tbl.dataset.sid="t"+ti+":"+((title&&title.textContent)||"");
+    tbl.dataset.sid=(root||"#mgBody")+"t"+ti+":"+((title&&title.textContent)||"");
     tbl.classList.add("mgSort");
     [...tbl.tHead.rows[0].cells].forEach((th,i)=>{
       if(!th.querySelector(".sa")) th.insertAdjacentHTML("beforeend",'<span class="sa">▲▼</span>');
@@ -4657,6 +4773,51 @@ function mgMakeSortable(){
   });
 }
 
+/* Stacked weekly columns: paid at the base, ready to pay above it, yet to approve on top.
+   Drawn as inline SVG, like every chart in the page, so nothing depends on a CDN. */
+const MG_COL={paid:"#12a768",__pay:"#2f72b8",yet:"#e0a21b"};
+function mgStacked(list){
+  if(!list.length) return '<div class="empty" style="margin:0"><b>No weeks to plot</b>Widen the dates.</div>';
+  const W=Math.max(420,list.length*92), H=200, padB=30, padT=22, pad=24;
+  const max=Math.max.apply(null,list.map(x=>x.paid+x.__pay+x.yet))||1;
+  const bw=(W-pad*2)/list.length, colW=Math.min(64,bw*0.56);
+  const short=l=>l.replace(/^Week (\d) \(.*?([A-Z][a-z]{2}'\d{2})\)$/,"W$1 $2");
+  let g="";
+  list.forEach((x,i)=>{
+    const tot=x.paid+x.__pay+x.yet, cx=pad+i*bw+bw/2, left=cx-colW/2;
+    let y=H-padB;
+    [["paid","Paid"],["__pay","Ready to pay"],["yet","Yet to approve"]].forEach(([k,lab],j)=>{
+      const v=x[k]; if(!(v>0)) return;
+      const hgt=Math.max(1.5,(v/max)*(H-padB-padT-6));
+      y-=hgt;
+      g+='<rect x="'+left.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+colW.toFixed(1)+'" height="'+hgt.toFixed(1)+'" fill="'+MG_COL[k]+'"'+
+         (j===2||(k==="__pay"&&!(x.yet>0))||(k==="paid"&&!(x.__pay>0)&&!(x.yet>0))?' rx="3"':'')+'>'+
+         '<title>'+esc(x.lbl)+' · '+lab+' '+money(Math.round(v))+' ('+(tot?Math.round(v/tot*100):0)+'%)</title></rect>';
+    });
+    g+='<text x="'+cx.toFixed(1)+'" y="'+(y-5).toFixed(1)+'" text-anchor="middle" font-size="9" font-weight="800" fill="#0B3F7A">'+anMoneyShort(tot)+'</text>'+
+       '<text x="'+cx.toFixed(1)+'" y="'+(H-12)+'" text-anchor="middle" font-size="9.5" font-weight="700" fill="#5D7C93">'+esc(short(x.lbl))+'</text>';
+  });
+  const leg=[["paid","Amount paid"],["__pay","Ready to pay"],["yet","Yet to approve"]].map(([k,l])=>
+    '<span><i style="background:'+MG_COL[k]+'"></i>'+l+'</span>').join("");
+  return '<div style="overflow-x:auto"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%;min-width:'+W+'px;height:'+H+'px">'+
+    '<line x1="'+pad+'" y1="'+(H-padB)+'" x2="'+(W-pad)+'" y2="'+(H-padB)+'" stroke="#dce6ef"/>'+g+'</svg></div>'+
+    '<div class="anLeg" style="justify-content:center">'+leg+'</div>';
+}
+/* One parent row opens to its child rows. */
+function anKidToggle(pid,ev){
+  if(ev) ev.stopPropagation();
+  const kids=document.querySelectorAll('tr.anKid[data-parent="'+pid+'"]');
+  if(!kids.length) return;
+  const open=kids[0].style.display==="none";
+  kids.forEach(k=>{ k.style.display=open?"":"none"; });
+  const c=document.querySelector('tr.anPar[data-pid="'+pid+'"] .anCv');
+  if(c) c.textContent=open?"▾":"▸";
+}
+function anKidsAll(tid,open){
+  const t=$(tid); if(!t) return;
+  t.querySelectorAll("tr.anKid").forEach(k=>{ k.style.display=open?"":"none"; });
+  t.querySelectorAll("tr.anPar .anCv").forEach(c=>{ c.textContent=open?"▾":"▸"; });
+}
 async function renderMgmt(){
   if(!isHO(ME)) return;
   mgBuildBasis();
@@ -4693,13 +4854,14 @@ async function renderMgmt(){
   scoped.forEach(r=>{ const v=mgValue(r), k=mgBucket(r); pos.all+=v; pos[k]+=v; posN.all++; posN[k]++; });
   const pb=($("mgBasis")&&$("mgBasis").value)||"all";
   const seg=(k,lbl,col)=>'<div class="mgPos'+(pb===k?" on":"")+'" title="Show only this position" '+
+    'style="border-top:3px solid '+(MG_COL[k]||"#0B3F7A")+'" '+
     'onclick="document.getElementById(\'mgBasis\').value=\''+k+'\';renderMgmt()">'+
     '<span>'+lbl+'</span><b style="color:'+col+'">'+money(Math.round(pos[k]))+'</b><i>'+posN[k]+' claim'+(posN[k]===1?"":"s")+'</i></div>';
   const POSBAR='<div class="mgPosBar">'+
       seg("all","All data entered","var(--navy)")+'<em>=</em>'+
       seg("paid","Amount paid","#0a8a53")+'<em>+</em>'+
       seg("__pay","Ready to pay","#2f72b8")+'<em>+</em>'+
-      seg("yet","Yet to approve","#b06a00")+
+      seg("yet","Yet to approve","#b8800f")+
     '</div>';
   const rows=all.filter(r=>{
     if(stPick && !mgStatusMatch(r,stPick)) return false;
@@ -4824,8 +4986,17 @@ async function renderMgmt(){
     '<table class="anTbl"><thead><tr>'+lead.map(x=>'<th>'+x+'</th>').join("")+
     cols.map(c=>'<th class="n">'+c[0]+'</th>').join("")+'</tr></thead><tbody>'+rowsH+totH+'</tbody></table></div></div>';
 
-  h+='<div class="anPanel"><h5>Week wise expense<span>'+weeks.length+' week(s)</span></h5><div class="in">'+
-     anColumns(weeks.map(w=>({v0:0,k:w.label.replace(/^Week (\d) \(.*?([A-Z][a-z]{2}'\d{2})\)$/,"W$1 $2"),v:w.v,n:w.claims})))+'</div></div>';
+  /* Each week's bar is split into the same three positions as the cards above it, in the
+     same colours, so the chart reads as the reconciliation bar drawn week by week. */
+  const WB={};
+  rows.forEach(r=>{
+    const wk=mgWeek(dkey(r.claimDate||r.perFrom)||"");
+    const e=WB[wk.k]||(WB[wk.k]={k:wk.k,lbl:wk.label,paid:0,__pay:0,yet:0,n:0});
+    e[mgBucket(r)]+=mgValue(r); e.n++;
+  });
+  const wbList=Object.keys(WB).sort().map(k=>WB[k]);
+  h+='<div class="anPanel"><h5>Week wise expense<span>'+wbList.length+' week(s) · paid, ready to pay, yet to approve</span></h5>'+
+     '<div class="in">'+mgStacked(wbList)+'</div></div>';
   h+=panel("1 · Week wise",weeks.length+" week(s), 1st–7th, 8th–14th and so on",["Week"],
     weeks.map(x=>'<tr><td>'+esc(x.label)+'</td>'+cells(x)+'</tr>').join(""),totRow());
   h+=panel("2 · Zone wise",zones.length+" zone(s)",["Zone","Branches"],
@@ -4955,9 +5126,59 @@ function hoExpandAll(open){
     k.style.display=open?"":"none"; HO_OPEN[k.id]=open; });
   document.querySelectorAll("#hoList .hbar .tog").forEach(t=>{ t.textContent=open?"\u2212":"+"; });
 }
+/* Claim numbers held by more than one claim, from the old random numbering. */
+function sharedNumbers(){
+  const g={};
+  (MEM||[]).forEach(r=>{ if(r.no){ const k=String(r.no).trim().toUpperCase(); (g[k]=g[k]||[]).push(r); } });
+  return Object.keys(g).filter(k=>g[k].length>1).map(k=>({no:k,claims:g[k]}));
+}
+/* Gives every claim in a shared group except one its own number, built the new way from
+   its engineer and date. The claim that keeps the old number is a paid one where there is
+   one, since its UTR is already recorded against it; otherwise the earliest submitted.
+   Paid and closed claims are never renumbered. The old number is kept in the trail. */
+async function fixSharedNumbers(){
+  const groups=sharedNumbers();
+  const plan=[];
+  groups.forEach(g=>{
+    const settled=x=>x.status===ST.PAID||x.status===ST.CLOSED;
+    const keep=g.claims.find(settled) ||
+      g.claims.slice().sort((a,b)=>String(a.submittedAt||a.createdAt||"").localeCompare(String(b.submittedAt||b.createdAt||"")))[0];
+    g.claims.forEach(c=>{ if(c!==keep && !settled(c)) plan.push(c); });
+  });
+  if(!plan.length){ alert("Nothing to renumber. Every shared number is on claims that are already paid."); return; }
+  const preview=plan.slice(0,12).map(c=>{ const n=claimNumbers(c.by,c.branch,dkey(c.claimDate||c.perFrom));
+    return c.no+" ("+c.by+")  →  "+n.no; }).join("\n");
+  if(!confirm("Give "+plan.length+" claim(s) their own numbers?\n\n"+preview+(plan.length>12?"\n… and "+(plan.length-12)+" more":"")+
+              "\n\nThe voucher number changes with the claim number. Any voucher already printed for these claims "+
+              "will show the old number; the old number is recorded in each claim's trail.")) return;
+  let done=0; const failed=[];
+  for(const c of plan){
+    try{
+      const r=await loadOne(c.id);
+      if(!r||r.status===ST.PAID||r.status===ST.CLOSED){ failed.push(c.no); continue; }
+      const n=claimNumbers(r.by,r.branch,dkey(r.claimDate||r.perFrom));
+      const old=r.no;
+      r.no=n.no; r.voucher=n.voucher;
+      r.trail.push({code:ME,act:"Renumbered",remark:"Claim number was shared with another engineer's claim. "+
+        old+" → "+n.no+" (voucher "+n.voucher+")",ts:new Date().toISOString(),amt:null});
+      await syncToCloud(r); done++;
+    }catch(e){ failed.push(c.no); }
+  }
+  await refresh();
+  alert(done+" claim(s) renumbered."+(failed.length?" Not changed: "+failed.join(", "):""));
+}
 function hoGroupedList(rows,emptyTitle,emptyLine){
   const el=$("hoList");
-  const bar='<div class="trBar" style="padding:0 0 8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+
+  const shared=sharedNumbers();
+  const warn = shared.length
+    ? '<div class="msg no on" style="display:block;margin-bottom:8px"><b>'+shared.length+' claim number'+(shared.length===1?" is":"s are")+
+        ' shared by more than one claim.</b> The old numbering drew four random digits, so two engineers could get the same number. '+
+        'Payment uploads now match on Voucher No and Emp ID together, so a shared voucher cannot be paid to the wrong person. '+
+        shared.slice(0,5).map(g=>esc(g.no)+" ("+g.claims.map(c=>esc(c.by)).join(", ")+")").join(" · ")+
+        (shared.length>5?" and "+(shared.length-5)+" more":"")+
+        ' <button type="button" class="btn" style="margin-left:6px" onclick="fixSharedNumbers()">Give these claims unique numbers</button></div>'
+    : "";
+  const bar=warn+'<div class="trBar" style="padding:0 0 8px;display:flex;gap:6px;align-items:center;flex-wrap:wrap">'+
     '<span style="font-size:11px;color:var(--muted);font-weight:700">'+
       (rows.length?[...new Set(rows.map(r=>r.branch||"Branch not set"))].length+" branch(es) · "+rows.length+" claim(s)":"")+'</span>'+
     '<div style="margin-left:auto;display:flex;gap:6px">'+
