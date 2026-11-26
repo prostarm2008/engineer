@@ -3960,15 +3960,15 @@ function payToast(t,ok){ const e=$("payToast"); if(!e) return;
 function paymentSheet(){
   const due=(MEM||[]).filter(r=>r.status===ST.APP||r.status===ST.HOLD);
   const head=["Voucher No","UTR / Payment Reference","Payment Date (DD-MM-YYYY)","Remark",
-              "Claim No","Engineer","Branch","Payable Amount","Current Status"];
+              "Claim No","Emp ID","Engineer","Branch","Payable Amount","Current Status"];
   const rows=due.map(r=>[r.voucher||"",( r.pay&&r.pay.ref)||"",dd(new Date().toISOString().slice(0,10)),"",
-                         r.no||"",r.name||"",r.branch||"",Number(r.payable)||0,r.status]);
+                         r.no||"",r.by||"",r.name||"",r.branch||"",Number(r.payable)||0,r.status]);
   if(!rows.length){
     payToast("No approved claims are waiting for payment, so the sheet is blank. Fill the voucher numbers by hand if you need to.",true);
-    rows.push(["TV/MH/2611/0001","","","","","","",0,""]);
+    rows.push(["TV/MH/2611/0001","","","","","","","",0,""]);
   }
   xlsxDownload("Prostarm_Payment_Update_"+new Date().toISOString().slice(0,10)+".xlsx",
-    [detailSheet(PAY_SHEET,head,rows,[22,26,24,26,22,24,16,16,30])]);
+    [detailSheet(PAY_SHEET,head,rows,[22,26,24,26,22,12,24,16,16,30])]);
 }
 
 $("payPick")&&$("payPick").addEventListener("click",()=>$("payFile").click());
